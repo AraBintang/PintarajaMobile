@@ -1,14 +1,19 @@
 // ============================================================
-// AUTH PROVIDER — Login, Register, Logout
+// AUTH PROVIDER — Login, Register, OTP, Logout
 // ============================================================
 
 import 'package:flutter/foundation.dart';
+
 import '../../core/constants/api_constants.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 
-enum AuthStatus { unknown, authenticated, unauthenticated }
+enum AuthStatus {
+  unknown,
+  authenticated,
+  unauthenticated,
+}
 
 class AuthProvider extends ChangeNotifier {
   AuthStatus _status = AuthStatus.unknown;
@@ -20,69 +25,206 @@ class AuthProvider extends ChangeNotifier {
   UserModel? get user => _user;
   String? get error => _error;
   bool get isLoading => _isLoading;
-  bool get isLoggedIn => _status == AuthStatus.authenticated;
+
+  bool get isLoggedIn =>
+      _status == AuthStatus.authenticated;
+
+  int get tokenBalance =>
+      _user?.quota ?? 0;
 
   AuthProvider() {
     _checkAuth();
   }
 
-  // ── Cek apakah sudah login ─────────────────────────────────
+  // ==========================================================
+  // CHECK AUTH
+  // ==========================================================
+
   Future<void> _checkAuth() async {
-    if (StorageService.isLoggedIn) {
-      final userData = StorageService.getUser();
-      if (userData != null) {
-        _user = UserModel.fromJson(userData);
-        _status = AuthStatus.authenticated;
-      } else {
-        try {
-          await _fetchUser();
-        } catch (_) {
-          _status = AuthStatus.unauthenticated;
-        }
+    try {
+      if (!StorageService.isLoggedIn) {
+        _status =
+            AuthStatus.unauthenticated;
+
+        notifyListeners();
+        return;
       }
-    } else {
-      _status = AuthStatus.unauthenticated;
+
+      final userData =
+          StorageService.getUser();
+
+      if (userData != null) {
+        _user =
+            UserModel.fromJson(
+          userData,
+        );
+
+        _status =
+            AuthStatus.authenticated;
+
+        notifyListeners();
+
+        await refreshUser();
+        return;
+      }
+
+      await _fetchUser();
+
+      _status =
+          AuthStatus.authenticated;
+
+      notifyListeners();
+    } catch (_) {
+      _user = null;
+      _status =
+          AuthStatus.unauthenticated;
+
+      await StorageService.clearAll();
+
+      notifyListeners();
     }
-    notifyListeners();
   }
 
-  // ── Fetch user dari API ─────────────────────────────────────
+  // ==========================================================
+  // FETCH USER
+  // ==========================================================
+
   Future<void> _fetchUser() async {
-    final data = await ApiService.instance.get(ApiConstants.user);
-    _user = UserModel.fromJson(data['data'] ?? data);
-    await StorageService.saveUser(_user!.toJson());
-    _status = AuthStatus.authenticated;
+    final data =
+        await ApiService.instance.get(
+      ApiConstants.user,
+    );
+
+    final rawUser =
+        data is Map
+            ? (data['data'] ?? data)
+            : null;
+
+    if (rawUser is! Map) {
+      throw const ApiException(
+        'Data user tidak valid.',
+      );
+    }
+
+    _user =
+        UserModel.fromJson(
+      Map<String, dynamic>.from(
+        rawUser,
+      ),
+    );
+
+    await StorageService.saveUser(
+      _user!.toJson(),
+    );
+
+    _status =
+        AuthStatus.authenticated;
   }
 
-  // ── LOGIN ─────────────────────────────────────────────────
-  Future<bool> login(String email, String password) async {
+  // ==========================================================
+  // LOGIN
+  // ==========================================================
+
+  Future<bool> login(
+    String email,
+    String password, {
+    bool remember = true,
+  }) async {
     _setLoading(true);
     _error = null;
 
     try {
-      final data = await ApiService.instance.post(
+      final data =
+          await ApiService.instance.post(
         ApiConstants.login,
-        {'email': email, 'password': password},
+        {
+          'email': email,
+          'password': password,
+          'remember': remember,
+        },
         useAuth: false,
       );
 
-      final token = data['token'] ?? data['access_token'];
-      if (token == null) throw ApiException('Token tidak ditemukan.');
+      if (data is! Map) {
+        throw const ApiException(
+          'Response login tidak valid.',
+        );
+      }
 
-      await StorageService.saveToken(token.toString());
-      await _fetchUser();
+      final token =
+          data['token'] ??
+          data['access_token'];
+
+      if (token == null ||
+          token.toString().isEmpty) {
+        throw const ApiException(
+          'Token tidak ditemukan.',
+        );
+      }
+
+      await StorageService.saveToken(
+        token.toString(),
+      );
+
+      final rawUser =
+          data['user'];
+
+      if (rawUser is Map) {
+        _user =
+            UserModel.fromJson(
+          Map<String, dynamic>.from(
+            rawUser,
+          ),
+        );
+
+        await StorageService.saveUser(
+          _user!.toJson(),
+        );
+      }
+
+      _status =
+          AuthStatus.authenticated;
+
       _setLoading(false);
+
+      notifyListeners();
+
+      // Refresh quota/profile di background.
+      _refreshUserInBackground();
+
       return true;
     } on ApiException catch (e) {
       _error = e.message;
       _setLoading(false);
       return false;
+    } catch (_) {
+      _error =
+          'Terjadi kesalahan saat login.';
+
+      _setLoading(false);
+      return false;
     }
   }
 
-  // ── REGISTER ──────────────────────────────────────────────
-  Future<bool> register(String name, String email, String password,
-      {String? referralCode}) async {
+  Future<void>
+      _refreshUserInBackground() async {
+    try {
+      await _fetchUser();
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  // ==========================================================
+  // REGISTER + TURNSTILE
+  // ==========================================================
+
+  Future<bool> register(
+    String name,
+    String email,
+    String password, {
+    String? referralCode,
+    required String turnstileToken,
+  }) async {
     _setLoading(true);
     _error = null;
 
@@ -91,45 +233,187 @@ class AuthProvider extends ChangeNotifier {
         'name': name,
         'email': email,
         'password': password,
-        'password_confirmation': password,
-        if (referralCode != null && referralCode.isNotEmpty)
-          'referral_code': referralCode,
+        'password_confirmation':
+            password,
+
+        // WAJIB untuk backend PintarAja.
+        'cf-turnstile-response':
+            turnstileToken,
+
+        if (referralCode != null &&
+            referralCode.isNotEmpty)
+          'referral_code':
+              referralCode,
       };
 
-      final data = await ApiService.instance.post(
+      final data =
+          await ApiService.instance.post(
         ApiConstants.register,
         body,
         useAuth: false,
       );
 
-      final token = data['token'] ?? data['access_token'];
-      if (token != null) {
-        await StorageService.saveToken(token.toString());
-        await _fetchUser();
+      // Register original PintarAja
+      // mengirim status OTP, bukan token.
+      if (data is Map) {
+        final token =
+            data['token'] ??
+            data['access_token'];
+
+        if (token != null) {
+          await StorageService.saveToken(
+            token.toString(),
+          );
+
+          await _fetchUser();
+        }
       }
 
       _setLoading(false);
+
       return true;
     } on ApiException catch (e) {
       _error = e.message;
       _setLoading(false);
       return false;
+    } catch (_) {
+      _error =
+          'Terjadi kesalahan saat registrasi.';
+
+      _setLoading(false);
+      return false;
     }
   }
 
-  // ── LOGOUT ────────────────────────────────────────────────
+  // ==========================================================
+  // VERIFY OTP
+  // ==========================================================
+
+  Future<bool> verifyOtp(
+    String email,
+    String otp,
+  ) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      final data =
+          await ApiService.instance.post(
+        '${ApiConstants.baseUrl}/verify-otp',
+        {
+          'email': email.trim(),
+          'otp': otp.trim(),
+        },
+        useAuth: false,
+      );
+
+      if (data is! Map) {
+        throw const ApiException(
+          'Response OTP tidak valid.',
+        );
+      }
+
+      final token =
+          data['token'] ??
+          data['access_token'];
+
+      if (token == null ||
+          token.toString().isEmpty) {
+        throw const ApiException(
+          'Token tidak ditemukan setelah verifikasi.',
+        );
+      }
+
+      await StorageService.saveToken(
+        token.toString(),
+      );
+
+      await _fetchUser();
+
+      _status =
+          AuthStatus.authenticated;
+
+      _setLoading(false);
+
+      notifyListeners();
+
+      return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _error =
+          'Terjadi kesalahan saat verifikasi OTP.';
+
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  // ==========================================================
+  // RESEND OTP
+  // ==========================================================
+
+  Future<bool> resendOtp(
+    String email,
+  ) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      await ApiService.instance.post(
+        '${ApiConstants.baseUrl}/resend-otp',
+        {
+          'email': email.trim(),
+        },
+        useAuth: false,
+      );
+
+      _setLoading(false);
+
+      return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _error =
+          'Gagal mengirim ulang OTP.';
+
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  // ==========================================================
+  // LOGOUT
+  // ==========================================================
+
   Future<void> logout() async {
     try {
-      await ApiService.instance.post(ApiConstants.logout, {});
+      if (StorageService.getToken() != null) {
+        await ApiService.instance.post(
+          ApiConstants.logout,
+          {},
+        );
+      }
     } catch (_) {}
 
     await StorageService.clearAll();
+
     _user = null;
-    _status = AuthStatus.unauthenticated;
+    _status =
+        AuthStatus.unauthenticated;
+    _error = null;
+
     notifyListeners();
   }
 
-  // ── Refresh user data ─────────────────────────────────────
+  // ==========================================================
+  // REFRESH USER
+  // ==========================================================
+
   Future<void> refreshUser() async {
     try {
       await _fetchUser();
@@ -137,10 +421,20 @@ class AuthProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
-  void _setLoading(bool value) {
+  // ==========================================================
+  // LOADING
+  // ==========================================================
+
+  void _setLoading(
+    bool value,
+  ) {
     _isLoading = value;
     notifyListeners();
   }
+
+  // ==========================================================
+  // CLEAR ERROR
+  // ==========================================================
 
   void clearError() {
     _error = null;

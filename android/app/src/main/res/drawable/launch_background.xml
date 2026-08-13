@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Background splash -->
     <item>
         <shape android:shape="rectangle">
-            <gradient
-                android:startColor="#0F172A"
-                android:endColor="#1E293B"
-                android:angle="270" />
+            <solid android:color="#F0F2F5" />
         </shape>
     </item>
 
+    <!-- Logo PintarAja -->
     <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/ic_launcher" />
+            android:src="@drawable/pintaraja" />
     </item>
+
 </layer-list>
