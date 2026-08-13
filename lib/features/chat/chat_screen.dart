@@ -55,8 +55,7 @@ class _ChatScreenState extends State<ChatScreen>
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
-        final chat =
-            context.read<ChatProvider>();
+        final chat = context.read<ChatProvider>();
 
         await chat.initializeChat();
 
@@ -111,8 +110,7 @@ class _ChatScreenState extends State<ChatScreen>
 
     _messageController.clear();
 
-    final chat =
-        context.read<ChatProvider>();
+    final chat = context.read<ChatProvider>();
 
     await chat.startNewChat();
 
@@ -135,8 +133,7 @@ class _ChatScreenState extends State<ChatScreen>
 
     _closeDrawer();
 
-    final chat =
-        context.read<ChatProvider>();
+    final chat = context.read<ChatProvider>();
 
     await chat.selectConversation(
       conversation.id,
@@ -154,15 +151,13 @@ class _ChatScreenState extends State<ChatScreen>
   // ==========================================================
 
   Future<void> _sendMessage() async {
-    final message =
-        _messageController.text.trim();
+    final message = _messageController.text.trim();
 
     if (message.isEmpty) {
       return;
     }
 
-    final chat =
-        context.read<ChatProvider>();
+    final chat = context.read<ChatProvider>();
 
     if (chat.isStreaming) {
       return;
@@ -205,11 +200,8 @@ class _ChatScreenState extends State<ChatScreen>
         }
 
         _scrollController.animateTo(
-          _scrollController
-              .position
-              .maxScrollExtent,
-          duration:
-              const Duration(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(
             milliseconds: 280,
           ),
           curve: Curves.easeOut,
@@ -223,27 +215,22 @@ class _ChatScreenState extends State<ChatScreen>
   // ==========================================================
 
   void _showConversationSearch() {
-    final controller =
-        TextEditingController();
+    final controller = TextEditingController();
 
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor:
-          AppTheme.surfaceLight,
+      backgroundColor: AppTheme.surfaceLight,
       showDragHandle: true,
-      shape:
-          const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
           top: Radius.circular(24),
         ),
       ),
       builder: (sheetContext) {
         return SafeArea(
           child: Padding(
-            padding:
-                EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               16,
               8,
               16,
@@ -253,66 +240,47 @@ class _ChatScreenState extends State<ChatScreen>
                   ).bottom,
             ),
             child: Column(
-              mainAxisSize:
-                  MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment:
                   CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Cari percakapan',
-                  style:
-                      TextStyle(
-                    color:
-                        AppTheme
-                            .textPrimary,
-                    fontSize:
-                        18,
-                    fontWeight:
-                        FontWeight.w700,
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-
                 const SizedBox(
                   height: 12,
                 ),
-
                 TextField(
-                  controller:
-                      controller,
+                  controller: controller,
                   autofocus: true,
                   textInputAction:
                       TextInputAction.search,
-                  onSubmitted: (
-                    value,
-                  ) {
+                  onSubmitted: (value) {
                     _searchConversation(
                       value,
                       sheetContext,
                     );
                   },
-                  decoration:
-                      InputDecoration(
+                  decoration: InputDecoration(
                     hintText:
                         'Cari judul percakapan...',
-                    prefixIcon:
-                        const Icon(
-                      Icons
-                          .search_rounded,
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
                     ),
-                    suffixIcon:
-                        IconButton(
-                      onPressed:
-                          () {
+                    suffixIcon: IconButton(
+                      onPressed: () {
                         _searchConversation(
-                          controller
-                              .text,
+                          controller.text,
                           sheetContext,
                         );
                       },
-                      icon:
-                          const Icon(
-                        Icons
-                            .arrow_forward_rounded,
+                      icon: const Icon(
+                        Icons.arrow_forward_rounded,
                       ),
                     ),
                   ),
@@ -357,29 +325,24 @@ class _ChatScreenState extends State<ChatScreen>
   void _showModelSelector() {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor:
-          AppTheme.surfaceLight,
+      backgroundColor: AppTheme.surfaceLight,
       showDragHandle: true,
       isScrollControlled: true,
-      shape:
-          const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
           top: Radius.circular(24),
         ),
       ),
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding:
-                const EdgeInsets.fromLTRB(
+            padding: const EdgeInsets.fromLTRB(
               16,
               8,
               16,
               20,
             ),
-            child:
-                Consumer<ChatProvider>(
+            child: Consumer<ChatProvider>(
               builder: (
                 context,
                 chat,
@@ -391,12 +354,10 @@ class _ChatScreenState extends State<ChatScreen>
                     child: Center(
                       child: Text(
                         'Tidak ada AI provider yang tersedia.',
-                        textAlign:
-                            TextAlign.center,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           color:
-                              AppTheme
-                                  .textSecondary,
+                              AppTheme.textSecondary,
                         ),
                       ),
                     ),
@@ -404,63 +365,50 @@ class _ChatScreenState extends State<ChatScreen>
                 }
 
                 return Column(
-                  mainAxisSize:
-                      MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment:
                       CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Pilih Model AI',
                       style: TextStyle(
-                        color:
-                            AppTheme
-                                .textPrimary,
+                        color: AppTheme.textPrimary,
                         fontSize: 19,
-                        fontWeight:
-                            FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-
                     const SizedBox(
                       height: 5,
                     ),
-
                     const Text(
                       'Model dan kuota mengikuti akun PintarAja kamu.',
                       style: TextStyle(
                         color:
-                            AppTheme
-                                .textSecondary,
+                            AppTheme.textSecondary,
                         fontSize: 11.5,
                       ),
                     ),
-
                     const SizedBox(
                       height: 16,
                     ),
-
-                    ...chat.aiProviders
-                        .map(
+                    ...chat.aiProviders.map(
                       (provider) {
                         return _ProviderOption(
-                          provider:
-                              provider,
+                          provider: provider,
                           selected:
                               chat.selectedProviderId ==
                                   provider.id,
-                          onTap:
-                              provider
-                                      .isLimited
-                                  ? null
-                                  : () {
-                                      chat.selectProvider(
-                                        provider.id,
-                                      );
+                          onTap: provider.isLimited
+                              ? null
+                              : () {
+                                  chat.selectProvider(
+                                    provider.id,
+                                  );
 
-                                      Navigator.of(
-                                        context,
-                                      ).pop();
-                                    },
+                                  Navigator.of(
+                                    context,
+                                  ).pop();
+                                },
                         );
                       },
                     ),
@@ -480,41 +428,32 @@ class _ChatScreenState extends State<ChatScreen>
 
   void _showTokenDialog() {
     final token =
-        context
-            .read<AuthProvider>()
-            .tokenBalance;
+        context.read<AuthProvider>().tokenBalance;
 
     showDialog<void>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor:
-              AppTheme.surfaceLight,
+          backgroundColor: AppTheme.surfaceLight,
           title: const Text(
             'Token PintarAja',
             style: TextStyle(
-              color:
-                  AppTheme.textPrimary,
-              fontWeight:
-                  FontWeight.w700,
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.w700,
             ),
           ),
           content: Text(
             'Saldo token kamu: $token',
             style: const TextStyle(
-              color:
-                  AppTheme.textSecondary,
+              color: AppTheme.textSecondary,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(
-                  context,
-                ).pop();
+                Navigator.of(context).pop();
               },
-              child:
-                  const Text(
+              child: const Text(
                 'Tutup',
               ),
             ),
@@ -533,8 +472,7 @@ class _ChatScreenState extends State<ChatScreen>
     BuildContext context,
   ) {
     return AnimatedBuilder(
-      animation:
-          _drawerController,
+      animation: _drawerController,
       builder: (
         context,
         _,
@@ -545,7 +483,6 @@ class _ChatScreenState extends State<ChatScreen>
           body: Stack(
             children: [
               _buildChatContent(),
-
               if (_isDrawerVisible)
                 _buildFloatingDrawer(),
             ],
@@ -564,10 +501,8 @@ class _ChatScreenState extends State<ChatScreen>
       child: Column(
         children: [
           _buildAppBar(),
-
           Expanded(
-            child:
-                Consumer<ChatProvider>(
+            child: Consumer<ChatProvider>(
               builder: (
                 context,
                 chat,
@@ -578,8 +513,7 @@ class _ChatScreenState extends State<ChatScreen>
                   return const Center(
                     child:
                         CircularProgressIndicator(
-                      color:
-                          AppTheme.primary,
+                      color: AppTheme.primary,
                     ),
                   );
                 }
@@ -589,18 +523,15 @@ class _ChatScreenState extends State<ChatScreen>
                 }
 
                 return ListView.builder(
-                  controller:
-                      _scrollController,
+                  controller: _scrollController,
                   padding:
-                      const EdgeInsets
-                          .fromLTRB(
+                      const EdgeInsets.fromLTRB(
                     16,
                     14,
                     16,
                     20,
                   ),
-                  itemCount:
-                      chat.messages.length,
+                  itemCount: chat.messages.length,
                   itemBuilder: (
                     context,
                     index,
@@ -614,28 +545,22 @@ class _ChatScreenState extends State<ChatScreen>
               },
             ),
           ),
-
           Consumer<ChatProvider>(
             builder: (
               context,
               chat,
               _,
             ) {
-              final error =
-                  chat.error;
+              final error = chat.error;
 
               if (error == null ||
                   error.trim().isEmpty) {
-                return const SizedBox
-                    .shrink();
+                return const SizedBox.shrink();
               }
 
-              return _buildError(
-                error,
-              );
+              return _buildError(error);
             },
           ),
-
           _ChatInput(
             controller:
                 _messageController,
@@ -653,75 +578,49 @@ class _ChatScreenState extends State<ChatScreen>
 
   Widget _buildAppBar() {
     final tokenBalance =
-        context
-            .watch<AuthProvider>()
-            .tokenBalance;
+        context.watch<AuthProvider>().tokenBalance;
 
     return Container(
       height: 62,
-      padding:
-          const EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: 8,
       ),
-      decoration:
-          const BoxDecoration(
-        color:
-            AppTheme.backgroundApp,
-        border:
-            Border(
-          bottom:
-              BorderSide(
-            color:
-                AppTheme.borderLight,
-            width:
-                0.7,
+      decoration: const BoxDecoration(
+        color: AppTheme.backgroundApp,
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.borderLight,
+            width: 0.7,
           ),
         ),
       ),
       child: Row(
         children: [
-          // MENU
           Material(
-            color:
-                Colors.transparent,
+            color: Colors.transparent,
             borderRadius:
-                BorderRadius.circular(
-              12,
-            ),
-            child:
-                InkWell(
-              onTap:
-                  _toggleDrawer,
+                BorderRadius.circular(12),
+            child: InkWell(
+              onTap: _toggleDrawer,
               borderRadius:
-                  BorderRadius.circular(
-                12,
-              ),
-              child:
-                  const Padding(
-                padding:
-                    EdgeInsets.all(
-                  10,
-                ),
-                child:
-                    Icon(
+                  BorderRadius.circular(12),
+              child: const Padding(
+                padding: EdgeInsets.all(10),
+                child: Icon(
                   Icons.menu_rounded,
                   color:
-                      AppTheme
-                          .textPrimary,
-                  size:
-                      25,
+                      AppTheme.textPrimary,
+                  size: 25,
                 ),
               ),
             ),
           ),
 
-          // LOGO
           Image.asset(
             'assets/images/pintaraja.webp',
             width: 30,
             height: 30,
-            fit:
-                BoxFit.contain,
+            fit: BoxFit.contain,
           ),
 
           const SizedBox(
@@ -729,57 +628,38 @@ class _ChatScreenState extends State<ChatScreen>
           ),
 
           const Flexible(
-            child:
-                Text(
+            child: Text(
               'intaraja',
               maxLines: 1,
               overflow:
                   TextOverflow.ellipsis,
-              style:
-                  TextStyle(
+              style: TextStyle(
                 color:
-                    AppTheme
-                        .textPrimary,
-                fontSize:
-                    18,
+                    AppTheme.textPrimary,
+                fontSize: 18,
                 fontWeight:
                     FontWeight.w700,
-                letterSpacing:
-                    -0.6,
+                letterSpacing: -0.6,
               ),
             ),
           ),
 
-          // SEARCH
           Material(
-            color:
-                Colors.transparent,
+            color: Colors.transparent,
             borderRadius:
-                BorderRadius.circular(
-              10,
-            ),
-            child:
-                InkWell(
+                BorderRadius.circular(10),
+            child: InkWell(
               onTap:
                   _showConversationSearch,
               borderRadius:
-                  BorderRadius.circular(
-                10,
-              ),
-              child:
-                  const Padding(
-                padding:
-                    EdgeInsets.all(
-                  8,
-                ),
-                child:
-                    Icon(
+                  BorderRadius.circular(10),
+              child: const Padding(
+                padding: EdgeInsets.all(8),
+                child: Icon(
                   Icons.search_rounded,
                   color:
-                      AppTheme
-                          .textSecondary,
-                  size:
-                      21,
+                      AppTheme.textSecondary,
+                  size: 21,
                 ),
               ),
             ),
@@ -789,15 +669,11 @@ class _ChatScreenState extends State<ChatScreen>
             width: 2,
           ),
 
-          // MODEL
           Flexible(
-            child:
-                GestureDetector(
+            child: GestureDetector(
               onTap:
                   _showModelSelector,
-              child:
-                  Consumer<
-                      ChatProvider>(
+              child: Consumer<ChatProvider>(
                 builder: (
                   context,
                   chat,
@@ -806,52 +682,35 @@ class _ChatScreenState extends State<ChatScreen>
                   return Container(
                     constraints:
                         const BoxConstraints(
-                      maxWidth:
-                          110,
+                      maxWidth: 110,
                     ),
                     padding:
-                        const EdgeInsets
-                            .symmetric(
-                      horizontal:
-                          8,
-                      vertical:
-                          5,
+                        const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 5,
                     ),
-                    decoration:
-                        BoxDecoration(
+                    decoration: BoxDecoration(
                       color:
-                          AppTheme
-                              .surfaceMuted,
+                          AppTheme.surfaceMuted,
                       borderRadius:
-                          BorderRadius
-                              .circular(
-                        20,
-                      ),
+                          BorderRadius.circular(20),
                     ),
-                    child:
-                        Row(
+                    child: Row(
                       mainAxisSize:
                           MainAxisSize.min,
                       children: [
                         Flexible(
-                          child:
-                              Text(
+                          child: Text(
                             chat.selectedModelName,
-                            maxLines:
-                                1,
+                            maxLines: 1,
                             overflow:
-                                TextOverflow
-                                    .ellipsis,
-                            style:
-                                const TextStyle(
+                                TextOverflow.ellipsis,
+                            style: const TextStyle(
                               color:
-                                  AppTheme
-                                      .textSecondary,
-                              fontSize:
-                                  10,
+                                  AppTheme.textSecondary,
+                              fontSize: 10,
                               fontWeight:
-                                  FontWeight
-                                      .w600,
+                                  FontWeight.w600,
                             ),
                           ),
                         ),
@@ -862,10 +721,8 @@ class _ChatScreenState extends State<ChatScreen>
                           Icons
                               .keyboard_arrow_down_rounded,
                           color:
-                              AppTheme
-                                  .textSecondary,
-                          size:
-                              14,
+                              AppTheme.textSecondary,
+                          size: 14,
                         ),
                       ],
                     ),
@@ -877,79 +734,55 @@ class _ChatScreenState extends State<ChatScreen>
 
           const Spacer(),
 
-          // TOKEN
           GestureDetector(
             onTap:
                 _showTokenDialog,
-            child:
-                Container(
+            child: Container(
               constraints:
                   const BoxConstraints(
-                maxWidth:
-                    72,
+                maxWidth: 72,
               ),
               padding:
-                  const EdgeInsets
-                      .symmetric(
-                horizontal:
-                    8,
-                vertical:
-                    6,
+                  const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 6,
               ),
               decoration:
                   BoxDecoration(
                 color:
-                    AppTheme
-                        .surfaceMuted,
+                    AppTheme.surfaceMuted,
                 borderRadius:
-                    BorderRadius
-                        .circular(
-                  20,
-                ),
-                border:
-                    Border.all(
+                    BorderRadius.circular(20),
+                border: Border.all(
                   color:
-                      AppTheme
-                          .borderLight,
+                      AppTheme.borderLight,
                 ),
               ),
-              child:
-                  Row(
+              child: Row(
                 mainAxisSize:
                     MainAxisSize.min,
                 children: [
                   const Icon(
-                    Icons
-                        .diamond_rounded,
+                    Icons.diamond_rounded,
                     color:
-                        Color(
-                      0xFFF59E0B,
-                    ),
-                    size:
-                        15,
+                        Color(0xFFF59E0B),
+                    size: 15,
                   ),
                   const SizedBox(
                     width: 4,
                   ),
                   Flexible(
-                    child:
-                        Text(
+                    child: Text(
                       '$tokenBalance',
-                      maxLines:
-                          1,
+                      maxLines: 1,
                       overflow:
-                          TextOverflow
-                              .ellipsis,
-                      style:
-                          const TextStyle(
+                          TextOverflow.ellipsis,
+                      style: const TextStyle(
                         color:
-                            AppTheme
-                                .textPrimary,
-                        fontSize:
-                            11,
+                            AppTheme.textPrimary,
+                        fontSize: 11,
                         fontWeight:
-                            FontWeight
-                                .w700,
+                            FontWeight.w700,
                       ),
                     ),
                   ),
@@ -962,37 +795,23 @@ class _ChatScreenState extends State<ChatScreen>
             width: 3,
           ),
 
-          // NEW CHAT
           Material(
-            color:
-                Colors.transparent,
+            color: Colors.transparent,
             borderRadius:
-                BorderRadius.circular(
-              12,
-            ),
-            child:
-                InkWell(
+                BorderRadius.circular(12),
+            child: InkWell(
               onTap:
                   _startNewChat,
               borderRadius:
-                  BorderRadius.circular(
-                12,
-              ),
-              child:
-                  const Padding(
-                padding:
-                    EdgeInsets.all(
-                  10,
-                ),
-                child:
-                    Icon(
+                  BorderRadius.circular(12),
+              child: const Padding(
+                padding: EdgeInsets.all(10),
+                child: Icon(
                   Icons
                       .add_comment_outlined,
                   color:
-                      AppTheme
-                          .textPrimary,
-                  size:
-                      22,
+                      AppTheme.textPrimary,
+                  size: 22,
                 ),
               ),
             ),
@@ -1018,24 +837,17 @@ class _ChatScreenState extends State<ChatScreen>
         8,
       ),
       padding:
-          const EdgeInsets.all(
-        11,
-      ),
+          const EdgeInsets.all(11),
       decoration:
           BoxDecoration(
-        color:
-            AppTheme.error.withValues(
+        color: AppTheme.error.withValues(
           alpha: 0.10,
         ),
         borderRadius:
-            BorderRadius.circular(
-          12,
-        ),
-        border:
-            Border.all(
+            BorderRadius.circular(12),
+        border: Border.all(
           color:
-              AppTheme.error
-                  .withValues(
+              AppTheme.error.withValues(
             alpha: 0.25,
           ),
         ),
@@ -1046,31 +858,22 @@ class _ChatScreenState extends State<ChatScreen>
             CrossAxisAlignment.start,
         children: [
           const Icon(
-            Icons
-                .error_outline_rounded,
-            color:
-                AppTheme.error,
-            size:
-                18,
+            Icons.error_outline_rounded,
+            color: AppTheme.error,
+            size: 18,
           ),
           const SizedBox(
             width: 8,
           ),
           Expanded(
-            child:
-                Text(
+            child: Text(
               error,
-              maxLines:
-                  4,
+              maxLines: 4,
               overflow:
-                  TextOverflow
-                      .ellipsis,
-              style:
-                  const TextStyle(
-                color:
-                    AppTheme.error,
-                fontSize:
-                    12,
+                  TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppTheme.error,
+                fontSize: 12,
               ),
             ),
           ),
@@ -1085,9 +888,7 @@ class _ChatScreenState extends State<ChatScreen>
 
   Widget _buildFloatingDrawer() {
     final size =
-        MediaQuery.sizeOf(
-      context,
-    );
+        MediaQuery.sizeOf(context);
 
     final drawerWidth =
         (size.width * 0.78).clamp(
@@ -1105,10 +906,8 @@ class _ChatScreenState extends State<ChatScreen>
             (drawerWidth * progress);
 
     return Positioned.fill(
-      child:
-          Stack(
+      child: Stack(
         children: [
-          // BLUR OVERLAY
           Positioned.fill(
             child:
                 GestureDetector(
@@ -1132,8 +931,7 @@ class _ChatScreenState extends State<ChatScreen>
                 child:
                     Container(
                   color:
-                      Colors.black
-                          .withValues(
+                      Colors.black.withValues(
                     alpha:
                         0.24 *
                             _drawerController
@@ -1144,7 +942,6 @@ class _ChatScreenState extends State<ChatScreen>
             ),
           ),
 
-          // FLOATING PANEL
           Positioned(
             left:
                 leftPosition,
@@ -1161,48 +958,35 @@ class _ChatScreenState extends State<ChatScreen>
               elevation:
                   18,
               shadowColor:
-                  Colors.black
-                      .withValues(
-                alpha:
-                    0.18,
+                  Colors.black.withValues(
+                alpha: 0.18,
               ),
               borderRadius:
                   const BorderRadius.only(
                 topRight:
-                    Radius.circular(
-                  24,
-                ),
+                    Radius.circular(24),
                 bottomRight:
-                    Radius.circular(
-                  24,
-                ),
+                    Radius.circular(24),
               ),
               child:
                   Container(
                 decoration:
                     BoxDecoration(
                   color:
-                      AppTheme
-                          .backgroundApp,
+                      AppTheme.backgroundApp,
                   borderRadius:
-                      const BorderRadius
-                          .only(
+                      const BorderRadius.only(
                     topRight:
-                        Radius.circular(
-                      24,
-                    ),
+                        Radius.circular(24),
                     bottomRight:
-                        Radius.circular(
-                      24,
-                    ),
+                        Radius.circular(24),
                   ),
                   border:
                       Border.all(
                     color:
                         Colors.white
                             .withValues(
-                      alpha:
-                          0.75,
+                      alpha: 0.75,
                     ),
                   ),
                 ),
@@ -1215,9 +999,11 @@ class _ChatScreenState extends State<ChatScreen>
                   onConversationTap:
                       _openConversation,
                   onSettings: () {
-                      _closeDrawer();
-                      context.push('/settings');
-                     },
+                    _closeDrawer();
+                    context.push(
+                      '/settings',
+                    );
+                  },
                 ),
               ),
             ),
@@ -1252,10 +1038,8 @@ class _SidebarSurface
     BuildContext context,
   ) {
     return SafeArea(
-      child:
-          Column(
+      child: Column(
         children: [
-          // HEADER
           _SidebarHeader(
             onClose:
                 onClose,
@@ -1264,19 +1048,16 @@ class _SidebarSurface
           const Divider(
             height: 1,
             color:
-                AppTheme
-                    .borderLight,
+                AppTheme.borderLight,
           ),
 
           const SizedBox(
             height: 12,
           ),
 
-          // NEW CHAT
           Padding(
             padding:
-                const EdgeInsets
-                    .symmetric(
+                const EdgeInsets.symmetric(
               horizontal: 14,
             ),
             child:
@@ -1290,11 +1071,9 @@ class _SidebarSurface
             height: 14,
           ),
 
-          // WORKSPACE
           Padding(
             padding:
-                const EdgeInsets
-                    .fromLTRB(
+                const EdgeInsets.fromLTRB(
               20,
               0,
               20,
@@ -1310,8 +1089,7 @@ class _SidebarSurface
                 style:
                     TextStyle(
                   color:
-                      AppTheme
-                          .textMuted,
+                      AppTheme.textMuted,
                   fontSize:
                       11,
                   fontWeight:
@@ -1326,8 +1104,7 @@ class _SidebarSurface
                 Icons.home_outlined,
             title:
                 'Beranda',
-            onTap:
-                () {
+            onTap: () {
               onClose();
               context.go(
                 '/home',
@@ -1340,8 +1117,7 @@ class _SidebarSurface
                 Icons.edit_outlined,
             title:
                 'Writer',
-            onTap:
-                () {
+            onTap: () {
               onClose();
               context.go(
                 '/writer',
@@ -1354,8 +1130,7 @@ class _SidebarSurface
                 Icons.grid_view_rounded,
             title:
                 'AI Tools',
-            onTap:
-                () {
+            onTap: () {
               onClose();
               context.go(
                 '/tools',
@@ -1370,15 +1145,13 @@ class _SidebarSurface
           const Divider(
             height: 1,
             color:
-                AppTheme
-                    .borderLight,
+                AppTheme.borderLight,
           ),
 
           const SizedBox(
             height: 6,
           ),
 
-          // CONVERSATIONS
           Expanded(
             child:
                 Consumer<ChatProvider>(
@@ -1391,8 +1164,7 @@ class _SidebarSurface
                   physics:
                       const ClampingScrollPhysics(),
                   padding:
-                      const EdgeInsets
-                          .fromLTRB(
+                      const EdgeInsets.fromLTRB(
                     14,
                     2,
                     14,
@@ -1401,8 +1173,7 @@ class _SidebarSurface
                   children: [
                     const Padding(
                       padding:
-                          EdgeInsets
-                              .fromLTRB(
+                          EdgeInsets.fromLTRB(
                         6,
                         6,
                         6,
@@ -1429,8 +1200,7 @@ class _SidebarSurface
                         .isEmpty)
                       const Padding(
                         padding:
-                            EdgeInsets
-                                .fromLTRB(
+                            EdgeInsets.fromLTRB(
                           8,
                           12,
                           8,
@@ -1501,13 +1271,11 @@ class _SidebarSurface
             ),
           ),
 
-          // SETTINGS
           Container(
             width:
                 double.infinity,
             padding:
-                const EdgeInsets
-                    .fromLTRB(
+                const EdgeInsets.fromLTRB(
               14,
               8,
               14,
@@ -1520,8 +1288,7 @@ class _SidebarSurface
                 top:
                     BorderSide(
                   color:
-                      AppTheme
-                          .borderLight,
+                      AppTheme.borderLight,
                 ),
               ),
             ),
@@ -1551,7 +1318,8 @@ class _ConversationItem
   final bool selected;
   final VoidCallback onTap;
   final VoidCallback onDelete;
-  final ValueChanged<String> onRename;
+  final ValueChanged<String>
+      onRename;
 
   const _ConversationItem({
     required this.conversation,
@@ -1574,17 +1342,14 @@ class _ConversationItem
           Material(
         color:
             selected
-                ? AppTheme
-                    .primary
+                ? AppTheme.primary
                     .withValues(
-                  alpha:
-                      0.08,
-                )
+                    alpha:
+                        0.08,
+                  )
                 : Colors.transparent,
         borderRadius:
-            BorderRadius.circular(
-          13,
-        ),
+            BorderRadius.circular(13),
         child:
             InkWell(
           onTap:
@@ -1596,8 +1361,7 @@ class _ConversationItem
           child:
               Padding(
             padding:
-                const EdgeInsets
-                    .fromLTRB(
+                const EdgeInsets.fromLTRB(
               10,
               10,
               4,
@@ -1611,8 +1375,7 @@ class _ConversationItem
                       .chat_bubble_outline_rounded,
                   color:
                       selected
-                          ? AppTheme
-                              .primary
+                          ? AppTheme.primary
                           : AppTheme
                               .textSecondary,
                   size:
@@ -1631,8 +1394,7 @@ class _ConversationItem
                             .start,
                     children: [
                       Text(
-                        conversation
-                            .title,
+                        conversation.title,
                         maxLines:
                             1,
                         overflow:
@@ -1658,7 +1420,8 @@ class _ConversationItem
                       ),
 
                       const SizedBox(
-                        height: 3,
+                        height:
+                            3,
                       ),
 
                       Text(
@@ -1672,8 +1435,7 @@ class _ConversationItem
                         style:
                             const TextStyle(
                           color:
-                              AppTheme
-                                  .textMuted,
+                              AppTheme.textMuted,
                           fontSize:
                               9.5,
                         ),
@@ -1758,16 +1520,14 @@ class _ConversationItem
           (dialogContext) {
         return AlertDialog(
           backgroundColor:
-              AppTheme
-                  .surfaceLight,
+              AppTheme.surfaceLight,
           title:
               const Text(
             'Ubah nama percakapan',
             style:
                 TextStyle(
               color:
-                  AppTheme
-                      .textPrimary,
+                  AppTheme.textPrimary,
             ),
           ),
           content:
@@ -1848,16 +1608,14 @@ class _ConversationItem
           (dialogContext) {
         return AlertDialog(
           backgroundColor:
-              AppTheme
-                  .surfaceLight,
+              AppTheme.surfaceLight,
           title:
               const Text(
             'Hapus percakapan?',
             style:
                 TextStyle(
               color:
-                  AppTheme
-                      .textPrimary,
+                  AppTheme.textPrimary,
             ),
           ),
           content:
@@ -1866,8 +1624,7 @@ class _ConversationItem
             style:
                 TextStyle(
               color:
-                  AppTheme
-                      .textSecondary,
+                  AppTheme.textSecondary,
             ),
           ),
           actions: [
@@ -1900,8 +1657,7 @@ class _ConversationItem
                 style:
                     TextStyle(
                   color:
-                      AppTheme
-                          .error,
+                      AppTheme.error,
                 ),
               ),
             ),
@@ -1910,8 +1666,7 @@ class _ConversationItem
       },
     );
 
-    if (confirmed ==
-        true) {
+    if (confirmed == true) {
       onDelete();
     }
   }
@@ -1935,8 +1690,7 @@ class _SidebarHeader
   ) {
     return Padding(
       padding:
-          const EdgeInsets
-              .fromLTRB(
+          const EdgeInsets.fromLTRB(
         16,
         14,
         10,
@@ -1951,9 +1705,7 @@ class _SidebarHeader
             height:
                 42,
             padding:
-                const EdgeInsets.all(
-              6,
-            ),
+                const EdgeInsets.all(6),
             decoration:
                 BoxDecoration(
               color:
@@ -1999,8 +1751,7 @@ class _SidebarHeader
               style:
                   TextStyle(
                 color:
-                    AppTheme
-                        .textPrimary,
+                    AppTheme.textPrimary,
                 fontSize:
                     21,
                 fontWeight:
@@ -2034,8 +1785,7 @@ class _SidebarHeader
                 ),
                 child:
                     Icon(
-                  Icons
-                      .close_rounded,
+                  Icons.close_rounded,
                   color:
                       AppTheme
                           .textSecondary,
@@ -2296,699 +2046,6 @@ class _SidebarItem
 }
 
 // ============================================================
-// SETTINGS SHEET
-// ============================================================
-
-class _SettingsSheet
-    extends StatelessWidget {
-  const _SettingsSheet();
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final auth =
-        context.watch<AuthProvider>();
-
-    final user =
-        auth.user;
-
-    return SafeArea(
-      child:
-          SingleChildScrollView(
-        padding:
-            const EdgeInsets
-                .fromLTRB(
-          18,
-          8,
-          18,
-          24,
-        ),
-        child:
-            Column(
-          crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
-          children: [
-            const Text(
-              'Pengaturan',
-              style:
-                  TextStyle(
-                color:
-                    AppTheme
-                        .textPrimary,
-                fontSize:
-                    23,
-                fontWeight:
-                    FontWeight.w700,
-              ),
-            ),
-
-            const SizedBox(
-              height: 4,
-            ),
-
-            const Text(
-              'Kelola akun dan preferensi PintarAja.',
-              style:
-                  TextStyle(
-                color:
-                    AppTheme
-                        .textSecondary,
-                fontSize:
-                    12,
-              ),
-            ),
-
-            const SizedBox(
-              height: 20,
-            ),
-
-            _SettingsAccountCard(
-              name:
-                  user?.name ??
-                      'Pengguna PintarAja',
-              email:
-                  user?.email ??
-                      '-',
-              plan:
-                  user?.plan ??
-                      'Free',
-            ),
-
-            const SizedBox(
-              height: 12,
-            ),
-
-            _SettingsSection(
-              title:
-                  'Akun',
-              children: [
-                _SettingsTile(
-                  icon:
-                      Icons
-                          .person_outline_rounded,
-                  title:
-                      'Profil & akun',
-                  subtitle:
-                      'Nama, email, dan data akun',
-                  onTap:
-                      () {
-                    Navigator.of(
-                      context,
-                    ).pop();
-
-                    context.go(
-                      '/profile',
-                    );
-                  },
-                ),
-
-                _SettingsTile(
-                  icon:
-                      Icons
-                          .workspace_premium_outlined,
-                  title:
-                      'Membership',
-                  subtitle:
-                      'Paket dan akses AI',
-                  onTap:
-                      () {
-                    _showInfo(
-                      context,
-                      'Membership',
-                      'Paket membership akan kita sambungkan dengan data backend.',
-                    );
-                  },
-                ),
-
-                _SettingsTile(
-                  icon:
-                      Icons
-                          .diamond_outlined,
-                  title:
-                      'Token & kuota',
-                  subtitle:
-                      'Saldo token: ${auth.tokenBalance}',
-                  onTap:
-                      () {
-                    _showInfo(
-                      context,
-                      'Token & Kuota',
-                      'Saldo token saat ini: ${auth.tokenBalance}',
-                    );
-                  },
-                ),
-              ],
-            ),
-
-            const SizedBox(
-              height: 12,
-            ),
-
-            _SettingsSection(
-              title:
-                  'Preferensi',
-              children: [
-                _SettingsTile(
-                  icon:
-                      Icons.notifications_none_rounded,
-                  title:
-                      'Notifikasi',
-                  subtitle:
-                      'Atur pemberitahuan aplikasi',
-                  onTap:
-                      () {
-                    _showInfo(
-                      context,
-                      'Notifikasi',
-                      'Pengaturan notifikasi akan kita sambungkan berikutnya.',
-                    );
-                  },
-                ),
-
-                _SettingsTile(
-                  icon:
-                      Icons.palette_outlined,
-                  title:
-                      'Tampilan',
-                  subtitle:
-                      'Tema dan tampilan aplikasi',
-                  onTap:
-                      () {
-                    _showInfo(
-                      context,
-                      'Tampilan',
-                      'Pengaturan tema akan kita sambungkan berikutnya.',
-                    );
-                  },
-                ),
-              ],
-            ),
-
-            const SizedBox(
-              height: 12,
-            ),
-
-            _SettingsSection(
-              title:
-                  'Keamanan',
-              children: [
-                _SettingsTile(
-                  icon:
-                      Icons
-                          .lock_outline_rounded,
-                  title:
-                      'Password',
-                  subtitle:
-                      'Ubah password akun',
-                  onTap:
-                      () {
-                    _showInfo(
-                      context,
-                      'Password',
-                      'Fitur ubah password akan kita sambungkan berikutnya.',
-                    );
-                  },
-                ),
-              ],
-            ),
-
-            const SizedBox(
-              height: 12,
-            ),
-
-            _SettingsSection(
-              title:
-                  'Lainnya',
-              children: [
-                _SettingsTile(
-                  icon:
-                      Icons
-                          .info_outline_rounded,
-                  title:
-                      'Tentang PintarAja',
-                  subtitle:
-                      'Informasi aplikasi',
-                  onTap:
-                      () {
-                    _showInfo(
-                      context,
-                      'Tentang PintarAja',
-                      'PintarAja Mobile.',
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static void _showInfo(
-    BuildContext context,
-    String title,
-    String message,
-  ) {
-    showDialog<void>(
-      context:
-          context,
-      builder:
-          (context) {
-        return AlertDialog(
-          backgroundColor:
-              AppTheme
-                  .surfaceLight,
-          title:
-              Text(
-            title,
-            style:
-                const TextStyle(
-              color:
-                  AppTheme
-                      .textPrimary,
-            ),
-          ),
-          content:
-              Text(
-            message,
-            style:
-                const TextStyle(
-              color:
-                  AppTheme
-                      .textSecondary,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed:
-                  () {
-                Navigator.of(
-                  context,
-                ).pop();
-              },
-              child:
-                  const Text(
-                'Tutup',
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-// ============================================================
-// SETTINGS ACCOUNT CARD
-// ============================================================
-
-class _SettingsAccountCard
-    extends StatelessWidget {
-  final String name;
-  final String email;
-  final String plan;
-
-  const _SettingsAccountCard({
-    required this.name,
-    required this.email,
-    required this.plan,
-  });
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final initial =
-        name.trim().isEmpty
-            ? '?'
-            : name
-                .trim()
-                .substring(
-                  0,
-                  1,
-                )
-                .toUpperCase();
-
-    return Container(
-      width:
-          double.infinity,
-      padding:
-          const EdgeInsets.all(
-        16,
-      ),
-      decoration:
-          BoxDecoration(
-        color:
-            AppTheme
-                .surfaceMuted,
-        borderRadius:
-            BorderRadius.circular(
-          18,
-        ),
-        border:
-            Border.all(
-          color:
-              AppTheme
-                  .borderLight,
-        ),
-      ),
-      child:
-          Row(
-        children: [
-          Container(
-            width:
-                52,
-            height:
-                52,
-            decoration:
-                BoxDecoration(
-              color:
-                  AppTheme
-                      .primary
-                      .withValues(
-                alpha:
-                    0.10,
-              ),
-              shape:
-                  BoxShape.circle,
-            ),
-            child:
-                Center(
-              child:
-                  Text(
-                initial,
-                style:
-                    const TextStyle(
-                  color:
-                      AppTheme
-                          .primary,
-                  fontSize:
-                      21,
-                  fontWeight:
-                      FontWeight
-                          .w700,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(
-            width: 12,
-          ),
-
-          Expanded(
-            child:
-                Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
-              children: [
-                Text(
-                  name,
-                  maxLines:
-                      1,
-                  overflow:
-                      TextOverflow
-                          .ellipsis,
-                  style:
-                      const TextStyle(
-                    color:
-                        AppTheme
-                            .textPrimary,
-                    fontSize:
-                        15,
-                    fontWeight:
-                        FontWeight
-                            .w700,
-                  ),
-                ),
-
-                const SizedBox(
-                  height: 3,
-                ),
-
-                Text(
-                  email,
-                  maxLines:
-                      1,
-                  overflow:
-                      TextOverflow
-                          .ellipsis,
-                  style:
-                      const TextStyle(
-                    color:
-                        AppTheme
-                            .textSecondary,
-                    fontSize:
-                        11,
-                  ),
-                ),
-
-                const SizedBox(
-                  height: 5,
-                ),
-
-                Text(
-                  plan,
-                  style:
-                      const TextStyle(
-                    color:
-                        AppTheme
-                            .primary,
-                    fontSize:
-                        10.5,
-                    fontWeight:
-                        FontWeight
-                            .w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================
-// SETTINGS SECTION
-// ============================================================
-
-class _SettingsSection
-    extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
-
-  const _SettingsSection({
-    required this.title,
-    required this.children,
-  });
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding:
-              const EdgeInsets
-                  .fromLTRB(
-            6,
-            0,
-            6,
-            6,
-          ),
-          child:
-              Text(
-            title,
-            style:
-                const TextStyle(
-              color:
-                  AppTheme
-                      .textMuted,
-              fontSize:
-                  11,
-              fontWeight:
-                  FontWeight
-                      .w600,
-            ),
-          ),
-        ),
-        Container(
-          decoration:
-              BoxDecoration(
-            color:
-                AppTheme
-                    .surfaceLight,
-            borderRadius:
-                BorderRadius.circular(
-              16,
-            ),
-            border:
-                Border.all(
-              color:
-                  AppTheme
-                      .borderLight,
-            ),
-          ),
-          child:
-              Column(
-            children: children,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ============================================================
-// SETTINGS TILE
-// ============================================================
-
-class _SettingsTile
-    extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return Material(
-      color:
-          Colors.transparent,
-      child:
-          InkWell(
-        onTap:
-            onTap,
-        child:
-            Padding(
-          padding:
-              const EdgeInsets
-                  .symmetric(
-            horizontal:
-                14,
-            vertical:
-                12,
-          ),
-          child:
-              Row(
-            children: [
-              Container(
-                width:
-                    38,
-                height:
-                    38,
-                decoration:
-                    BoxDecoration(
-                  color:
-                      AppTheme
-                          .surfaceMuted,
-                  borderRadius:
-                      BorderRadius
-                          .circular(
-                    11,
-                  ),
-                ),
-                child:
-                    Icon(
-                  icon,
-                  color:
-                      AppTheme
-                          .textSecondary,
-                  size:
-                      20,
-                ),
-              ),
-
-              const SizedBox(
-                width: 11,
-              ),
-
-              Expanded(
-                child:
-                    Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines:
-                          1,
-                      overflow:
-                          TextOverflow
-                              .ellipsis,
-                      style:
-                          const TextStyle(
-                        color:
-                            AppTheme
-                                .textPrimary,
-                        fontSize:
-                            13,
-                        fontWeight:
-                            FontWeight
-                                .w600,
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 2,
-                    ),
-
-                    Text(
-                      subtitle,
-                      maxLines:
-                          2,
-                      overflow:
-                          TextOverflow
-                              .ellipsis,
-                      style:
-                          const TextStyle(
-                        color:
-                            AppTheme
-                                .textSecondary,
-                        fontSize:
-                            10.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const Icon(
-                Icons
-                    .chevron_right_rounded,
-                color:
-                    AppTheme.textMuted,
-                size:
-                    19,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ============================================================
 // EMPTY CHAT
 // ============================================================
 
@@ -3055,8 +2112,7 @@ class _EmptyChat
               style:
                   TextStyle(
                 color:
-                    AppTheme
-                        .textPrimary,
+                    AppTheme.textPrimary,
                 fontSize:
                     21,
                 fontWeight:
@@ -3075,8 +2131,7 @@ class _EmptyChat
               style:
                   TextStyle(
                 color:
-                    AppTheme
-                        .textSecondary,
+                    AppTheme.textSecondary,
                 fontSize:
                     13,
                 height:
@@ -3135,20 +2190,17 @@ class _SuggestionButton
     BuildContext context,
   ) {
     return GestureDetector(
-      onTap:
-          () {
-        final state =
-            context
-                .findAncestorStateOfType<
-                    _ChatScreenState>();
+      onTap: () {
+        final state = context
+            .findAncestorStateOfType<
+                _ChatScreenState>();
 
         if (state == null) {
           return;
         }
 
-        state
-            ._messageController
-            .text = text;
+        state._messageController.text =
+            text;
 
         state._sendMessage();
       },
@@ -3170,8 +2222,7 @@ class _SuggestionButton
         decoration:
             BoxDecoration(
           color:
-              AppTheme
-                  .surfaceLight,
+              AppTheme.surfaceLight,
           borderRadius:
               BorderRadius.circular(
             20,
@@ -3179,8 +2230,7 @@ class _SuggestionButton
           border:
               Border.all(
             color:
-                AppTheme
-                    .borderLight,
+                AppTheme.borderLight,
           ),
         ),
         child:
@@ -3234,12 +2284,14 @@ class _MessageBubble
     return Padding(
       padding:
           const EdgeInsets.only(
-        bottom: 18,
+        bottom:
+            18,
       ),
       child:
           Row(
         crossAxisAlignment:
-            CrossAxisAlignment.start,
+            CrossAxisAlignment
+                .start,
         mainAxisAlignment:
             isUser
                 ? MainAxisAlignment.end
@@ -3276,7 +2328,8 @@ class _MessageBubble
 
           if (!isUser)
             const SizedBox(
-              width: 9,
+              width:
+                  9,
             ),
 
           Flexible(
@@ -3290,7 +2343,8 @@ class _MessageBubble
               child:
                   Container(
                 padding:
-                    const EdgeInsets.all(
+                    const EdgeInsets
+                        .all(
                   14,
                 ),
                 decoration:
@@ -3359,7 +2413,8 @@ class _MessageBubble
 
           if (isUser)
             const SizedBox(
-              width: 9,
+              width:
+                  9,
             ),
 
           if (isUser)
@@ -3471,7 +2526,8 @@ class _ChatInput
               child:
                   Row(
                 crossAxisAlignment:
-                    CrossAxisAlignment.end,
+                    CrossAxisAlignment
+                        .end,
                 children: [
                   IconButton(
                     tooltip:
@@ -3507,7 +2563,8 @@ class _ChatInput
                       keyboardType:
                           TextInputType.multiline,
                       textInputAction:
-                          TextInputAction.newline,
+                          TextInputAction
+                              .newline,
                       onSubmitted:
                           (_) {
                         if (!chat
@@ -3520,11 +2577,14 @@ class _ChatInput
                         hintText:
                             'Tulis pesan...',
                         border:
-                            InputBorder.none,
+                            InputBorder
+                                .none,
                         enabledBorder:
-                            InputBorder.none,
+                            InputBorder
+                                .none,
                         focusedBorder:
-                            InputBorder.none,
+                            InputBorder
+                                .none,
                         filled:
                             false,
                         contentPadding:
@@ -3767,7 +2827,8 @@ class _ProviderOption
                 ),
 
                 const SizedBox(
-                  width: 11,
+                  width:
+                      11,
                 ),
 
                 Expanded(
@@ -3801,7 +2862,8 @@ class _ProviderOption
                       ),
 
                       const SizedBox(
-                        height: 3,
+                        height:
+                            3,
                       ),
 
                       Text(
@@ -3825,10 +2887,12 @@ class _ProviderOption
                 ),
 
                 const SizedBox(
-                  width: 8,
+                  width:
+                      8,
                 ),
 
-                if (provider.isLimited)
+                if (provider
+                    .isLimited)
                   const Icon(
                     Icons
                         .lock_outline_rounded,

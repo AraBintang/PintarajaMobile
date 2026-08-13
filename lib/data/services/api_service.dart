@@ -1,6 +1,7 @@
 // ============================================================
 // API SERVICE — PintarAja
-// HTTP Client + Sanctum Token Authentication
+// HTTP Client + Sanctum Authentication
+// JSON + Multipart + Error Handling
 // ============================================================
 
 import 'dart:async';
@@ -37,36 +38,39 @@ class ApiService {
       ApiService._();
 
   // ==========================================================
-  // AUTHENTICATED HEADERS
+  // HEADERS
   // ==========================================================
 
-  Map<String, String> get _headers {
-    final token =
-        StorageService.getToken();
+  Map<String, String> _headers({
+    bool authenticated = true,
+  }) {
+    final headers = <String, String>{
+      'Accept': 'application/json',
+    };
 
-    return {
-      'Content-Type':
-          'application/json',
-      'Accept':
-          'application/json',
+    if (authenticated) {
+      final token =
+          StorageService.getToken();
 
       if (token != null &&
-          token.isNotEmpty)
-        'Authorization':
-            'Bearer $token',
-    };
+          token.isNotEmpty) {
+        headers['Authorization'] =
+            'Bearer $token';
+      }
+    }
+
+    return headers;
   }
 
-  // ==========================================================
-  // PUBLIC HEADERS
-  // ==========================================================
-
-  Map<String, String>
-      get _publicHeaders {
+  Map<String, String> _jsonHeaders({
+    bool authenticated = true,
+  }) {
     return {
+      ..._headers(
+        authenticated:
+            authenticated,
+      ),
       'Content-Type':
-          'application/json',
-      'Accept':
           'application/json',
     };
   }
@@ -78,20 +82,29 @@ class ApiService {
   Future<dynamic> get(
     String url, {
     Map<String, String>? params,
+    bool useAuth = true,
   }) async {
     try {
-      final uri =
-          Uri.parse(url).replace(
-        queryParameters:
-            params,
-      );
+      Uri uri =
+          Uri.parse(url);
+
+      if (params != null &&
+          params.isNotEmpty) {
+        uri = uri.replace(
+          queryParameters:
+              params,
+        );
+      }
 
       final response =
           await http
               .get(
                 uri,
                 headers:
-                    _headers,
+                    _headers(
+                  authenticated:
+                      useAuth,
+                ),
               )
               .timeout(
                 const Duration(
@@ -104,13 +117,11 @@ class ApiService {
       );
     } on SocketException {
       throw const ApiException(
-        'Tidak ada koneksi internet. '
-        'Cek WiFi atau data kamu.',
+        'Tidak ada koneksi internet. Cek WiFi atau data kamu.',
       );
     } on TimeoutException {
       throw const ApiException(
-        'Request terlalu lama. '
-        'Coba lagi.',
+        'Request terlalu lama. Coba lagi.',
       );
     } on HttpException {
       throw const ApiException(
@@ -127,22 +138,26 @@ class ApiService {
     String url,
     Map<String, dynamic> body, {
     bool useAuth = true,
+    Duration timeout =
+        const Duration(
+      seconds: 60,
+    ),
   }) async {
     try {
       final response =
           await http
               .post(
                 Uri.parse(url),
-                headers: useAuth
-                    ? _headers
-                    : _publicHeaders,
+                headers:
+                    _jsonHeaders(
+                  authenticated:
+                      useAuth,
+                ),
                 body:
                     jsonEncode(body),
               )
               .timeout(
-                const Duration(
-                  seconds: 30,
-                ),
+                timeout,
               );
 
       return _handleResponse(
@@ -150,12 +165,11 @@ class ApiService {
       );
     } on SocketException {
       throw const ApiException(
-        'Tidak ada koneksi internet.',
+        'Tidak ada koneksi internet. Cek WiFi atau data kamu.',
       );
     } on TimeoutException {
       throw const ApiException(
-        'Request terlalu lama. '
-        'Coba lagi.',
+        'Request terlalu lama. Coba lagi.',
       );
     } on HttpException {
       throw const ApiException(
@@ -170,22 +184,24 @@ class ApiService {
 
   Future<dynamic> put(
     String url,
-    Map<String, dynamic> body,
-  ) async {
+    Map<String, dynamic> body, {
+    Duration timeout =
+        const Duration(
+      seconds: 60,
+    ),
+  }) async {
     try {
       final response =
           await http
               .put(
                 Uri.parse(url),
                 headers:
-                    _headers,
+                    _jsonHeaders(),
                 body:
                     jsonEncode(body),
               )
               .timeout(
-                const Duration(
-                  seconds: 30,
-                ),
+                timeout,
               );
 
       return _handleResponse(
@@ -197,7 +213,11 @@ class ApiService {
       );
     } on TimeoutException {
       throw const ApiException(
-        'Request terlalu lama.',
+        'Request terlalu lama. Coba lagi.',
+      );
+    } on HttpException {
+      throw const ApiException(
+        'Terjadi kesalahan jaringan.',
       );
     }
   }
@@ -215,7 +235,7 @@ class ApiService {
               .delete(
                 Uri.parse(url),
                 headers:
-                    _headers,
+                    _headers(),
               )
               .timeout(
                 const Duration(
@@ -234,17 +254,26 @@ class ApiService {
       throw const ApiException(
         'Request terlalu lama.',
       );
+    } on HttpException {
+      throw const ApiException(
+        'Terjadi kesalahan jaringan.',
+      );
     }
   }
 
   // ==========================================================
-  // POST MULTIPART
+  // MULTIPART UPLOAD
   // ==========================================================
 
   Future<dynamic> postMultipart(
     String url, {
-    Map<String, String>? fields,
+    Map<String, String>?
+        fields,
     Map<String, File>? files,
+    Duration timeout =
+        const Duration(
+      seconds: 120,
+    ),
   }) async {
     try {
       final request =
@@ -253,25 +282,38 @@ class ApiService {
         Uri.parse(url),
       );
 
+      // Jangan memasukkan Content-Type: application/json
+      // di sini. MultipartRequest akan membuat boundary
+      // multipart/form-data sendiri.
       request.headers.addAll(
-        _headers,
+        _headers(),
       );
 
-      if (fields != null) {
+      if (fields != null &&
+          fields.isNotEmpty) {
         request.fields.addAll(
           fields,
         );
       }
 
-      if (files != null) {
+      if (files != null &&
+          files.isNotEmpty) {
         for (final entry
             in files.entries) {
+          final file =
+              entry.value;
+
+          if (!await file.exists()) {
+            throw ApiException(
+              'File tidak ditemukan: ${file.path}',
+            );
+          }
+
           request.files.add(
-            await http
-                .MultipartFile
+            await http.MultipartFile
                 .fromPath(
               entry.key,
-              entry.value.path,
+              file.path,
             ),
           );
         }
@@ -281,14 +323,11 @@ class ApiService {
           await request
               .send()
               .timeout(
-                const Duration(
-                  seconds: 60,
-                ),
+                timeout,
               );
 
       final response =
-          await http.Response
-              .fromStream(
+          await http.Response.fromStream(
         streamedResponse,
       );
 
@@ -301,14 +340,17 @@ class ApiService {
       );
     } on TimeoutException {
       throw const ApiException(
-        'Upload terlalu lama. '
-        'Coba lagi.',
+        'Upload terlalu lama. Coba lagi.',
+      );
+    } on HttpException {
+      throw const ApiException(
+        'Terjadi kesalahan jaringan.',
       );
     }
   }
 
   // ==========================================================
-  // RESPONSE HANDLER
+  // RESPONSE
   // ==========================================================
 
   dynamic _handleResponse(
@@ -321,11 +363,15 @@ class ApiService {
 
     dynamic data;
 
-    try {
-      data =
-          jsonDecode(body);
-    } catch (_) {
-      data = body;
+    if (body.trim().isEmpty) {
+      data = null;
+    } else {
+      try {
+        data =
+            jsonDecode(body);
+      } catch (_) {
+        data = body;
+      }
     }
 
     // ========================================================
@@ -333,73 +379,68 @@ class ApiService {
     // ========================================================
 
     if (response.statusCode >= 200 &&
-        response.statusCode < 300) {
+        response.statusCode <
+            300) {
       return data;
     }
 
     // ========================================================
-    // EXTRACT SERVER MESSAGE
+    // ERROR MESSAGE
     // ========================================================
 
-    String message =
+    final message =
         _extractErrorMessage(
       data,
+      response.statusCode,
     );
 
     // ========================================================
-    // 401
+    // AUTH EXPIRED
     // ========================================================
 
     if (response.statusCode ==
         401) {
-      StorageService.clearAll();
+      // Jangan menghapus token secara
+      // blocking di tengah response.
+      unawaited(
+        StorageService.clearAll(),
+      );
 
       throw ApiException(
-        message ==
-                'Terjadi kesalahan.'
-            ? 'Sesi habis. '
-                'Silakan login kembali.'
-            : message,
+        message,
         statusCode:
             response.statusCode,
       );
     }
 
     // ========================================================
-    // 403
+    // FORBIDDEN
     // ========================================================
 
     if (response.statusCode ==
         403) {
       throw ApiException(
-        message ==
-                'Terjadi kesalahan.'
-            ? 'Akses ditolak.'
-            : message,
+        message,
         statusCode:
             response.statusCode,
       );
     }
 
     // ========================================================
-    // 404
+    // NOT FOUND
     // ========================================================
 
     if (response.statusCode ==
         404) {
       throw ApiException(
-        message ==
-                'Terjadi kesalahan.'
-            ? 'Endpoint atau data '
-                'tidak ditemukan.'
-            : message,
+        message,
         statusCode:
             response.statusCode,
       );
     }
 
     // ========================================================
-    // 422 VALIDATION
+    // VALIDATION
     // ========================================================
 
     if (response.statusCode ==
@@ -412,24 +453,20 @@ class ApiService {
     }
 
     // ========================================================
-    // 429
+    // RATE LIMIT
     // ========================================================
 
     if (response.statusCode ==
         429) {
       throw ApiException(
-        message ==
-                'Terjadi kesalahan.'
-            ? 'Terlalu banyak permintaan. '
-                'Coba lagi sebentar.'
-            : message,
+        message,
         statusCode:
             response.statusCode,
       );
     }
 
     // ========================================================
-    // 500 / OTHER
+    // OTHER
     // ========================================================
 
     throw ApiException(
@@ -440,11 +477,12 @@ class ApiService {
   }
 
   // ==========================================================
-  // EXTRACT MESSAGE
+  // ERROR EXTRACTION
   // ==========================================================
 
   String _extractErrorMessage(
     dynamic data,
+    int statusCode,
   ) {
     if (data is String &&
         data.trim().isNotEmpty) {
@@ -452,8 +490,8 @@ class ApiService {
     }
 
     if (data is Map) {
-      // Laravel biasanya:
-      // { "message": "..." }
+      // Laravel:
+      // {"message":"..."}
 
       final message =
           data['message'];
@@ -468,8 +506,8 @@ class ApiService {
             .trim();
       }
 
-      // Backend PintarAja login:
-      // { "error": "..." }
+      // Custom:
+      // {"error":"..."}
 
       final error =
           data['error'];
@@ -484,28 +522,72 @@ class ApiService {
             .trim();
       }
 
-      // Laravel validation:
-      // { "errors": {...} }
+      // Validation:
+      // {"errors":{"email":["..."]}}
 
       final errors =
           data['errors'];
 
       if (errors is Map &&
           errors.isNotEmpty) {
-        final firstValue =
+        final first =
             errors.values.first;
 
-        if (firstValue is List &&
-            firstValue.isNotEmpty) {
-          return firstValue.first
+        if (first is List &&
+            first.isNotEmpty) {
+          return first.first
               .toString();
         }
 
-        return firstValue
-            .toString();
+        return first.toString();
+      }
+
+      // Some endpoints may return:
+      // {"detail":"..."}
+
+      final detail =
+          data['detail'];
+
+      if (detail != null &&
+          detail
+              .toString()
+              .trim()
+              .isNotEmpty) {
+        return detail
+            .toString()
+            .trim();
       }
     }
 
-    return 'Terjadi kesalahan.';
+    switch (statusCode) {
+      case 400:
+        return 'Request tidak valid.';
+
+      case 401:
+        return 'Sesi login sudah berakhir. Silakan login kembali.';
+
+      case 403:
+        return 'Kamu tidak memiliki akses ke fitur ini.';
+
+      case 404:
+        return 'Data atau endpoint tidak ditemukan.';
+
+      case 422:
+        return 'Data yang dikirim tidak valid.';
+
+      case 429:
+        return 'Terlalu banyak permintaan. Coba lagi sebentar.';
+
+      case 500:
+        return 'Terjadi kesalahan pada server PintarAja.';
+
+      case 502:
+      case 503:
+      case 504:
+        return 'Server PintarAja sedang tidak tersedia.';
+
+      default:
+        return 'Terjadi kesalahan pada server.';
+    }
   }
 }
