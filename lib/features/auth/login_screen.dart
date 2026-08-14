@@ -32,7 +32,7 @@ class _LoginScreenState
 
   bool _obscurePassword = true;
 
-  bool _rememberMe = true;
+  bool _rememberMe = false;
 
   bool _showSuccessPopup = false;
 

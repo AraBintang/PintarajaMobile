@@ -67,8 +67,7 @@ class ApiService {
   }) {
     return {
       ..._headers(
-        authenticated:
-            authenticated,
+        authenticated: authenticated,
       ),
       'Content-Type':
           'application/json',
@@ -91,8 +90,7 @@ class ApiService {
       if (params != null &&
           params.isNotEmpty) {
         uri = uri.replace(
-          queryParameters:
-              params,
+          queryParameters: params,
         );
       }
 
@@ -100,8 +98,7 @@ class ApiService {
           await http
               .get(
                 uri,
-                headers:
-                    _headers(
+                headers: _headers(
                   authenticated:
                       useAuth,
                 ),
@@ -148,13 +145,11 @@ class ApiService {
           await http
               .post(
                 Uri.parse(url),
-                headers:
-                    _jsonHeaders(
+                headers: _jsonHeaders(
                   authenticated:
                       useAuth,
                 ),
-                body:
-                    jsonEncode(body),
+                body: jsonEncode(body),
               )
               .timeout(
                 timeout,
@@ -195,10 +190,8 @@ class ApiService {
           await http
               .put(
                 Uri.parse(url),
-                headers:
-                    _jsonHeaders(),
-                body:
-                    jsonEncode(body),
+                headers: _jsonHeaders(),
+                body: jsonEncode(body),
               )
               .timeout(
                 timeout,
@@ -261,6 +254,10 @@ class ApiService {
     }
   }
 
+  // ==========================================================
+  // DELETE WITH BODY
+  // ==========================================================
+
   Future<dynamic> deleteWithBody(
     String url,
     Map<String, dynamic> body,
@@ -271,16 +268,28 @@ class ApiService {
         Uri.parse(url),
       );
 
-      request.headers.addAll(_jsonHeaders());
-      request.body = jsonEncode(body);
-
-      final streamedResponse = await request.send().timeout(
-        const Duration(seconds: 30),
+      request.headers.addAll(
+        _jsonHeaders(),
       );
 
-      final response = await http.Response.fromStream(streamedResponse);
+      request.body =
+          jsonEncode(body);
 
-      return _handleResponse(response);
+      final streamedResponse =
+          await request.send().timeout(
+        const Duration(
+          seconds: 30,
+        ),
+      );
+
+      final response =
+          await http.Response.fromStream(
+        streamedResponse,
+      );
+
+      return _handleResponse(
+        response,
+      );
     } on SocketException {
       throw const ApiException(
         'Tidak ada koneksi internet.',
@@ -302,8 +311,7 @@ class ApiService {
 
   Future<dynamic> postMultipart(
     String url, {
-    Map<String, String>?
-        fields,
+    Map<String, String>? fields,
     Map<String, File>? files,
     Duration timeout =
         const Duration(
@@ -317,9 +325,14 @@ class ApiService {
         Uri.parse(url),
       );
 
-      // Jangan memasukkan Content-Type: application/json
-      // di sini. MultipartRequest akan membuat boundary
-      // multipart/form-data sendiri.
+      // Jangan memasukkan
+      // Content-Type: application/json
+      // di sini.
+      //
+      // MultipartRequest akan membuat
+      // boundary multipart/form-data
+      // sendiri.
+
       request.headers.addAll(
         _headers(),
       );
@@ -414,8 +427,7 @@ class ApiService {
     // ========================================================
 
     if (response.statusCode >= 200 &&
-        response.statusCode <
-            300) {
+        response.statusCode < 300) {
       return data;
     }
 
@@ -435,10 +447,14 @@ class ApiService {
 
     if (response.statusCode ==
         401) {
-      // Jangan menghapus token secara
-      // blocking di tengah response.
+      // Hanya hapus data authentication.
+      //
+      // Jangan menggunakan clearAll()
+      // karena SharedPreferences bisa
+      // berisi setting aplikasi lain.
+
       unawaited(
-        StorageService.clearAll(),
+        StorageService.clearAuth(),
       );
 
       throw ApiException(

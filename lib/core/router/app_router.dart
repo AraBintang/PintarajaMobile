@@ -12,6 +12,7 @@ import '../../features/splash/splash_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/auth/forgot_password_screen.dart';
+import '../../features/auth/new_password_screen.dart';
 
 import '../../features/settings/settings_screen.dart';
 import '../../features/home/home_screen.dart';
@@ -27,19 +28,45 @@ class AppRouter {
       initialLocation: '/splash',
 
       redirect: (context, state) {
-        final isLoggedIn = auth.isLoggedIn;
+        final isLoggedIn =
+            auth.isLoggedIn;
+
         final isUnknown =
-            auth.status == AuthStatus.unknown;
+            auth.status ==
+                AuthStatus.unknown;
 
-        final location = state.matchedLocation;
+        final location =
+            state.matchedLocation;
 
-        final isSplash = location == '/splash';
+        final isSplash =
+            location == '/splash';
+
+        // ======================================================
+        // RESET PASSWORD
+        //
+        // Jangan redirect halaman reset password ke login/chat.
+        // Route ini harus bisa dibuka walaupun user belum login.
+        // ======================================================
+
+        final isResetPassword =
+            location ==
+                '/reset-password' ||
+            location ==
+                '/auth/new-password';
+
+        if (isResetPassword) {
+          return null;
+        }
+
+        // ======================================================
+        // AUTH ROUTE
+        // ======================================================
 
         final isAuthRoute =
             location.startsWith('/auth');
 
         // ======================================================
-        // AUTH STATUS MASIH UNKNOWN
+        // AUTH STATUS UNKNOWN
         // ======================================================
 
         if (isUnknown) {
@@ -64,19 +91,17 @@ class AppRouter {
         // BELUM LOGIN
         // ======================================================
 
-        if (!isLoggedIn && !isAuthRoute) {
+        if (!isLoggedIn &&
+            !isAuthRoute) {
           return '/auth/login';
         }
 
         // ======================================================
-        // SUDAH LOGIN
-        //
-        // JANGAN redirect dari halaman auth secara otomatis.
-        // Login/Register screen akan mengatur popup dan
-        // navigasi ke Chat sendiri setelah 3 detik.
+        // SUDAH LOGIN + AUTH ROUTE
         // ======================================================
 
-        if (isLoggedIn && isAuthRoute) {
+        if (isLoggedIn &&
+            isAuthRoute) {
           return null;
         }
 
@@ -118,18 +143,81 @@ class AppRouter {
               const ForgotPasswordScreen(),
         ),
 
+        // ======================================================
+        // RESET PASSWORD
+        //
+        // Format:
+        //
+        // /reset-password
+        //   ?email=user@email.com
+        //   &token=xxxxx
+        //
+        // Contoh:
+        //
+        // https://pintaraja.com/reset-password
+        //     ?email=test@example.com
+        //     &token=TEST_TOKEN
+        // ======================================================
+
         GoRoute(
-          path: '/settings',
-          builder: (
-            context,
-            state,
-          ) {
-            return const SettingsScreen();
+          path: '/reset-password',
+          builder: (_, state) {
+            final email =
+                state.uri.queryParameters[
+                    'email'];
+
+            final token =
+                state.uri.queryParameters[
+                    'token'];
+
+            if (email == null ||
+                email.isEmpty ||
+                token == null ||
+                token.isEmpty) {
+              return const _InvalidResetLinkScreen();
+            }
+
+            return NewPasswordScreen(
+              email: email,
+              token: token,
+            );
           },
         ),
 
         // ======================================================
-        // MAIN APP
+        // INTERNAL RESET PASSWORD
+        //
+        // Tetap dipertahankan karena bisa digunakan
+        // oleh flow internal aplikasi.
+        // ======================================================
+
+        GoRoute(
+          path: '/auth/new-password',
+          builder: (_, state) {
+            final email =
+                state.uri.queryParameters[
+                    'email'];
+
+            final token =
+                state.uri.queryParameters[
+                    'token'];
+
+            if (email == null ||
+                email.isEmpty ||
+                token == null ||
+                token.isEmpty) {
+              return const _InvalidResetLinkScreen();
+            }
+
+            return NewPasswordScreen(
+              email: email,
+              token: token,
+            );
+          },
+        ),
+
+        // ======================================================
+        // MAIN APP SHELL
         // ======================================================
 
         ShellRoute(
@@ -143,7 +231,6 @@ class AppRouter {
               child: child,
             );
           },
-
           routes: [
             // --------------------------------------------------
             // CHAT
@@ -208,12 +295,8 @@ class AppRouter {
 
             GoRoute(
               path: '/settings',
-              builder: (
-                context,
-                state,
-              ) {
-                return const SettingsScreen();
-              },
+              builder: (_, __) =>
+                  const SettingsScreen(),
             ),
           ],
         ),
@@ -236,7 +319,8 @@ class AppRouter {
 // MAIN SHELL
 // ============================================================
 
-class MainShell extends StatelessWidget {
+class MainShell
+    extends StatelessWidget {
   final Widget child;
   final GoRouterState state;
 
@@ -252,6 +336,83 @@ class MainShell extends StatelessWidget {
   ) {
     return Scaffold(
       body: child,
+    );
+  }
+}
+
+// ============================================================
+// INVALID RESET LINK
+// ============================================================
+
+class _InvalidResetLinkScreen
+    extends StatelessWidget {
+  const _InvalidResetLinkScreen();
+
+  @override
+  Widget build(
+    BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Reset Password',
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding:
+              const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize:
+                MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.link_off_rounded,
+                size: 56,
+              ),
+
+              const SizedBox(
+                height: 16,
+              ),
+
+              const Text(
+                'Link reset password tidak valid.',
+                textAlign:
+                    TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight:
+                      FontWeight.w700,
+                ),
+              ),
+
+              const SizedBox(
+                height: 8,
+              ),
+
+              const Text(
+                'Silakan minta link reset password baru.',
+                textAlign:
+                    TextAlign.center,
+              ),
+
+              const SizedBox(
+                height: 20,
+              ),
+
+              ElevatedButton(
+                onPressed: () {
+                  context.go(
+                    '/auth/forgot-password',
+                  );
+                },
+                child: const Text(
+                  'Minta link baru',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
