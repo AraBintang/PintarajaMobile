@@ -63,7 +63,7 @@ class AppButton extends StatelessWidget {
             ? null
             : [
                 BoxShadow(
-                  color: (gradient?.colors.first ?? AppTheme.primary).withOpacity(0.25),
+                  color: (gradient?.colors.first ?? AppTheme.primary).withValues(alpha: 0.25),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),

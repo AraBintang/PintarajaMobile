@@ -587,9 +587,9 @@ class _LoginScreenState
                             height: 22,
                           ),
 
-                          Row(
+                          const Row(
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child:
                                     Divider(
                                   color: AppTheme
@@ -598,7 +598,7 @@ class _LoginScreenState
                               ),
                               Padding(
                                 padding:
-                                    const EdgeInsets
+                                    EdgeInsets
                                         .symmetric(
                                   horizontal:
                                       12,
@@ -607,7 +607,7 @@ class _LoginScreenState
                                     Text(
                                   'or',
                                   style:
-                                      const TextStyle(
+                                      TextStyle(
                                     color: AppTheme
                                         .textMuted,
                                     fontSize:
@@ -615,7 +615,7 @@ class _LoginScreenState
                                   ),
                                 ),
                               ),
-                              const Expanded(
+                              Expanded(
                                 child:
                                     Divider(
                                   color: AppTheme

@@ -1071,16 +1071,16 @@ class _SidebarSurface
             height: 14,
           ),
 
-          Padding(
+          const Padding(
             padding:
-                const EdgeInsets.fromLTRB(
+                EdgeInsets.fromLTRB(
               20,
               0,
               20,
               6,
             ),
             child:
-                const Align(
+                Align(
               alignment:
                   Alignment.centerLeft,
               child:
@@ -1101,13 +1101,13 @@ class _SidebarSurface
 
           _SidebarItem(
             icon:
-                Icons.home_outlined,
+                Icons.chat_bubble_outline_rounded,
             title:
-                'Beranda',
+                'Chat AI',
             onTap: () {
               onClose();
               context.go(
-                '/home',
+                '/chat',
               );
             },
           ),
@@ -1116,7 +1116,7 @@ class _SidebarSurface
             icon:
                 Icons.edit_outlined,
             title:
-                'Writer',
+                'AI Writer',
             onTap: () {
               onClose();
               context.go(
@@ -1459,6 +1459,7 @@ class _ConversationItem
                   ),
                   onSelected:
                       (value) async {
+                    // ignore: use_build_context_synchronously
                     if (value ==
                         'rename') {
                       await _renameConversation(
@@ -1469,6 +1470,7 @@ class _ConversationItem
                     if (value ==
                         'delete') {
                       await _confirmDelete(
+                        // ignore: use_build_context_synchronously
                         context,
                       );
                     }
@@ -2143,7 +2145,7 @@ class _EmptyChat
               height: 20,
             ),
 
-            Wrap(
+            const Wrap(
               alignment:
                   WrapAlignment
                       .center,
@@ -2151,7 +2153,7 @@ class _EmptyChat
                   8,
               runSpacing:
                   8,
-              children: const [
+              children: [
                 _SuggestionButton(
                   text:
                       'Bantu tugas kuliah',
@@ -2706,8 +2708,7 @@ class _ChatInput
 // AI PROVIDER OPTION
 // ============================================================
 
-class _ProviderOption
-    extends StatelessWidget {
+class _ProviderOption extends StatelessWidget {
   final AiProvider provider;
   final bool selected;
   final VoidCallback? onTap;
@@ -2718,199 +2719,174 @@ class _ProviderOption
     required this.onTap,
   });
 
+  // Map code → brand info
+  static const Map<String, Map<String, dynamic>> _brands = {
+    'SETTING-GPT': {
+      'emoji': '🤖',
+      'label': 'OpenAI GPT-4o',
+      'desc': 'Terbaik untuk teks panjang & analitik kompleks',
+      'color': Color(0xFF10A37F),
+    },
+    'SETTING-GMN': {
+      'emoji': '✨',
+      'label': 'Google Gemini',
+      'desc': 'Multimodal cepat dari Google DeepMind',
+      'color': Color(0xFF4285F4),
+    },
+    'SETTING-CLD': {
+      'emoji': '🧠',
+      'label': 'Claude 3.5 Sonnet',
+      'desc': 'Nuanced writing & reasoning dari Anthropic',
+      'color': Color(0xFFD97706),
+    },
+    'SETTING-XAI': {
+      'emoji': '⚡',
+      'label': 'xAI Grok 2',
+      'desc': 'Real-time info & humor dari xAI',
+      'color': Color(0xFF000000),
+    },
+    'SETTING-DSK': {
+      'emoji': '🔬',
+      'label': 'DeepSeek R1',
+      'desc': 'Riset mendalam & STEM dari DeepSeek',
+      'color': Color(0xFF0D47A1),
+    },
+    'SETTING-QWN': {
+      'emoji': '🌏',
+      'label': 'Qwen 2.5 Max',
+      'desc': 'Bahasa Asia & coding dari Alibaba Cloud',
+      'color': Color(0xFFE53935),
+    },
+    'SETTING-DRM': {
+      'emoji': '🎨',
+      'label': 'Dreamina AI',
+      'desc': 'Generasi gambar kreatif dari CapCut',
+      'color': Color(0xFF7C3AED),
+    },
+  };
+
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final quota =
-        provider.quota;
+  Widget build(BuildContext context) {
+    final quota = provider.quota;
+    final brand = _brands[provider.code];
+
+    final String brandLabel = brand?['label'] as String? ?? provider.displayName;
+    final String brandDesc = brand?['desc'] as String? ?? 'AI Model PintarAja';
+    final String brandEmoji = brand?['emoji'] as String? ?? '🤖';
+    final Color brandColor = (brand?['color'] as Color?) ??
+        (provider.isLimited ? AppTheme.textMuted : AppTheme.primary);
 
     String quotaText;
-
     if (!quota.hasLimit) {
-      quotaText =
-          'Tanpa batas harian';
+      quotaText = 'Tanpa batas harian';
     } else if (provider.isLimited) {
-      quotaText =
-          'Kuota hari ini habis';
+      quotaText = 'Kuota hari ini habis';
     } else {
-      quotaText =
-          'Sisa ${quota.remaining} / ${quota.limit} hari ini';
-    }
-
-    Color titleColor;
-
-    if (provider.isLimited) {
-      titleColor =
-          AppTheme.textMuted;
-    } else if (selected) {
-      titleColor =
-          AppTheme.primary;
-    } else {
-      titleColor =
-          AppTheme.textPrimary;
+      quotaText = 'Sisa ${quota.remaining} / ${quota.limit}';
     }
 
     return Padding(
-      padding:
-          const EdgeInsets.only(
-        bottom:
-            4,
-      ),
-      child:
-          Material(
-        color:
-            Colors.transparent,
-        borderRadius:
-            BorderRadius.circular(
-          14,
-        ),
-        child:
-            InkWell(
-          onTap:
-              onTap,
-          borderRadius:
-              BorderRadius.circular(
-            14,
-          ),
-          child:
-              Padding(
-            padding:
-                const EdgeInsets
-                    .symmetric(
-              horizontal:
-                  10,
-              vertical:
-                  10,
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: selected
+                  ? brandColor.withValues(alpha: 0.07)
+                  : provider.isLimited
+                      ? AppTheme.surfaceMuted.withValues(alpha: 0.5)
+                      : Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: selected ? brandColor.withValues(alpha: 0.5) : AppTheme.borderLight,
+                width: selected ? 1.5 : 1,
+              ),
             ),
-            child:
-                Row(
+            child: Row(
               children: [
+                // Brand emoji icon
                 Container(
-                  width:
-                      40,
-                  height:
-                      40,
-                  decoration:
-                      BoxDecoration(
-                    color:
-                        provider
-                                .isLimited
-                            ? AppTheme
-                                .surfaceMuted
-                            : AppTheme
-                                .primary
-                                .withValues(
-                                alpha:
-                                    0.10,
-                              ),
-                    borderRadius:
-                        BorderRadius
-                            .circular(
-                      11,
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: provider.isLimited
+                        ? AppTheme.surfaceMuted
+                        : brandColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      provider.isLimited ? '🔒' : brandEmoji,
+                      style: const TextStyle(fontSize: 22),
                     ),
                   ),
-                  child:
-                      Icon(
-                    Icons
-                        .auto_awesome_rounded,
-                    color:
-                        provider
-                                .isLimited
-                            ? AppTheme
-                                .textMuted
-                            : AppTheme
-                                .primary,
-                    size:
-                        20,
-                  ),
                 ),
 
-                const SizedBox(
-                  width:
-                      11,
-                ),
+                const SizedBox(width: 12),
 
+                // Info column
                 Expanded(
-                  child:
-                      Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        provider
-                            .displayName,
-                        maxLines:
-                            1,
-                        overflow:
-                            TextOverflow
-                                .ellipsis,
-                        style:
-                            TextStyle(
-                          color:
-                              titleColor,
-                          fontSize:
-                              13.5,
-                          fontWeight:
-                              selected
-                                  ? FontWeight
-                                      .w700
-                                  : FontWeight
-                                      .w500,
+                        brandLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: provider.isLimited
+                              ? AppTheme.textMuted
+                              : selected
+                                  ? brandColor
+                                  : AppTheme.textPrimary,
+                          fontSize: 13.5,
+                          fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                         ),
                       ),
-
-                      const SizedBox(
-                        height:
-                            3,
-                      ),
-
+                      const SizedBox(height: 2),
                       Text(
-                        quotaText,
-                        maxLines:
-                            1,
-                        overflow:
-                            TextOverflow
-                                .ellipsis,
-                        style:
-                            const TextStyle(
-                          color:
-                              AppTheme
-                                  .textMuted,
-                          fontSize:
-                              10,
+                        brandDesc,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: provider.isLimited ? AppTheme.textMuted : AppTheme.textSecondary,
+                          fontSize: 10.5,
                         ),
                       ),
+                      const SizedBox(height: 5),
+                      // Quota indicator
+                      Row(children: [
+                        Icon(
+                          provider.isLimited ? Icons.block_rounded : Icons.bar_chart_rounded,
+                          size: 11,
+                          color: provider.isLimited ? AppTheme.error : AppTheme.textMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          quotaText,
+                          style: TextStyle(
+                            color: provider.isLimited ? AppTheme.error : AppTheme.textMuted,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ]),
                     ],
                   ),
                 ),
 
-                const SizedBox(
-                  width:
-                      8,
-                ),
+                const SizedBox(width: 8),
 
-                if (provider
-                    .isLimited)
-                  const Icon(
-                    Icons
-                        .lock_outline_rounded,
-                    color:
-                        AppTheme
-                            .textMuted,
-                    size:
-                        18,
-                  )
+                // Trailing indicator
+                if (provider.isLimited)
+                  const Icon(Icons.lock_outline_rounded, color: AppTheme.textMuted, size: 18)
                 else if (selected)
-                  const Icon(
-                    Icons
-                        .check_circle_rounded,
-                    color:
-                        AppTheme.primary,
-                    size:
-                        20,
-                  ),
+                  Icon(Icons.check_circle_rounded, color: brandColor, size: 22),
               ],
             ),
           ),

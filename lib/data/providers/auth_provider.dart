@@ -414,11 +414,114 @@ class AuthProvider extends ChangeNotifier {
   // REFRESH USER
   // ==========================================================
 
+  // ==========================================================
+  // REFRESH USER
+  // ==========================================================
+
   Future<void> refreshUser() async {
     try {
       await _fetchUser();
       notifyListeners();
     } catch (_) {}
+  }
+
+  // ==========================================================
+  // UPDATE PROFILE (PUT /api/profiles)
+  // ==========================================================
+
+  Future<bool> updateProfile({
+    required String name,
+    String? phone,
+  }) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      await ApiService.instance.put(
+        ApiConstants.updateProfile,
+        {
+          'name': name.trim(),
+          if (phone != null) 'phone': phone.trim(),
+        },
+      );
+
+      await refreshUser();
+      _setLoading(false);
+      return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _error = 'Gagal memperbarui profil.';
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  // ==========================================================
+  // CHANGE PASSWORD (PUT /api/profiles/password)
+  // ==========================================================
+
+  Future<bool> changePassword({
+    String? oldPassword,
+    required String newPassword,
+  }) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      await ApiService.instance.put(
+        ApiConstants.changePassword,
+        {
+          if (oldPassword != null && oldPassword.isNotEmpty)
+            'password_old': oldPassword,
+          'password': newPassword,
+        },
+      );
+
+      await refreshUser();
+      _setLoading(false);
+      return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _error = 'Gagal mengubah password.';
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  // ==========================================================
+  // REDEEM COUPON (POST /api/profiles/redeem)
+  // ==========================================================
+
+  Future<bool> redeemCoupon(String code) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      await ApiService.instance.post(
+        ApiConstants.redeemCoupon,
+        {
+          'code': code.trim(),
+        },
+      );
+
+      await refreshUser();
+      _setLoading(false);
+      return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _error = 'Gagal menukarkan kupon.';
+      _setLoading(false);
+      return false;
+    }
   }
 
   // ==========================================================

@@ -44,7 +44,7 @@ class _PlanScreenState extends State<PlanScreen> {
           }
 
           if (provider.plans.isEmpty) {
-            return Center(child: Text('Belum ada paket tersedia', style: const TextStyle(color: AppTheme.textSecondary)));
+            return const Center(child: Text('Belum ada paket tersedia', style: TextStyle(color: AppTheme.textSecondary)));
           }
 
           return ListView.builder(

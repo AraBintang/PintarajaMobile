@@ -13,6 +13,7 @@ import 'core/theme/app_theme.dart';
 import 'data/providers/auth_provider.dart';
 import 'data/providers/chat_provider.dart';
 import 'data/providers/plan_provider.dart';
+import 'data/providers/theme_provider.dart';
 
 import 'data/services/storage_service.dart';
 
@@ -81,6 +82,10 @@ class _PintaRajaAppState
           value: _authProvider,
         ),
 
+        ChangeNotifierProvider<ThemeProvider>(
+          create: (_) => ThemeProvider(),
+        ),
+
         ChangeNotifierProvider<ChatProvider>(
           create: (_) => ChatProvider(),
         ),
@@ -90,13 +95,17 @@ class _PintaRajaAppState
         ),
       ],
 
-      child: MaterialApp.router(
-        title: 'PintarAja',
-        debugShowCheckedModeBanner: false,
-
-        theme: AppTheme.lightTheme,
-
-        routerConfig: _router,
+      child: Consumer<ThemeProvider>(
+        builder: (context, theme, _) {
+          return MaterialApp.router(
+            title: 'PintarAja',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: theme.themeMode,
+            routerConfig: _router,
+          );
+        },
       ),
     );
   }

@@ -4,6 +4,8 @@
 // Responsive Android 720x1520
 // ============================================================
 
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +13,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
+import '../../data/providers/chat_provider.dart';
 import '../../data/services/api_service.dart';
 
 class WriterScreen extends StatefulWidget {
@@ -44,6 +47,12 @@ class _WriterScreenState extends State<WriterScreen>
 
   int _charCount = 0;
 
+  List<Map<String, dynamic>> _myFiles = [];
+  Map<String, dynamic>? _storageQuota;
+  bool _isLoadingFiles = false;
+  bool _isUploadingFile = false;
+  String? _filesError;
+
   final List<String> _types = [
     'Essay',
     'Article',
@@ -66,13 +75,22 @@ class _WriterScreenState extends State<WriterScreen>
       vsync: this,
     );
 
+    _tabController.addListener(_handleTabChanged);
+
     _topicController.addListener(
       _handleTopicChanged,
     );
   }
 
+  void _handleTabChanged() {
+    if (_tabController.indexIsChanging && _tabController.index == 1) {
+      _loadMyFiles();
+    }
+  }
+
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChanged);
     _topicController.removeListener(
       _handleTopicChanged,
     );
@@ -82,6 +100,159 @@ class _WriterScreenState extends State<WriterScreen>
     _tabController.dispose();
 
     super.dispose();
+  }
+
+  // ==========================================================
+  // LOAD & MANAGE FILES
+  // ==========================================================
+
+  Future<void> _loadMyFiles() async {
+    setState(() {
+      _isLoadingFiles = true;
+      _filesError = null;
+    });
+
+    try {
+      final data = await ApiService.instance.get(ApiConstants.writerFiles);
+      if (data is Map) {
+        final rawFiles = data['files'];
+        final quotaData = data['quota'];
+        if (rawFiles is List) {
+          _myFiles = List<Map<String, dynamic>>.from(
+            rawFiles.whereType<Map>().map((e) => Map<String, dynamic>.from(e)),
+          );
+        }
+        if (quotaData is Map) {
+          _storageQuota = Map<String, dynamic>.from(quotaData);
+        }
+      }
+    } on ApiException catch (e) {
+      _filesError = e.message;
+    } catch (_) {
+      _filesError = 'Gagal memuat daftar file.';
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingFiles = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _uploadFile() async {
+    // Capture context-dependent values before any await
+    final chatProvider = context.read<ChatProvider>();
+    int providerId = chatProvider.selectedProviderId ?? 1;
+    for (final p in chatProvider.aiProviders) {
+      if (p.code.contains('GPT')) {
+        providerId = p.id;
+        break;
+      }
+    }
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx', 'txt'],
+    );
+
+    if (result == null || result.files.single.path == null) {
+      return;
+    }
+
+    final file = File(result.files.single.path!);
+
+    setState(() {
+      _isUploadingFile = true;
+      _filesError = null;
+    });
+
+    try {
+      await ApiService.instance.postMultipart(
+        ApiConstants.writerUploadFile,
+        fields: {
+          'providerId': providerId.toString(),
+        },
+        files: {
+          'file': file,
+        },
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('File berhasil diunggah!')),
+      );
+
+      await _loadMyFiles();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _filesError = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _filesError = 'Gagal mengunggah file. Pastikan file valid.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingFile = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _deleteFile(Map<String, dynamic> fileData) async {
+    final fileId = fileData['fileId']?.toString();
+    final vectorStoreId = fileData['vectorStoreId']?.toString();
+    final providerId = fileData['providerId'] ?? 1;
+
+    if (fileId == null || vectorStoreId == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surfaceLight,
+        title: const Text('Hapus File', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700)),
+        content: Text('Apakah kamu yakin ingin menghapus ${fileData['name'] ?? 'file ini'}?', style: const TextStyle(color: AppTheme.textSecondary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Hapus', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await ApiService.instance.deleteWithBody(
+        ApiConstants.writerDeleteFile,
+        {
+          'providerId': providerId,
+          'fileId': fileId,
+          'vectorStoreId': vectorStoreId,
+        },
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('File berhasil dihapus.')),
+      );
+
+      await _loadMyFiles();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menghapus file: ${e.message}')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal menghapus file.')),
+      );
+    }
   }
 
   // ==========================================================
@@ -129,15 +300,22 @@ class _WriterScreenState extends State<WriterScreen>
     });
 
     try {
+      final chatProvider = context.read<ChatProvider>();
+      int providerId = chatProvider.selectedProviderId ?? 1;
+
+      if (chatProvider.aiProviders.isNotEmpty && (providerId <= 0)) {
+        providerId = chatProvider.aiProviders.first.id;
+      }
+
+      final promptMessage =
+          'Tolong buatkan $_selectedType dengan nada $_selectedTone tentang topik berikut:\n\n$topic';
+
       final data =
           await ApiService.instance.post(
         ApiConstants.writer,
         {
-          'topic': topic,
-          'type':
-              _selectedType.toLowerCase(),
-          'tone':
-              _selectedTone.toLowerCase(),
+          'providerId': providerId,
+          'message': promptMessage,
         },
         timeout:
             const Duration(
@@ -194,13 +372,11 @@ class _WriterScreenState extends State<WriterScreen>
             'Gagal membuat tulisan. Coba lagi.';
       });
     } finally {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
-
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
@@ -234,7 +410,7 @@ class _WriterScreenState extends State<WriterScreen>
             value.toString().trim();
 
         if (text.isNotEmpty) {
-          return text;
+          return _cleanHtmlFormatting(text);
         }
       }
 
@@ -249,6 +425,43 @@ class _WriterScreenState extends State<WriterScreen>
     }
 
     return '';
+  }
+
+  String _cleanHtmlFormatting(String raw) {
+    if (raw.isEmpty) return raw;
+
+    String clean = raw;
+    clean = clean.replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
+    clean = clean.replaceAll(RegExp(r'</p\s*>', caseSensitive: false), '\n\n');
+    clean = clean.replaceAll(RegExp(r'<p[^>]*>', caseSensitive: false), '');
+    clean = clean.replaceAll(RegExp(r'</div\s*>', caseSensitive: false), '\n');
+    clean = clean.replaceAll(RegExp(r'<div[^>]*>', caseSensitive: false), '');
+
+    // Convert bold HTML to Markdown
+    clean = clean.replaceAll(RegExp(r'<\s*b\s*>', caseSensitive: false), '**');
+    clean = clean.replaceAll(RegExp(r'<\s*/\s*b\s*>', caseSensitive: false), '**');
+    clean = clean.replaceAll(RegExp(r'<\s*strong\s*>', caseSensitive: false), '**');
+    clean = clean.replaceAll(RegExp(r'<\s*/\s*strong\s*>', caseSensitive: false), '**');
+
+    // Convert italic HTML to Markdown
+    clean = clean.replaceAll(RegExp(r'<\s*i\s*>', caseSensitive: false), '*');
+    clean = clean.replaceAll(RegExp(r'<\s*/\s*i\s*>', caseSensitive: false), '*');
+    clean = clean.replaceAll(RegExp(r'<\s*em\s*>', caseSensitive: false), '*');
+    clean = clean.replaceAll(RegExp(r'<\s*/\s*em\s*>', caseSensitive: false), '*');
+
+    // Convert list items
+    clean = clean.replaceAll(RegExp(r'<\s*li\s*>', caseSensitive: false), '\n• ');
+    clean = clean.replaceAll(RegExp(r'<\s*/\s*li\s*>', caseSensitive: false), '');
+    clean = clean.replaceAll(RegExp(r'<\s*/?\s*ul\s*>', caseSensitive: false), '\n');
+    clean = clean.replaceAll(RegExp(r'<\s*/?\s*ol\s*>', caseSensitive: false), '\n');
+
+    // Strip remaining HTML tags
+    clean = clean.replaceAll(RegExp(r'<[^>]+>'), '');
+
+    // Normalize multiple blank lines
+    clean = clean.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+
+    return clean.trim();
   }
 
   // ==========================================================
@@ -465,7 +678,7 @@ class _WriterScreenState extends State<WriterScreen>
         ),
         title:
             const Text(
-          'Writer',
+          'AI Writer',
           style:
               TextStyle(
             color:
@@ -1082,62 +1295,209 @@ class _WriterScreenState extends State<WriterScreen>
   // ==========================================================
 
   Widget _buildMyFilesTab() {
-    return const Center(
-      child:
-          SingleChildScrollView(
-        padding:
-            EdgeInsets.symmetric(
-          horizontal:
-              30,
-        ),
-        child:
-            Column(
-          mainAxisSize:
-              MainAxisSize.min,
-          children: [
-            Icon(
-              Icons
-                  .folder_open_rounded,
-              color:
-                  AppTheme.textMuted,
-              size:
-                  48,
+    if (_isLoadingFiles && _myFiles.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+    }
+
+    final limit = _storageQuota?['limit'] ?? 524288000;
+    final used = _storageQuota?['used'] ?? 0;
+    final double usedMb = (used / (1024 * 1024));
+    final double limitMb = (limit / (1024 * 1024));
+    final double progress = limit > 0 ? (used / limit).clamp(0.0, 1.0) : 0.0;
+
+    return RefreshIndicator(
+      onRefresh: _loadMyFiles,
+      color: AppTheme.primary,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Storage Quota Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceLight,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.borderLight),
             ),
-            SizedBox(
-              height:
-                  12,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Penyimpanan Dokumen AI',
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      '${usedMb.toStringAsFixed(1)}MB / ${limitMb.toStringAsFixed(0)}MB',
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 8,
+                    backgroundColor: AppTheme.surfaceMuted,
+                    color: AppTheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isUploadingFile ? null : _uploadFile,
+                    icon: _isUploadingFile
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
+                          )
+                        : const Icon(Icons.upload_file_rounded, size: 18, color: AppTheme.primary),
+                    label: Text(
+                      _isUploadingFile ? 'Mengunggah...' : 'Upload Dokumen Baru',
+                      style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.primary),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppTheme.primary),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            Text(
-              'Belum Ada File',
-              textAlign:
-                  TextAlign.center,
-              style:
-                  TextStyle(
-                color:
-                    AppTheme.textPrimary,
-                fontWeight:
-                    FontWeight.w700,
-              ),
-            ),
-            SizedBox(
-              height:
-                  5,
-            ),
-            Text(
-              'Hasil tulisan kamu akan tersimpan di sini.',
-              textAlign:
-                  TextAlign.center,
-              style:
-                  TextStyle(
-                color:
-                    AppTheme
-                        .textSecondary,
-                fontSize:
-                    12,
-              ),
-            ),
+          ),
+
+          if (_filesError != null) ...[
+            const SizedBox(height: 14),
+            _ErrorBox(message: _filesError!),
           ],
-        ),
+
+          const SizedBox(height: 20),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'File Saya (${_myFiles.length})',
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+              IconButton(
+                onPressed: _loadMyFiles,
+                icon: const Icon(Icons.refresh_rounded, color: AppTheme.textSecondary, size: 20),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          if (_myFiles.isEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceLight,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.borderLight),
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.folder_open_rounded, color: AppTheme.textMuted, size: 48),
+                  SizedBox(height: 12),
+                  Text(
+                    'Belum Ada Dokumen',
+                    style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Upload file PDF/Doc untuk dijadikan referensi AI Writer.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _myFiles.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final file = _myFiles[index];
+                final fileName = file['name']?.toString() ?? 'File';
+                final fileSize = (file['size'] is num) ? ((file['size'] as num) / 1024).toStringAsFixed(1) : '0';
+                final fileStatus = file['status']?.toString() ?? 'ready';
+
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceLight,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppTheme.borderLight),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.description_rounded, color: AppTheme.primary, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              fileName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '$fileSize KB • ${fileStatus.toUpperCase()}',
+                              style: const TextStyle(
+                                color: AppTheme.textMuted,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => _deleteFile(file),
+                        icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                        tooltip: 'Hapus file',
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
       ),
     );
   }

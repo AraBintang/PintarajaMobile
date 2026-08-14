@@ -1,9 +1,6 @@
-// ============================================================
-// PINTARAJA — AI TOOLS SCREEN
-// Paraphrase + Humanizer + Plagiarism
-// Responsive Android 720x1520
-// ============================================================
+import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -39,6 +36,26 @@ class _ToolsScreenState
 
   double? _plagiarismPercent;
 
+  String _selectedLanguage = 'Indonesia';
+  String _selectedParaMode = 'standard';
+  String _selectedHumanMode = 'basic';
+  String _selectedPlagService = 'turnitin';
+  File? _selectedPlagFile;
+
+  final List<String> _languages = ['Indonesia', 'English'];
+  final List<String> _paraModes = [
+    'standard',
+    'fluency',
+    'formal',
+    'academic',
+    'simple',
+    'creative',
+    'expand',
+    'shorten'
+  ];
+  final List<String> _humanModes = ['basic', 'advanced'];
+  final List<String> _plagServices = ['turnitin', 'drillbot'];
+
   @override
   void dispose() {
     _textController.dispose();
@@ -61,6 +78,7 @@ class _ToolsScreenState
       _result = '';
       _error = null;
       _plagiarismPercent = null;
+      _selectedPlagFile = null;
     });
   }
 
@@ -69,15 +87,23 @@ class _ToolsScreenState
   // ==========================================================
 
   Future<void> _processText() async {
-    final text =
-        _textController.text.trim();
+    final text = _textController.text.trim();
+    // Capture context-dependent values before any await
+    final authUser = context.read<AuthProvider>().user;
 
-    if (text.isEmpty) {
+    if (_activeTab != 'plagiarism' && text.isEmpty) {
       setState(() {
         _error =
             'Teks tidak boleh kosong.';
       });
 
+      return;
+    }
+
+    if (_activeTab == 'plagiarism' && text.isEmpty && _selectedPlagFile == null) {
+      setState(() {
+        _error = 'Masukkan teks atau upload file dokumen.';
+      });
       return;
     }
 
@@ -99,30 +125,42 @@ class _ToolsScreenState
 
       switch (_activeTab) {
         case 'humanizer':
-          data =
-              await ApiService.instance.post(
-            ApiConstants.humanizer,
-            {
-              'text': text,
-            },
-            timeout:
-                const Duration(
-              seconds: 120,
-            ),
-          );
-          break;
+          setState(() {
+            _isLoading = false;
+            _error = 'Fitur Humanizer AI akan segera rilis! (Coming Soon)';
+          });
+          return;
 
         case 'plagiarism':
-          data =
-              await ApiService.instance.post(
+          final userNameParts = (authUser?.name ?? 'Mahasiswa PintarAja').trim().split(' ');
+          final firstName = userNameParts.isNotEmpty ? userNameParts.first : 'Mahasiswa';
+          final lastName = userNameParts.length > 1 ? userNameParts.sublist(1).join(' ') : 'PintarAja';
+          final phone = (authUser?.phone != null && authUser!.phone!.isNotEmpty) ? authUser.phone! : '081234567890';
+
+          File fileToUpload;
+          if (_selectedPlagFile != null) {
+            fileToUpload = _selectedPlagFile!;
+          } else {
+            final tempDir = await Directory.systemTemp.createTemp('plag');
+            fileToUpload = File('${tempDir.path}/dokumen_cek.txt');
+            await fileToUpload.writeAsString(text);
+          }
+
+          data = await ApiService.instance.postMultipart(
             ApiConstants.plagiarism,
-            {
-              'text': text,
+            fields: {
+              'service_type': _selectedPlagService,
+              'author_first_name': firstName,
+              'author_last_name': lastName,
+              'whatsapp_phone': phone,
+              'channel': 'quota',
+              'method': 'quota',
+              'phone': phone,
             },
-            timeout:
-                const Duration(
-              seconds: 120,
-            ),
+            files: {
+              'documents[]': fileToUpload,
+            },
+            timeout: const Duration(seconds: 120),
           );
           break;
 
@@ -132,6 +170,8 @@ class _ToolsScreenState
               await ApiService.instance.post(
             ApiConstants.paraphrase,
             {
+              'language': _selectedLanguage,
+              'mode': _selectedParaMode,
               'text': text,
             },
             timeout:
@@ -517,7 +557,13 @@ class _ToolsScreenState
             _buildTabSelector(),
 
             const SizedBox(
-              height: 22,
+              height: 16,
+            ),
+
+            _buildOptionsConfig(),
+
+            const SizedBox(
+              height: 10,
             ),
 
             _buildInputTitle(),
@@ -569,6 +615,162 @@ class _ToolsScreenState
   }
 
   // ==========================================================
+  // OPTIONS CONFIG
+  // ==========================================================
+
+  Widget _buildOptionsConfig() {
+    if (_activeTab == 'plagiarism') {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceLight,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppTheme.borderLight),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Layanan Pengecekan:', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            Row(
+              children: _plagServices.map((service) {
+                final selected = service == _selectedPlagService;
+                final isTurnitin = service == 'turnitin';
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: isTurnitin ? 6 : 0),
+                    child: ChoiceChip(
+                      label: Center(
+                        child: Text(
+                          isTurnitin ? 'Turnitin Check' : 'Drillbot AI Check',
+                          style: TextStyle(color: selected ? Colors.white : AppTheme.textPrimary, fontSize: 11.5, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      selected: selected,
+                      selectedColor: AppTheme.primary,
+                      onSelected: (val) {
+                        if (val) setState(() => _selectedPlagService = service);
+                      },
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _selectedPlagFile != null
+                        ? 'File: ${_selectedPlagFile!.path.split(Platform.pathSeparator).last}'
+                        : 'Atau Upload Dokumen (PDF/Doc/Txt):',
+                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final res = await FilePicker.platform.pickFiles(
+                      type: FileType.custom,
+                      allowedExtensions: ['pdf', 'doc', 'docx', 'txt'],
+                    );
+                    if (res != null && res.files.single.path != null) {
+                      setState(() {
+                        _selectedPlagFile = File(res.files.single.path!);
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.attach_file_rounded, size: 16),
+                  label: Text(_selectedPlagFile != null ? 'Ganti File' : 'Pilih File'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    final modes = _activeTab == 'paraphrase' ? _paraModes : _humanModes;
+    final currentMode = _activeTab == 'paraphrase' ? _selectedParaMode : _selectedHumanMode;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceLight,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('Bahasa: ', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 8),
+              ..._languages.map((lang) {
+                final selected = lang == _selectedLanguage;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: InkWell(
+                    onTap: () => setState(() => _selectedLanguage = lang),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: selected ? AppTheme.primary : AppTheme.surfaceMuted,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(lang, style: TextStyle(color: selected ? Colors.white : AppTheme.textPrimary, fontSize: 11, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text('Mode:', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: modes.map((m) {
+                final selected = m == currentMode;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: ChoiceChip(
+                    label: Text(m),
+                    selected: selected,
+                    selectedColor: AppTheme.primary,
+                    labelStyle: TextStyle(color: selected ? Colors.white : AppTheme.textPrimary, fontSize: 11),
+                    onSelected: (val) {
+                      if (val) {
+                        setState(() {
+                          if (_activeTab == 'paraphrase') {
+                            _selectedParaMode = m;
+                          } else {
+                            _selectedHumanMode = m;
+                          }
+                        });
+                      }
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================
   // TAB SELECTOR
   // ==========================================================
 
@@ -607,6 +809,7 @@ class _ToolsScreenState
               active:
                   _activeTab ==
                       'humanizer',
+              isSoon: true,
               onTap:
                   () =>
                       _changeTab(
@@ -1104,11 +1307,13 @@ class _ToolTabButton
     extends StatelessWidget {
   final String label;
   final bool active;
+  final bool isSoon;
   final VoidCallback onTap;
 
   const _ToolTabButton({
     required this.label,
     required this.active,
+    this.isSoon = false,
     required this.onTap,
   });
 
@@ -1156,28 +1361,34 @@ class _ToolTabButton
           ),
           child:
               Center(
-            child:
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-              label,
-              maxLines:
-                  1,
-              overflow:
-                  TextOverflow
-                      .ellipsis,
-              style:
-                  TextStyle(
-                color:
-                    active
-                        ? Colors.white
-                        : AppTheme
-                            .textSecondary,
-                fontSize:
-                    11.5,
-                fontWeight:
-                    active
-                        ? FontWeight.w700
-                        : FontWeight.w500,
-              ),
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: active ? Colors.white : AppTheme.textSecondary,
+                    fontSize: 11.5,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+                if (isSoon) ...[
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: active ? Colors.white24 : Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'SOON',
+                      style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ),

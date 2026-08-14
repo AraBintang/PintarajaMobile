@@ -261,6 +261,41 @@ class ApiService {
     }
   }
 
+  Future<dynamic> deleteWithBody(
+    String url,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final request = http.Request(
+        'DELETE',
+        Uri.parse(url),
+      );
+
+      request.headers.addAll(_jsonHeaders());
+      request.body = jsonEncode(body);
+
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 30),
+      );
+
+      final response = await http.Response.fromStream(streamedResponse);
+
+      return _handleResponse(response);
+    } on SocketException {
+      throw const ApiException(
+        'Tidak ada koneksi internet.',
+      );
+    } on TimeoutException {
+      throw const ApiException(
+        'Request terlalu lama.',
+      );
+    } on HttpException {
+      throw const ApiException(
+        'Terjadi kesalahan jaringan.',
+      );
+    }
+  }
+
   // ==========================================================
   // MULTIPART UPLOAD
   // ==========================================================

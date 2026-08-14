@@ -1277,9 +1277,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               height: 20,
             ),
 
-            Row(
+            const Row(
               children: [
-                const Expanded(
+                Expanded(
                   child:
                       Divider(
                     color:
@@ -1287,7 +1287,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             .borderLight,
                   ),
                 ),
-                const Padding(
+                Padding(
                   padding:
                       EdgeInsets
                           .symmetric(
@@ -1307,7 +1307,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
-                const Expanded(
+                Expanded(
                   child:
                       Divider(
                     color:

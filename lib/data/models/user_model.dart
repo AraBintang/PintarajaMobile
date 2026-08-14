@@ -7,9 +7,14 @@ class UserModel {
   final String name;
   final String email;
   final String? avatar;
+  final String? phone;
+  final String? role;
   final String? plan;
+  final int? planId;
   final int quota;
+  final bool havePassword;
   final String? referralCode;
+  final DateTime? subscriptionExpiredAt;
   final DateTime? createdAt;
 
   const UserModel({
@@ -17,16 +22,21 @@ class UserModel {
     required this.name,
     required this.email,
     this.avatar,
+    this.phone,
+    this.role,
     this.plan,
+    this.planId,
     this.quota = 0,
+    this.havePassword = true,
     this.referralCode,
+    this.subscriptionExpiredAt,
     this.createdAt,
   });
 
   factory UserModel.fromJson(
     Map<String, dynamic> json,
   ) {
-    final rawPlan = json['plan'];
+    final rawPlan = json['plan_name'] ?? json['plan'];
 
     String? planName;
 
@@ -37,22 +47,25 @@ class UserModel {
     }
 
     return UserModel(
-      id: _toInt(json['id']),
-      name: json['name']?.toString() ?? '',
-      email: json['email']?.toString() ?? '',
-      avatar: json['avatar']?.toString(),
+      id: _toInt(json['id'] ?? json['M_UserID']),
+      name: json['name']?.toString() ?? json['M_UserFullName']?.toString() ?? '',
+      email: json['email']?.toString() ?? json['M_UserEmail']?.toString() ?? '',
+      avatar: json['image']?.toString() ?? json['avatar']?.toString() ?? json['M_UserImage']?.toString(),
+      phone: json['phone']?.toString() ?? json['M_UserPhone']?.toString(),
+      role: json['role']?.toString() ?? json['M_UserRole']?.toString(),
       plan: planName,
-
-      // Backend PintarAja mengirim "quota".
-      // "credits" dipakai sebagai fallback agar
-      // data lama di storage tidak langsung rusak.
+      planId: _toIntNullable(json['plan_id'] ?? json['M_UserPlan']),
       quota: _toInt(
-        json['quota'] ?? json['credits'],
+        json['quota'] ?? json['M_UserQuota'] ?? json['credits'],
       ),
-
+      havePassword: json['havePassword'] != false,
       referralCode:
           json['referral_code']?.toString(),
-
+      subscriptionExpiredAt: json['subscription_expired_at'] != null
+          ? DateTime.tryParse(json['subscription_expired_at'].toString())
+          : (json['M_UserSubsExp'] != null
+              ? DateTime.tryParse(json['M_UserSubsExp'].toString())
+              : null),
       createdAt:
           json['created_at'] != null
               ? DateTime.tryParse(
@@ -68,9 +81,14 @@ class UserModel {
       'name': name,
       'email': email,
       'avatar': avatar,
+      'phone': phone,
+      'role': role,
       'plan': plan,
+      'plan_id': planId,
       'quota': quota,
+      'havePassword': havePassword,
       'referral_code': referralCode,
+      'subscription_expired_at': subscriptionExpiredAt?.toIso8601String(),
       'created_at':
           createdAt?.toIso8601String(),
     };
@@ -122,5 +140,21 @@ class UserModel {
           value.toString(),
         ) ??
         0;
+  }
+
+  static int? _toIntNullable(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is int) {
+      return value;
+    }
+
+    if (value is double) {
+      return value.toInt();
+    }
+
+    return int.tryParse(value.toString());
   }
 }

@@ -5,8 +5,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../theme/app_theme.dart';
-
 import '../../data/providers/auth_provider.dart';
 
 import '../../features/splash/splash_screen.dart';
@@ -248,128 +246,12 @@ class MainShell extends StatelessWidget {
     required this.state,
   });
 
-  int _currentIndex(String location) {
-    if (location.startsWith('/chat')) {
-      return 0;
-    }
-
-    if (location.startsWith('/home')) {
-      return 1;
-    }
-
-    if (location.startsWith('/writer')) {
-      return 2;
-    }
-
-    if (location.startsWith('/tools')) {
-      return 3;
-    }
-
-    if (location.startsWith('/profile')) {
-      return 4;
-    }
-
-    return 0;
-  }
-
   @override
   Widget build(
     BuildContext context,
   ) {
-    final index =
-        _currentIndex(
-      state.matchedLocation,
-    );
-
     return Scaffold(
       body: child,
-
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.bgSurface,
-          border: Border(
-            top: BorderSide(
-              color: AppTheme.divider,
-              width: 1,
-            ),
-          ),
-        ),
-
-        child: BottomNavigationBar(
-          currentIndex: index,
-
-          onTap: (value) {
-            switch (value) {
-              case 0:
-                context.go('/chat');
-
-              case 1:
-                context.go('/home');
-
-              case 2:
-                context.go('/writer');
-
-              case 3:
-                context.go('/tools');
-
-              case 4:
-                context.go('/profile');
-            }
-          },
-
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.chat_bubble_outline,
-              ),
-              activeIcon: Icon(
-                Icons.chat_bubble,
-              ),
-              label: 'Chat AI',
-            ),
-
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.home_outlined,
-              ),
-              activeIcon: Icon(
-                Icons.home_rounded,
-              ),
-              label: 'Home',
-            ),
-
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.edit_outlined,
-              ),
-              activeIcon: Icon(
-                Icons.edit,
-              ),
-              label: 'Writer',
-            ),
-
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.apps_outlined,
-              ),
-              activeIcon: Icon(
-                Icons.apps,
-              ),
-              label: 'Tools',
-            ),
-
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.person_outline,
-              ),
-              activeIcon: Icon(
-                Icons.person,
-              ),
-              label: 'Profil',
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
