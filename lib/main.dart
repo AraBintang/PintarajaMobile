@@ -14,6 +14,8 @@ import 'data/providers/auth_provider.dart';
 import 'data/providers/chat_provider.dart';
 import 'data/providers/plan_provider.dart';
 import 'data/providers/theme_provider.dart';
+import 'data/providers/language_provider.dart';
+import 'data/providers/notification_provider.dart';
 
 import 'data/services/storage_service.dart';
 
@@ -37,6 +39,7 @@ Future<void> main() async {
 
   runApp(const PintaRajaApp());
 }
+
 
 // ============================================================
 // APP
@@ -86,12 +89,20 @@ class _PintaRajaAppState
           create: (_) => ThemeProvider(),
         ),
 
+        ChangeNotifierProvider<LanguageProvider>(
+          create: (_) => LanguageProvider(),
+        ),
+
         ChangeNotifierProvider<ChatProvider>(
           create: (_) => ChatProvider(),
         ),
 
         ChangeNotifierProvider<PlanProvider>(
           create: (_) => PlanProvider(),
+        ),
+
+        ChangeNotifierProvider<NotificationProvider>(
+          create: (_) => NotificationProvider(),
         ),
       ],
 

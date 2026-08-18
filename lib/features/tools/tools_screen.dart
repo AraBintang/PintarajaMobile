@@ -504,11 +504,11 @@ class _ToolsScreenState
         elevation: 0,
         leading: IconButton(
           onPressed: () {
-            Navigator.of(context).pop();
+            Scaffold.of(context).openDrawer();
           },
           icon:
               const Icon(
-            Icons.arrow_back_rounded,
+            Icons.menu_rounded,
             color:
                 AppTheme.textPrimary,
           ),

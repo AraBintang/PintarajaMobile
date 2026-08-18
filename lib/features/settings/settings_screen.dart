@@ -9,6 +9,9 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/providers/theme_provider.dart';
+import '../../data/providers/language_provider.dart';
+import '../../data/providers/notification_provider.dart';
+import '../shared/widgets/payment_sheet.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -17,6 +20,8 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final theme = context.watch<ThemeProvider>();
+    final lang = context.watch<LanguageProvider>();
+    final notif = context.watch<NotificationProvider>();
     final user = auth.user;
 
     return Scaffold(
@@ -104,8 +109,14 @@ class SettingsScreen extends StatelessWidget {
               _SettingsTile(
                 icon: Icons.notifications_none_rounded,
                 title: 'Notifikasi',
-                subtitle: 'Atur pemberitahuan PintarAja',
-                onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pengaturan notifikasi akan segera tersedia.'))),
+                subtitle: notif.enabled ? 'Pemberitahuan aktif' : 'Pemberitahuan dinonaktifkan',
+                trailing: Switch.adaptive(
+                  value: notif.enabled,
+                  activeThumbColor: AppTheme.primary,
+                  activeTrackColor: AppTheme.primaryLight,
+                  onChanged: (v) => notif.setEnabled(v),
+                ),
+                onTap: () => notif.setEnabled(!notif.enabled),
               ),
 
               _SettingsTile(
@@ -124,8 +135,12 @@ class SettingsScreen extends StatelessWidget {
               _SettingsTile(
                 icon: Icons.language_rounded,
                 title: 'Bahasa',
-                subtitle: 'Bahasa Indonesia',
-                onTap: () => _showLanguageDialog(context),
+                subtitle: lang.isEnglish ? 'English (US)' : 'Bahasa Indonesia',
+                trailing: Text(
+                  lang.isEnglish ? '🇺🇸' : '🇮🇩',
+                  style: const TextStyle(fontSize: 20),
+                ),
+                onTap: () => _showLanguageDialog(context, lang),
               ),
 
               const SizedBox(height: 18),
@@ -184,12 +199,12 @@ class SettingsScreen extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.bgSurface,
-        title: const Text('Token PintarAja', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700)),
+        backgroundColor: AppTheme.getSurface(context),
+        title: Text('Token PintarAja', style: TextStyle(color: AppTheme.getTextColor(context), fontWeight: FontWeight.w700)),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Container(
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: BorderRadius.circular(12)),
+            decoration: const BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: BorderRadius.all(Radius.circular(12))),
             child: Row(children: [
               const Icon(Icons.diamond_rounded, color: Colors.white, size: 28),
               const SizedBox(width: 12),
@@ -200,11 +215,99 @@ class SettingsScreen extends StatelessWidget {
             ]),
           ),
           const SizedBox(height: 12),
-          const Text('Token digunakan untuk setiap permintaan AI. Token habis? Redeem voucher atau upgrade paket kamu.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, height: 1.4)),
+          Text(
+            'Token digunakan untuk setiap permintaan AI. Token habis? Beli paket top-up di bawah.',
+            style: TextStyle(color: AppTheme.getTextSecondary(context), fontSize: 12, height: 1.4),
+          ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tutup')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _openTopUpSheet(context);
+            },
+            child: const Text('Beli Token'),
+          ),
         ],
+      ),
+    );
+  }
+
+  static void _openTopUpSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetCtx) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          decoration: BoxDecoration(
+            color: AppTheme.getSurface(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.getBorder(context),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              Text(
+                'Pilih Paket Top-up Token',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.getTextColor(context)),
+              ),
+              const SizedBox(height: 16),
+              _buildTopUpOption(context, sheetCtx, '10.000 Token', 10000),
+              _buildTopUpOption(context, sheetCtx, '50.000 Token (Diskon)', 45000),
+              _buildTopUpOption(context, sheetCtx, '100.000 Token (Hemat)', 80000),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  static Widget _buildTopUpOption(BuildContext context, BuildContext sheetCtx, String label, double price) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.getBorder(context)),
+      ),
+      child: ListTile(
+        onTap: () {
+          Navigator.pop(sheetCtx);
+          showModalBottomSheet<void>(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (paymentCtx) {
+              return PaymentSelectionSheet(
+                itemName: 'Top-up $label',
+                price: price,
+                onPaymentSuccess: () async {
+                  Navigator.pop(paymentCtx);
+                  await context.read<AuthProvider>().refreshUser();
+                },
+              );
+            },
+          );
+        },
+        leading: const Icon(Icons.diamond_outlined, color: AppTheme.primary),
+        title: Text(label, style: TextStyle(color: AppTheme.getTextColor(context), fontWeight: FontWeight.bold)),
+        trailing: Text(
+          'Rp ${price.toStringAsFixed(0)}',
+          style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 14),
+        ),
       ),
     );
   }
@@ -363,28 +466,40 @@ class SettingsScreen extends StatelessWidget {
 
   // ── Language Dialog ───────────────────────────────────────
 
-  static void _showLanguageDialog(BuildContext context) {
+  static void _showLanguageDialog(BuildContext context, LanguageProvider lang) {
     showDialog<void>(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: AppTheme.bgSurface,
-        title: const Text('Pilih Bahasa', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(
-            leading: const Text('🇮🇩', style: TextStyle(fontSize: 22)),
-            title: const Text('Bahasa Indonesia', style: TextStyle(color: AppTheme.textPrimary)),
-            trailing: const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 18),
-            onTap: () => Navigator.pop(dialogCtx),
-          ),
-          ListTile(
-            leading: const Text('🇺🇸', style: TextStyle(fontSize: 22)),
-            title: const Text('English (US)', style: TextStyle(color: AppTheme.textPrimary)),
-            onTap: () {
-              Navigator.pop(dialogCtx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('English language will be available soon.')));
-            },
-          ),
-        ]),
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (_, setState) => AlertDialog(
+          backgroundColor: AppTheme.getSurface(context),
+          title: Text('Pilih Bahasa', style: TextStyle(color: AppTheme.getTextColor(context), fontWeight: FontWeight.bold, fontSize: 16)),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            ListTile(
+              leading: const Text('🇮🇩', style: TextStyle(fontSize: 22)),
+              title: Text('Bahasa Indonesia', style: TextStyle(color: AppTheme.getTextColor(context))),
+              trailing: !lang.isEnglish
+                  ? const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 18)
+                  : null,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              onTap: () {
+                lang.setLocale('id');
+                Navigator.pop(dialogCtx);
+              },
+            ),
+            ListTile(
+              leading: const Text('🇺🇸', style: TextStyle(fontSize: 22)),
+              title: Text('English (US)', style: TextStyle(color: AppTheme.getTextColor(context))),
+              trailing: lang.isEnglish
+                  ? const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 18)
+                  : null,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              onTap: () {
+                lang.setLocale('en');
+                Navigator.pop(dialogCtx);
+              },
+            ),
+          ]),
+        ),
       ),
     );
   }

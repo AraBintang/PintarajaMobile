@@ -139,27 +139,81 @@ class _WriterScreenState extends State<WriterScreen>
     }
   }
 
-  Future<void> _uploadFile() async {
-    // Capture context-dependent values before any await
-    final chatProvider = context.read<ChatProvider>();
-    int providerId = chatProvider.selectedProviderId ?? 1;
-    for (final p in chatProvider.aiProviders) {
-      if (p.code.contains('GPT')) {
-        providerId = p.id;
-        break;
+  int _resolveWriterProviderId(ChatProvider chatProvider) {
+    final selectedId = chatProvider.selectedProviderId;
+
+    if (selectedId != null &&
+        selectedId > 0 &&
+        chatProvider.aiProviders.any((provider) => provider.id == selectedId)) {
+      return selectedId;
+    }
+
+    for (final provider in chatProvider.aiProviders) {
+      final code = provider.code.toLowerCase();
+      final model = provider.model.toLowerCase();
+
+      if (code.contains('gpt') || model.contains('gpt')) {
+        return provider.id;
       }
     }
 
+    if (chatProvider.aiProviders.isNotEmpty) {
+      return chatProvider.aiProviders.first.id;
+    }
+
+    return 1;
+  }
+
+  Future<File?> _resolvePickedFile(PlatformFile file) async {
+    if (file.path != null && file.path!.isNotEmpty) {
+      return File(file.path!);
+    }
+
+    if (file.bytes == null || file.bytes!.isEmpty) {
+      return null;
+    }
+
+    final tempDir = await Directory.systemTemp.createTemp('pintaraja_writer_');
+    final tempFile = File('${tempDir.path}/${file.name}');
+    await tempFile.writeAsBytes(file.bytes!);
+    return tempFile;
+  }
+
+  Future<void> _uploadFile() async {
+    final chatProvider = context.read<ChatProvider>();
+    final providerId = _resolveWriterProviderId(chatProvider);
+
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['pdf', 'doc', 'docx', 'txt'],
+      allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'md'],
+      withData: false,
     );
 
-    if (result == null || result.files.single.path == null) {
+    if (result == null || result.files.isEmpty) {
       return;
     }
 
-    final file = File(result.files.single.path!);
+    final selectedFile = result.files.first;
+    final extension = selectedFile.extension?.toLowerCase();
+    final allowedExtensions = {'pdf', 'doc', 'docx', 'txt', 'md'};
+
+    if (extension == null || !allowedExtensions.contains(extension)) {
+      if (!mounted) return;
+      setState(() {
+        _filesError = 'Format file tidak didukung. Gunakan PDF, DOC, DOCX, TXT, atau MD.';
+      });
+      return;
+    }
+
+    final file = await _resolvePickedFile(selectedFile);
+
+    if (file == null) {
+      if (!mounted) return;
+      setState(() {
+        _filesError = 'File tidak dapat dibaca. Coba file lain.';
+      });
+      return;
+    }
 
     setState(() {
       _isUploadingFile = true;
@@ -301,11 +355,7 @@ class _WriterScreenState extends State<WriterScreen>
 
     try {
       final chatProvider = context.read<ChatProvider>();
-      int providerId = chatProvider.selectedProviderId ?? 1;
-
-      if (chatProvider.aiProviders.isNotEmpty && (providerId <= 0)) {
-        providerId = chatProvider.aiProviders.first.id;
-      }
+      final providerId = _resolveWriterProviderId(chatProvider);
 
       final promptMessage =
           'Tolong buatkan $_selectedType dengan nada $_selectedTone tentang topik berikut:\n\n$topic';
@@ -667,11 +717,11 @@ class _WriterScreenState extends State<WriterScreen>
         leading:
             IconButton(
           onPressed: () {
-            Navigator.of(context).pop();
+            Scaffold.of(context).openDrawer();
           },
           icon:
               const Icon(
-            Icons.arrow_back_rounded,
+            Icons.menu_rounded,
             color:
                 AppTheme.textPrimary,
           ),

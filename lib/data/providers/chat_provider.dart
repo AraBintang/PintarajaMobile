@@ -623,12 +623,19 @@ class ChatProvider
       return null;
     }
 
-    // GPT lebih diprioritaskan.
+    // GPT lebih diprioritaskan, namun backend bisa
+    // mengembalikan value dengan casing berbeda atau label lain.
     for (final provider
         in _aiProviders) {
-      if (provider.code ==
-              'SETTING-GPT' &&
-          !provider.isLimited) {
+      final code = provider.code
+          .toLowerCase();
+      final model = provider.model
+          .toLowerCase();
+
+      if ((!provider.isLimited) &&
+          (code == 'setting-gpt' ||
+              code.contains('gpt') ||
+              model.contains('gpt'))) {
         return provider.id;
       }
     }

@@ -20,6 +20,7 @@ import '../../features/chat/chat_screen.dart';
 import '../../features/writer/writer_screen.dart';
 import '../../features/tools/tools_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/shared/widgets/app_sidebar_drawer.dart';
 import '../../features/plan/plan_screen.dart';
 
 class AppRouter {
@@ -315,12 +316,12 @@ class AppRouter {
   }
 }
 
+
 // ============================================================
 // MAIN SHELL
 // ============================================================
 
-class MainShell
-    extends StatelessWidget {
+class MainShell extends StatelessWidget {
   final Widget child;
   final GoRouterState state;
 
@@ -335,6 +336,7 @@ class MainShell
     BuildContext context,
   ) {
     return Scaffold(
+      drawer: const AppSidebarDrawer(),
       body: child,
     );
   }

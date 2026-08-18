@@ -39,14 +39,14 @@ class AppTheme {
   static const Color bgInput = inputLight;
 
   // ==========================================================
-  // DARK
+  // DARK (Premium Slate Theme)
   // ==========================================================
 
-  static const Color backgroundDark = Color(0xFF0D1117);
-  static const Color surfaceDark = Color(0xFF161B22);
-  static const Color surfaceDarkMuted = Color(0xFF1F2937);
+  static const Color backgroundDark = Color(0xFF0F172A); // Slate 900
+  static const Color surfaceDark = Color(0xFF1E293B);    // Slate 800
+  static const Color surfaceDarkMuted = Color(0xFF334155); // Slate 700
 
-  static const Color inputDark = Color(0xFF1F2937);
+  static const Color inputDark = Color(0xFF1E293B);
 
   // ==========================================================
   // TEXT
@@ -56,15 +56,15 @@ class AppTheme {
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color textMuted = Color(0xFF9CA3AF);
 
-  static const Color textDark = Color(0xFFF3F4F6);
-  static const Color textDarkSecondary = Color(0xFF9CA3AF);
+  static const Color textDark = Color(0xFFF8FAFC);         // Slate 50
+  static const Color textDarkSecondary = Color(0xFF94A3B8); // Slate 400
 
   // ==========================================================
   // BORDER
   // ==========================================================
 
   static const Color borderLight = Color(0xFFE5E7EB);
-  static const Color borderDark = Color(0xFF374151);
+  static const Color borderDark = Color(0xFF334155);       // Slate 700
 
   static const Color divider = Color(0xFFE5E7EB);
 
@@ -72,7 +72,7 @@ class AppTheme {
   // STATUS
   // ==========================================================
 
-  static const Color success = Color(0xFF16A34A);
+  static const Color success = Color(0xFF10B981);
   static const Color warning = Color(0xFFF59E0B);
   static const Color error = Color(0xFFEF4444);
   static const Color info = Color(0xFF3B82F6);
@@ -98,6 +98,34 @@ class AppTheme {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  // ==========================================================
+  // DYNAMIC HELPERS
+  // ==========================================================
+
+  static bool isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
+  static Color getBg(BuildContext context) {
+    return isDarkMode(context) ? backgroundDark : backgroundApp;
+  }
+
+  static Color getSurface(BuildContext context) {
+    return isDarkMode(context) ? surfaceDark : surfaceLight;
+  }
+
+  static Color getTextColor(BuildContext context) {
+    return isDarkMode(context) ? textDark : textPrimary;
+  }
+
+  static Color getTextSecondary(BuildContext context) {
+    return isDarkMode(context) ? textDarkSecondary : textSecondary;
+  }
+
+  static Color getBorder(BuildContext context) {
+    return isDarkMode(context) ? borderDark : borderLight;
+  }
 
   static const LinearGradient purpleGradient = LinearGradient(
     colors: [

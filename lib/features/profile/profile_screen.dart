@@ -493,7 +493,7 @@ class ProfileScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(dialogCtx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Halaman upgrade paket akan segera tersedia.')));
+              context.push('/plans');
             },
             child: const Text('Upgrade Paket'),
           ),
