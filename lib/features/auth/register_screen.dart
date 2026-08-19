@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import 'turnstile_screen.dart';
 
@@ -1323,45 +1324,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             SizedBox(
-              width:
-                  double.infinity,
-              height:
-                  48,
-              child:
-                  OutlinedButton(
-                onPressed:
-                    () {
-                  _showSuccessSnackBar(
-                    'Google Sign-In akan disambungkan setelah authentication utama stabil.',
-                  );
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton(
+                onPressed: () async {
+                  final auth = context.read<AuthProvider>();
+                  try {
+                    final googleSignIn = GoogleSignIn(
+                      scopes: ['email', 'profile'],
+                    );
+                    await googleSignIn.signOut();
+                    final googleUser = await googleSignIn.signIn();
+                    if (googleUser == null) return;
+                    final googleAuth = await googleUser.authentication;
+                    final success = await auth.loginWithGoogle(
+                      googleToken: googleAuth.idToken,
+                      accessToken: googleAuth.accessToken,
+                    );
+                    if (!mounted) return;
+                    if (success) {
+                      context.go('/chat');
+                    } else {
+                      _showError(auth.error ?? 'Registrasi/login dengan Google gagal.');
+                    }
+                  } catch (e) {
+                    _showError('Gagal memulai login Google. Pastikan koneksi internet Anda aktif.');
+                  }
                 },
-                child:
-                    const Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment
-                          .center,
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       'G',
-                      style:
-                          TextStyle(
-                        color:
-                            Color(
-                          0xFF4285F4,
-                        ),
-                        fontSize:
-                            17,
-                        fontWeight:
-                            FontWeight
-                                .w700,
+                      style: TextStyle(
+                        color: Color(0xFF4285F4),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Text(
-                      'Sign up with Google',
-                    ),
+                    SizedBox(width: 10),
+                    Text('Sign up with Google'),
                   ],
                 ),
               ),

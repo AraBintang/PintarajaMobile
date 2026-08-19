@@ -382,6 +382,15 @@ class ChatProvider
 
   String? _error;
 
+  String? _systemPrompt;
+
+  String? get systemPrompt => _systemPrompt;
+
+  void setSystemPrompt(String? prompt) {
+    _systemPrompt = prompt?.trim().isEmpty == true ? null : prompt?.trim();
+    notifyListeners();
+  }
+
   // ==========================================================
   // GETTERS
   // ==========================================================
@@ -1334,6 +1343,13 @@ class ChatProvider
       _buildMessageHistory() {
     final result =
         <Map<String, dynamic>>[];
+
+    if (_systemPrompt != null && _systemPrompt!.isNotEmpty) {
+      result.add({
+        'role': 'system',
+        'content': _systemPrompt!,
+      });
+    }
 
     final recent =
         _messages

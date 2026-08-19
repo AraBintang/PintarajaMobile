@@ -15,13 +15,13 @@ import '../../features/auth/forgot_password_screen.dart';
 import '../../features/auth/new_password_screen.dart';
 
 import '../../features/settings/settings_screen.dart';
-import '../../features/home/home_screen.dart';
 import '../../features/chat/chat_screen.dart';
 import '../../features/writer/writer_screen.dart';
 import '../../features/tools/tools_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/shared/widgets/app_sidebar_drawer.dart';
 import '../../features/plan/plan_screen.dart';
+import '../../features/plagiarism/plagiarism_screen.dart';
 
 class AppRouter {
   static GoRouter router(AuthProvider auth) {
@@ -256,8 +256,10 @@ class AppRouter {
 
             GoRoute(
               path: '/home',
-              builder: (_, __) =>
-                  const HomeScreen(),
+              builder: (_, state) {
+                final conversationId = state.extra as int?;
+                return ChatScreen(conversationId: conversationId);
+              },
             ),
 
             // --------------------------------------------------
@@ -310,6 +312,12 @@ class AppRouter {
           path: '/plans',
           builder: (_, __) =>
               const PlanScreen(),
+        ),
+
+        GoRoute(
+          path: '/plagiarism',
+          builder: (_, __) =>
+              const PlagiarismScreen(),
         ),
       ],
     );

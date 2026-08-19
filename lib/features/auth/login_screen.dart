@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -630,52 +631,48 @@ class _LoginScreenState
                           ),
 
                           SizedBox(
-                            width:
-                                double.infinity,
+                            width: double.infinity,
                             height: 48,
-                            child:
-                                OutlinedButton(
-                              onPressed:
-                                  () {
-                                ScaffoldMessenger
-                                    .of(
-                                  context,
-                                ).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                        Text(
-                                      'Google Sign-In akan kita sambungkan setelah authentication utama selesai.',
-                                    ),
-                                  ),
-                                );
+                            child: OutlinedButton(
+                              onPressed: () async {
+                                final auth = context.read<AuthProvider>();
+                                try {
+                                  final googleSignIn = GoogleSignIn(
+                                    scopes: ['email', 'profile'],
+                                  );
+                                  await googleSignIn.signOut(); // ensure fresh sign-in
+                                  final googleUser = await googleSignIn.signIn();
+                                  if (googleUser == null) return; // user cancelled
+                                  final googleAuth = await googleUser.authentication;
+                                  final idToken = googleAuth.idToken;
+                                  final accessToken = googleAuth.accessToken;
+                                  final success = await auth.loginWithGoogle(
+                                    googleToken: idToken,
+                                    accessToken: accessToken,
+                                  );
+                                  if (!context.mounted) return;
+                                  if (success) {
+                                    context.go('/chat');
+                                  } else {
+                                    _showError(auth.error ?? 'Login dengan Google tidak dapat diproses saat ini.');
+                                  }
+                                } catch (e) {
+                                  _showError('Gagal memulai login Google. Pastikan koneksi internet Anda aktif.');
+                                }
                               },
-                              child:
-                                  const Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment
-                                        .center,
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
                                     'G',
-                                    style:
-                                        TextStyle(
-                                      color:
-                                          Color(
-                                        0xFF4285F4,
-                                      ),
-                                      fontSize:
-                                          17,
-                                      fontWeight:
-                                          FontWeight
-                                              .w700,
+                                    style: TextStyle(
+                                      color: Color(0xFF4285F4),
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text(
-                                    'Continue with Google',
-                                  ),
+                                  SizedBox(width: 10),
+                                  Text('Continue with Google'),
                                 ],
                               ),
                             ),

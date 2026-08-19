@@ -10,14 +10,15 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
 
 import '../../core/constants/api_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/providers/chat_provider.dart';
 import '../../data/services/api_service.dart';
+import '../shared/widgets/app_sidebar_drawer.dart';
 
 class WriterScreen extends StatefulWidget {
   const WriterScreen({
@@ -42,6 +43,12 @@ class _WriterScreenState extends State<WriterScreen>
 
   String _selectedType = 'Essay';
   String _selectedTone = 'Formal';
+  String _selectedPaper = 'Standard Academic';
+  String _selectedLanguage = 'Bahasa Indonesia';
+  String _selectedAiModel = 'GPT-4o';
+  int _paragraphCount = 3;
+  int _maxWords = 500;
+  final TextEditingController _instructionsController = TextEditingController();
 
   String _result = '';
   String? _error;
@@ -58,9 +65,12 @@ class _WriterScreenState extends State<WriterScreen>
 
   final List<String> _types = [
     'Essay',
-    'Artikel',
+    'Artikel Akademik',
     'Blog Post',
-    'Makalah',
+    'Makalah / Skripsi',
+    'Jurnal Ilmiah',
+    'Ringkasan Buku',
+    'Surat Formal',
     'Lainnya',
   ];
 
@@ -69,6 +79,31 @@ class _WriterScreenState extends State<WriterScreen>
     'Netral',
     'Santai',
     'Ilmiah',
+    'Kreatif',
+    'Persuasif',
+  ];
+
+  final List<String> _papers = [
+    'Standard Academic',
+    'APA 7th Edition',
+    'MLA 9th Edition',
+    'IEEE Format',
+    'Chicago Manual',
+  ];
+
+  final List<String> _languages = [
+    'Bahasa Indonesia',
+    'English (US)',
+    'English (UK)',
+    'Jawa',
+    'Sunda',
+  ];
+
+  final List<String> _aiModels = [
+    'GPT-4o',
+    'Gemini 1.5 Pro',
+    'Claude 3.5 Sonnet',
+    'DeepSeek R1',
   ];
 
   // Maksimum ukuran file upload: 10MB
@@ -398,8 +433,18 @@ class _WriterScreenState extends State<WriterScreen>
       final chatProvider = context.read<ChatProvider>();
       final providerId = _resolveWriterProviderId(chatProvider);
 
-      final promptMessage =
-          'Tolong buatkan $_selectedType dengan nada $_selectedTone tentang topik berikut:\n\n$topic';
+      final extraInst = _instructionsController.text.trim();
+      final promptMessage = '''
+Tolong buatkan artikel/tulisan jenis "$_selectedType" dengan ketentuan berikut:
+- Format Paper: $_selectedPaper
+- Nada Tulisan: $_selectedTone
+- Bahasa: $_selectedLanguage
+- Model AI: $_selectedAiModel
+- Target Panjang: $_paragraphCount paragraf (Maksimal $_maxWords kata)
+${extraInst.isNotEmpty ? '- Instruksi Tambahan: $extraInst\n' : ''}
+Topik utama:
+$topic
+''';
 
       final data =
           await ApiService.instance.post(
@@ -695,6 +740,7 @@ class _WriterScreenState extends State<WriterScreen>
         context.watch<AuthProvider>();
 
     return Scaffold(
+      drawer: const AppSidebarDrawer(),
       backgroundColor:
           AppTheme.backgroundApp,
       appBar:
@@ -703,24 +749,17 @@ class _WriterScreenState extends State<WriterScreen>
             AppTheme.backgroundApp,
         elevation:
             0,
-        // FIX: Ganti openDrawer() dengan navigasi yang benar
-        leading:
-            IconButton(
-          onPressed: () {
-            // Jika ada halaman sebelumnya, pop. Kalau tidak, ke home.
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/home');
-            }
-          },
-          icon:
-              const Icon(
-            Icons.arrow_back_rounded,
-            color:
-                AppTheme.textPrimary,
+        leading: Builder(
+          builder: (drawerContext) => IconButton(
+            onPressed: () {
+              Scaffold.of(drawerContext).openDrawer();
+            },
+            icon: const Icon(
+              Icons.menu_rounded,
+              color: AppTheme.textPrimary,
+            ),
+            tooltip: 'Menu Sidebar',
           ),
-          tooltip: 'Kembali',
         ),
         title:
             const Text(
@@ -744,25 +783,7 @@ class _WriterScreenState extends State<WriterScreen>
           ),
           const SizedBox(
             width:
-                4,
-          ),
-          // Tombol Home untuk navigasi cepat
-          IconButton(
-            tooltip:
-                'Beranda',
-            onPressed: () {
-              context.go('/home');
-            },
-            icon:
-                const Icon(
-              Icons.home_outlined,
-              color:
-                  AppTheme.textSecondary,
-            ),
-          ),
-          const SizedBox(
-            width:
-                4,
+                12,
           ),
         ],
       ),
@@ -838,96 +859,217 @@ class _WriterScreenState extends State<WriterScreen>
 
   Widget _buildNewWriteTab() {
     return SingleChildScrollView(
-      controller:
-          _scrollController,
-      keyboardDismissBehavior:
-          ScrollViewKeyboardDismissBehavior.onDrag,
-      padding:
-          const EdgeInsets.fromLTRB(
-        16,
-        18,
-        16,
-        30,
-      ),
-      child:
-          Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+      controller: _scrollController,
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildTopicCard(),
 
           if (_error != null) ...[
-            const SizedBox(
-              height:
-                  10,
-            ),
-            _ErrorBox(
-              message:
-                  _error!,
-            ),
+            const SizedBox(height: 10),
+            _ErrorBox(message: _error!),
           ],
 
-          const SizedBox(
-            height:
-                22,
+          const SizedBox(height: 18),
+
+          _buildDropdownCard(
+            label: 'Jenis Tulisan',
+            value: _selectedType,
+            options: _types,
+            onChanged: (v) => setState(() => _selectedType = v),
           ),
 
-          const _SectionLabel(
-            text:
-                'Pilih jenis tulisan',
+          const SizedBox(height: 14),
+
+          _buildDropdownCard(
+            label: 'Paper Selection (Format)',
+            value: _selectedPaper,
+            options: _papers,
+            onChanged: (v) => setState(() => _selectedPaper = v),
           ),
 
-          const SizedBox(
-            height:
-                10,
+          const SizedBox(height: 14),
+
+          _buildDropdownCard(
+            label: 'Bahasa (Language)',
+            value: _selectedLanguage,
+            options: _languages,
+            onChanged: (v) => setState(() => _selectedLanguage = v),
           ),
 
-          _buildTypeSelector(),
+          const SizedBox(height: 14),
 
-          const SizedBox(
-            height:
-                22,
+          _buildDropdownCard(
+            label: 'Model AI Engine',
+            value: _selectedAiModel,
+            options: _aiModels,
+            onChanged: (v) => setState(() => _selectedAiModel = v),
           ),
 
-          const _SectionLabel(
-            text:
-                'Nada tulisan',
+          const SizedBox(height: 14),
+
+          _buildDropdownCard(
+            label: 'Nada Tulisan (Tone)',
+            value: _selectedTone,
+            options: _tones,
+            onChanged: (v) => setState(() => _selectedTone = v),
           ),
 
-          const SizedBox(
-            height:
-                10,
-          ),
+          const SizedBox(height: 18),
 
-          _buildToneSelector(),
+          _buildSliderConfig(),
 
-          const SizedBox(
-            height:
-                28,
-          ),
+          const SizedBox(height: 16),
+
+          _buildInstructionsInput(),
+
+          const SizedBox(height: 24),
 
           _buildGenerateButton(),
 
-          // Tampilkan loading skeleton saat generate
           if (_isLoading) ...[
             const SizedBox(height: 28),
             _buildLoadingSkeleton(),
           ],
 
           if (_result.isNotEmpty && !_isLoading) ...[
-            const SizedBox(
-              height:
-                  28,
-            ),
+            const SizedBox(height: 28),
             _buildResultCard(),
           ],
 
-          const SizedBox(
-            height:
-                40,
-          ),
+          const SizedBox(height: 40),
         ],
       ),
+    );
+  }
+
+  Widget _buildDropdownCard({
+    required String label,
+    required String value,
+    required List<String> options,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionLabel(text: label),
+        const SizedBox(height: 6),
+        InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            showModalBottomSheet<void>(
+              context: context,
+              backgroundColor: AppTheme.surfaceLight,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              builder: (ctx) => Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text('Pilih $label', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textPrimary)),
+                  ),
+                  const Divider(height: 1),
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: options.map((opt) => ListTile(
+                        title: Text(opt, style: TextStyle(fontWeight: opt == value ? FontWeight.bold : FontWeight.normal, color: AppTheme.textPrimary)),
+                        trailing: opt == value ? const Icon(Icons.check_rounded, color: AppTheme.primary) : null,
+                        onTap: () {
+                          onChanged(opt);
+                          Navigator.pop(ctx);
+                        },
+                      )).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceLight,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppTheme.borderLight),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(value, style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600, fontSize: 13.5)),
+                const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSliderConfig() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const _SectionLabel(text: 'Jumlah Paragraf'),
+            Text('$_paragraphCount Paragraf', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 13)),
+          ],
+        ),
+        Slider(
+          value: _paragraphCount.toDouble(),
+          min: 1,
+          max: 10,
+          divisions: 9,
+          activeColor: AppTheme.primary,
+          onChanged: (v) => setState(() => _paragraphCount = v.toInt()),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const _SectionLabel(text: 'Maksimal Kata'),
+            Text('$_maxWords Kata', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 13)),
+          ],
+        ),
+        Slider(
+          value: _maxWords.toDouble(),
+          min: 100,
+          max: 3000,
+          divisions: 29,
+          activeColor: AppTheme.primary,
+          onChanged: (v) => setState(() => _maxWords = v.toInt()),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInstructionsInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionLabel(text: 'Instruksi Tambahan (Opsional)'),
+        const SizedBox(height: 6),
+        TextField(
+          controller: _instructionsController,
+          maxLines: 2,
+          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+          decoration: InputDecoration(
+            hintText: 'Misal: Sertakan contoh kasus di Indonesia & kutipan jurnal...',
+            hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 12.5),
+            fillColor: AppTheme.surfaceLight,
+            filled: true,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.borderLight)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.borderLight)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primary)),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1052,107 +1194,11 @@ class _WriterScreenState extends State<WriterScreen>
     );
   }
 
-  // ==========================================================
-  // TYPE
-  // ==========================================================
-
-  Widget _buildTypeSelector() {
-    return SizedBox(
-      height:
-          43,
-      child:
-          ListView.separated(
-        scrollDirection:
-            Axis.horizontal,
-        physics:
-            const BouncingScrollPhysics(),
-        itemCount:
-            _types.length,
-        separatorBuilder:
-            (_, __) =>
-                const SizedBox(
-          width:
-              8,
-        ),
-        itemBuilder:
-            (
-          context,
-          index,
-        ) {
-          final type =
-              _types[index];
-
-          return _ChoiceChip(
-            label:
-                type,
-            selected:
-                type ==
-                    _selectedType,
-            onTap:
-                () {
-              setState(() {
-                _selectedType =
-                    type;
-              });
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  // ==========================================================
-  // TONE
-  // ==========================================================
-
-  Widget _buildToneSelector() {
-    return SizedBox(
-      height:
-          43,
-      child:
-          ListView.separated(
-        scrollDirection:
-            Axis.horizontal,
-        physics:
-            const BouncingScrollPhysics(),
-        itemCount:
-            _tones.length,
-        separatorBuilder:
-            (_, __) =>
-                const SizedBox(
-          width:
-              8,
-        ),
-        itemBuilder:
-            (
-          context,
-          index,
-        ) {
-          final tone =
-              _tones[index];
-
-          return _ChoiceChip(
-            label:
-                tone,
-            selected:
-                tone ==
-                    _selectedTone,
-            onTap:
-                () {
-              setState(() {
-                _selectedTone =
-                    tone;
-              });
-            },
-          );
-        },
-      ),
-    );
-  }
 
   // ==========================================================
   // GENERATE BUTTON
   // ==========================================================
+
 
   Widget _buildGenerateButton() {
     return SizedBox(
@@ -1201,10 +1247,10 @@ class _WriterScreenState extends State<WriterScreen>
                 Center(
               child:
                   _isLoading
-                      ? Row(
+                      ? const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const SizedBox(
+                            SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
@@ -1212,7 +1258,7 @@ class _WriterScreenState extends State<WriterScreen>
                                 color: AppTheme.primary,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            SizedBox(width: 10),
                             Text(
                               'Sedang membuat...',
                               style: TextStyle(
@@ -1255,23 +1301,23 @@ class _WriterScreenState extends State<WriterScreen>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.borderLight),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SkeletonLine(width: double.infinity, height: 14),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           _SkeletonLine(width: double.infinity, height: 14),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           _SkeletonLine(width: 240, height: 14),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           _SkeletonLine(width: double.infinity, height: 14),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           _SkeletonLine(width: double.infinity, height: 14),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           _SkeletonLine(width: 180, height: 14),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           _SkeletonLine(width: double.infinity, height: 14),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           _SkeletonLine(width: 200, height: 14),
         ],
       ),
@@ -1502,7 +1548,7 @@ class _WriterScreenState extends State<WriterScreen>
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
+                const Text(
                   'Max upload per file: 10MB • Format: PDF, DOC, DOCX, TXT, MD',
                   style: TextStyle(
                     color: AppTheme.textMuted,
@@ -1603,7 +1649,12 @@ class _WriterScreenState extends State<WriterScreen>
               itemBuilder: (context, index) {
                 final file = _myFiles[index];
                 final fileName = file['name']?.toString() ?? 'File';
-                final fileSize = (file['size'] is num) ? ((file['size'] as num) / 1024).toStringAsFixed(1) : '0';
+                final fileSize = () {
+                  final raw = file['size'];
+                  if (raw == null) return '0';
+                  final bytes = raw is num ? raw : num.tryParse(raw.toString()) ?? 0;
+                  return (bytes / 1024).toStringAsFixed(1);
+                }();
                 final fileStatus = file['status']?.toString() ?? 'ready';
 
                 return Container(
@@ -1766,105 +1817,6 @@ class _SectionLabel
             FontWeight.w600,
         fontSize:
             14,
-      ),
-    );
-  }
-}
-
-// ============================================================
-// CHOICE CHIP
-// ============================================================
-
-class _ChoiceChip
-    extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _ChoiceChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return Material(
-      color:
-          Colors.transparent,
-      borderRadius:
-          BorderRadius.circular(
-        22,
-      ),
-      child:
-          InkWell(
-        onTap:
-            onTap,
-        borderRadius:
-            BorderRadius.circular(
-          22,
-        ),
-        child:
-            Ink(
-          padding:
-              const EdgeInsets
-                  .symmetric(
-            horizontal:
-                17,
-          ),
-          decoration:
-              BoxDecoration(
-            gradient:
-                selected
-                    ? AppTheme
-                        .primaryGradient
-                    : null,
-            color:
-                selected
-                    ? null
-                    : AppTheme
-                        .surfaceLight,
-            borderRadius:
-                BorderRadius.circular(
-              22,
-            ),
-            border:
-                Border.all(
-              color:
-                  selected
-                      ? Colors.transparent
-                      : AppTheme
-                          .borderLight,
-            ),
-          ),
-          child:
-              Center(
-            child:
-                Text(
-              label,
-              maxLines:
-                  1,
-              overflow:
-                  TextOverflow.ellipsis,
-              style:
-                  TextStyle(
-                color:
-                    selected
-                        ? Colors.white
-                        : AppTheme
-                            .textSecondary,
-                fontWeight:
-                    selected
-                        ? FontWeight.w700
-                        : FontWeight.w500,
-                fontSize:
-                    12.5,
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

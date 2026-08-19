@@ -10,6 +10,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/services/api_service.dart';
 import '../shared/widgets/app_button.dart';
+import '../shared/widgets/app_sidebar_drawer.dart';
 
 class ToolsScreen extends StatefulWidget {
   const ToolsScreen({
@@ -42,6 +43,13 @@ class _ToolsScreenState
   String _selectedPlagService = 'turnitin';
   File? _selectedPlagFile;
 
+  // Plagiarism author fields
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _whatsappController = TextEditingController();
+  bool _excludeBibliography = false;
+  bool _excludeQuotes = false;
+
   final List<String> _languages = ['Indonesia', 'English'];
   final List<String> _paraModes = [
     'standard',
@@ -54,11 +62,13 @@ class _ToolsScreenState
     'shorten'
   ];
   final List<String> _humanModes = ['basic', 'advanced'];
-  final List<String> _plagServices = ['turnitin', 'drillbot'];
 
   @override
   void dispose() {
     _textController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _whatsappController.dispose();
     super.dispose();
   }
 
@@ -87,6 +97,18 @@ class _ToolsScreenState
   // ==========================================================
 
   Future<void> _processText() async {
+    if (_activeTab == 'humanize') {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Humanize AI akan segera tersedia.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      return;
+    }
+
     final text = _textController.text.trim();
     // Capture context-dependent values before any await
     final authUser = context.read<AuthProvider>().user;
@@ -496,6 +518,7 @@ class _ToolsScreenState
         context.watch<AuthProvider>();
 
     return Scaffold(
+      drawer: const AppSidebarDrawer(),
       backgroundColor:
           AppTheme.backgroundApp,
       appBar: AppBar(
@@ -619,7 +642,7 @@ class _ToolsScreenState
   // ==========================================================
 
   Widget _buildOptionsConfig() {
-    if (_activeTab == 'plagiarism') {
+    if (_activeTab == 'humanize') {
       return Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
@@ -628,44 +651,116 @@ class _ToolsScreenState
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppTheme.borderLight),
         ),
+        child: const Row(
+          children: [
+            Icon(Icons.info_outline_rounded, color: AppTheme.primary, size: 18),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Fitur Humanize AI akan membuat teks terdeteksi 100% buatan manusia.',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_activeTab == 'plagiarism') {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceLight,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.borderLight),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Layanan Pengecekan:', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
+            const Text('Pilih Layanan:', style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
             Row(
-              children: _plagServices.map((service) {
-                final selected = service == _selectedPlagService;
-                final isTurnitin = service == 'turnitin';
-                return Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(right: isTurnitin ? 6 : 0),
-                    child: ChoiceChip(
-                      label: Center(
-                        child: Text(
-                          isTurnitin ? 'Turnitin Check' : 'Drillbot AI Check',
-                          style: TextStyle(color: selected ? Colors.white : AppTheme.textPrimary, fontSize: 11.5, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                      selected: selected,
-                      selectedColor: AppTheme.primary,
-                      onSelected: (val) {
-                        if (val) setState(() => _selectedPlagService = service);
-                      },
+              children: [
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Center(child: Text('Turnitin Check', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
+                    selected: _selectedPlagService == 'turnitin',
+                    selectedColor: AppTheme.primary,
+                    labelStyle: TextStyle(color: _selectedPlagService == 'turnitin' ? Colors.white : AppTheme.textPrimary),
+                    onSelected: (val) {
+                      if (val) setState(() => _selectedPlagService = 'turnitin');
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Center(child: Text('Drillbot Check', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
+                    selected: _selectedPlagService == 'drillbot',
+                    selectedColor: AppTheme.primary,
+                    labelStyle: TextStyle(color: _selectedPlagService == 'drillbot' ? Colors.white : AppTheme.textPrimary),
+                    onSelected: (val) {
+                      if (val) setState(() => _selectedPlagService = 'drillbot');
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const Text('Data Penulis:', style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _firstNameController,
+                    style: const TextStyle(fontSize: 12.5, color: AppTheme.textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Nama Depan',
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
-                );
-              }).toList(),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _lastNameController,
+                    style: const TextStyle(fontSize: 12.5, color: AppTheme.textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Nama Belakang',
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _whatsappController,
+              keyboardType: TextInputType.phone,
+              style: const TextStyle(fontSize: 12.5, color: AppTheme.textPrimary),
+              decoration: InputDecoration(
+                hintText: 'No WhatsApp (08xxxxxxxx)',
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+            const SizedBox(height: 14),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
                     _selectedPlagFile != null
-                        ? 'File: ${_selectedPlagFile!.path.split(Platform.pathSeparator).last}'
-                        : 'Atau Upload Dokumen (PDF/Doc/Txt):',
-                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 12),
+                        ? 'Dokumen: ${_selectedPlagFile!.path.split(Platform.pathSeparator).last}'
+                        : 'Upload Dokumen (PDF/Doc/Txt):',
+                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -682,14 +777,48 @@ class _ToolsScreenState
                       });
                     }
                   },
-                  icon: const Icon(Icons.attach_file_rounded, size: 16),
-                  label: Text(_selectedPlagFile != null ? 'Ganti File' : 'Pilih File'),
+                  icon: const Icon(Icons.upload_file_rounded, size: 16),
+                  label: Text(_selectedPlagFile != null ? 'Ganti File' : 'Upload File'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     visualDensity: VisualDensity.compact,
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+            const Text('Pengaturan Pengecualian:', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11.5, fontWeight: FontWeight.bold)),
+            Row(
+              children: [
+                Checkbox(
+                  value: _excludeBibliography,
+                  activeColor: AppTheme.primary,
+                  onChanged: (v) => setState(() => _excludeBibliography = v ?? true),
+                ),
+                const Text('Abaikan Daftar Pustaka', style: TextStyle(fontSize: 11, color: AppTheme.textPrimary)),
+                const SizedBox(width: 8),
+                Checkbox(
+                  value: _excludeQuotes,
+                  activeColor: AppTheme.primary,
+                  onChanged: (v) => setState(() => _excludeQuotes = v ?? true),
+                ),
+                const Text('Abaikan Kutipan', style: TextStyle(fontSize: 11, color: AppTheme.textPrimary)),
+              ],
+            ),
+            const Divider(height: 16),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Biaya Pengecekan Plagiarisme:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                  Text('Rp 22.000 / file', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                ],
+              ),
             ),
           ],
         ),

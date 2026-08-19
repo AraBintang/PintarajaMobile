@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "537328365262",
+    "project_id": "pintaraja-89bc2",
+    "storage_bucket": "pintaraja-89bc2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:537328365262:android:2904a257751816bb64aa9f",
+        "android_client_info": {
+          "package_name": "com.example.pintaraja_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "537328365262-8h3loik3emd7dasa45rif3p21bneqf3j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.pintaraja_app",
+            "certificate_hash": "fcc8ba064b46455589c0fcf88feb7ee3f01b5730"
+          }
+        },
+        {
+          "client_id": "537328365262-vq3vpoqddd8mq7hoi1gres5tukjbq7vf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD37PslZBMzZ_zHYfqagFyoKOwetWqGuNg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "537328365262-vq3vpoqddd8mq7hoi1gres5tukjbq7vf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -46,6 +46,9 @@ dependencies:
   permission_handler: ^11.3.1
   path_provider: ^2.1.4
   
+  # Google Auth
+  google_sign_in: ^6.2.1
+
   # Chat streaming
   flutter_markdown: ^0.6.23
 

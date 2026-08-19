@@ -27,6 +27,9 @@ class ApiConstants {
   static const String login =
       '$baseUrl/login';
 
+  static const String loginGoogle =
+      '$baseUrl/auth/google';
+
   static const String register =
       '$baseUrl/register';
 

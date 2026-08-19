@@ -126,10 +126,26 @@ class AppSidebarDrawer extends StatelessWidget {
             ),
             _buildWorkspaceItem(
               context,
-              icon: Icons.grid_view_rounded,
-              title: lang.translate('tools_ai'),
-              route: '/tools',
-              isActive: currentRoute == '/tools',
+              icon: Icons.repeat_rounded,
+              title: 'Paraphrase',
+              route: '/paraphrase',
+              isActive: currentRoute == '/paraphrase',
+              comingSoon: true,
+            ),
+            _buildWorkspaceItem(
+              context,
+              icon: Icons.person_outline_rounded,
+              title: 'Humanize',
+              route: '/humanize',
+              isActive: currentRoute == '/humanize',
+              comingSoon: true,
+            ),
+            _buildWorkspaceItem(
+              context,
+              icon: Icons.plagiarism_outlined,
+              title: 'Plagiatisme',
+              route: '/plagiarism',
+              isActive: currentRoute == '/plagiarism',
             ),
 
             const SizedBox(height: 10),
@@ -240,31 +256,68 @@ class AppSidebarDrawer extends StatelessWidget {
     required String title,
     required String route,
     required bool isActive,
+    bool comingSoon = false,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       child: ListTile(
-        onTap: () {
-          Navigator.pop(context);
-          context.go(route);
-        },
+        onTap: comingSoon
+            ? () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$title akan segera hadir!'),
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            : () {
+                Navigator.pop(context);
+                context.go(route);
+              },
         dense: true,
         selected: isActive,
         selectedTileColor: AppTheme.primary.withValues(alpha: 0.12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         leading: Icon(
           icon,
-          color: isActive ? AppTheme.primary : AppTheme.getTextSecondary(context),
+          color: comingSoon
+              ? AppTheme.getTextSecondary(context)
+              : isActive
+                  ? AppTheme.primary
+                  : AppTheme.getTextSecondary(context),
           size: 20,
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: isActive ? AppTheme.primary : AppTheme.getTextColor(context),
+            color: comingSoon
+                ? AppTheme.getTextSecondary(context)
+                : isActive
+                    ? AppTheme.primary
+                    : AppTheme.getTextColor(context),
             fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
             fontSize: 13.5,
           ),
         ),
+        trailing: comingSoon
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Soon',
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              )
+            : null,
       ),
     );
   }

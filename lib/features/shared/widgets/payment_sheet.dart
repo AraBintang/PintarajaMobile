@@ -17,6 +17,24 @@ class PaymentSelectionSheet extends StatefulWidget {
     required this.onPaymentSuccess,
   });
 
+  static void show(
+    BuildContext context, {
+    required String itemTitle,
+    required int amount,
+    required VoidCallback onPaymentSuccess,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => PaymentSelectionSheet(
+        itemName: itemTitle,
+        price: amount.toDouble(),
+        onPaymentSuccess: onPaymentSuccess,
+      ),
+    );
+  }
+
   @override
   State<PaymentSelectionSheet> createState() => _PaymentSelectionSheetState();
 }

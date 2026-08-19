@@ -315,6 +315,63 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ==========================================================
+  // GOOGLE LOGIN
+  // ==========================================================
+
+  Future<bool> loginWithGoogle({String? googleToken, String? accessToken}) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      final body = <String, String>{};
+      if (googleToken != null) body['id_token'] = googleToken;
+      if (accessToken != null) body['access_token'] = accessToken;
+      // fallback: send token as both for compatibility
+      if (googleToken != null && accessToken == null) {
+        body['access_token'] = googleToken;
+      }
+
+      final data = await ApiService.instance.post(
+        ApiConstants.loginGoogle,
+        body,
+        useAuth: false,
+      );
+
+      if (data is! Map) {
+        throw const ApiException('Response login Google tidak valid.');
+      }
+
+      final token = data['token'] ?? data['access_token'] ?? data['data']?['token'];
+      if (token == null || token.toString().isEmpty) {
+        throw const ApiException('Token otentikasi Google tidak ditemukan.');
+      }
+
+      await StorageService.saveToken(token.toString(), remember: true);
+
+      final rawUser = data['user'] ?? data['data']?['user'];
+      if (rawUser is Map) {
+        _user = UserModel.fromJson(Map<String, dynamic>.from(rawUser));
+        await StorageService.saveUser(_user!.toJson(), persistent: true);
+      } else {
+        await _fetchUser();
+      }
+
+      _status = AuthStatus.authenticated;
+      _setLoading(false);
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      _error = 'Gagal melakukan login dengan Google.';
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  // ==========================================================
   // BACKGROUND USER REFRESH
   // ==========================================================
 
