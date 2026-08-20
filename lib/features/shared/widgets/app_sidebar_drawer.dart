@@ -11,7 +11,9 @@ import '../../../data/providers/chat_provider.dart';
 import '../../../data/providers/language_provider.dart';
 
 class AppSidebarDrawer extends StatelessWidget {
-  const AppSidebarDrawer({super.key});
+  final VoidCallback? onSearchTap;
+
+  const AppSidebarDrawer({super.key, this.onSearchTap});
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +66,27 @@ class AppSidebarDrawer extends StatelessWidget {
                       letterSpacing: -0.5,
                     ),
                   ),
+                  const Spacer(),
+                  if (onSearchTap != null)
+                    Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                          onSearchTap!();
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: AppTheme.getTextSecondary(context),
+                            size: 21,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -130,14 +153,13 @@ class AppSidebarDrawer extends StatelessWidget {
               title: 'Paraphrase',
               route: '/paraphrase',
               isActive: currentRoute == '/paraphrase',
-              comingSoon: true,
             ),
             _buildWorkspaceItem(
               context,
               icon: Icons.person_outline_rounded,
               title: 'Humanize',
-              route: '/humanize',
-              isActive: currentRoute == '/humanize',
+              route: '/tools',
+              isActive: currentRoute == '/tools',
               comingSoon: true,
             ),
             _buildWorkspaceItem(
@@ -146,6 +168,13 @@ class AppSidebarDrawer extends StatelessWidget {
               title: 'Plagiatisme',
               route: '/plagiarism',
               isActive: currentRoute == '/plagiarism',
+            ),
+            _buildWorkspaceItem(
+              context,
+              icon: Icons.record_voice_over_rounded,
+              title: 'Transcribe AI',
+              route: '/transcribe',
+              isActive: currentRoute == '/transcribe',
             ),
 
             const SizedBox(height: 10),

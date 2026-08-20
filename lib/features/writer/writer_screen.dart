@@ -1,403 +1,176 @@
-// ============================================================
-// PINTARAJA — WRITER SCREEN
-// AI Writer — Fase 5 Fix
-// Responsive Android 720x1520
-// ============================================================
-
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-
 
 import '../../core/constants/api_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/providers/chat_provider.dart';
-import '../../data/services/api_service.dart';
+import '../../data/services/storage_service.dart';
 import '../shared/widgets/app_sidebar_drawer.dart';
 
 class WriterScreen extends StatefulWidget {
-  const WriterScreen({
-    super.key,
-  });
+  const WriterScreen({super.key});
 
   @override
-  State<WriterScreen> createState() {
-    return _WriterScreenState();
-  }
+  State<WriterScreen> createState() => _WriterScreenState();
 }
 
-class _WriterScreenState extends State<WriterScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
-  final TextEditingController _topicController =
-      TextEditingController();
-
-  final ScrollController _scrollController =
-      ScrollController();
-
-  String _selectedType = 'Essay';
-  String _selectedTone = 'Formal';
-  String _selectedPaper = 'Standard Academic';
-  String _selectedLanguage = 'Bahasa Indonesia';
-  String _selectedAiModel = 'GPT-4o';
-  int _paragraphCount = 3;
-  int _maxWords = 500;
+class _WriterScreenState extends State<WriterScreen> {
+  final TextEditingController _topicController = TextEditingController();
   final TextEditingController _instructionsController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  int? _selectedProviderId;
 
   String _result = '';
   String? _error;
-
   bool _isLoading = false;
-
   int _charCount = 0;
 
-  List<Map<String, dynamic>> _myFiles = [];
-  Map<String, dynamic>? _storageQuota;
-  bool _isLoadingFiles = false;
-  bool _isUploadingFile = false;
-  String? _filesError;
+  // File upload state
+  File? _attachedFile;
+  String? _attachedFileName;
 
-  final List<String> _types = [
-    'Essay',
-    'Artikel Akademik',
-    'Blog Post',
-    'Makalah / Skripsi',
-    'Jurnal Ilmiah',
-    'Ringkasan Buku',
-    'Surat Formal',
-    'Lainnya',
-  ];
-
-  final List<String> _tones = [
-    'Formal',
-    'Netral',
-    'Santai',
-    'Ilmiah',
-    'Kreatif',
-    'Persuasif',
-  ];
-
-  final List<String> _papers = [
-    'Standard Academic',
-    'APA 7th Edition',
-    'MLA 9th Edition',
-    'IEEE Format',
-    'Chicago Manual',
-  ];
-
-  final List<String> _languages = [
-    'Bahasa Indonesia',
-    'English (US)',
-    'English (UK)',
-    'Jawa',
-    'Sunda',
-  ];
-
-  final List<String> _aiModels = [
-    'GPT-4o',
-    'Gemini 1.5 Pro',
-    'Claude 3.5 Sonnet',
-    'DeepSeek R1',
-  ];
-
-  // Maksimum ukuran file upload: 10MB
-  static const int _maxFileSizeBytes = 10 * 1024 * 1024;
+  static const int _maxCharacters = 12000;
 
   @override
   void initState() {
     super.initState();
-
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-    );
-
-    _tabController.addListener(_handleTabChanged);
-
-    _topicController.addListener(
-      _handleTopicChanged,
-    );
-  }
-
-  void _handleTabChanged() {
-    if (_tabController.indexIsChanging && _tabController.index == 1) {
-      _loadMyFiles();
-    }
+    _topicController.addListener(_handleTopicChanged);
   }
 
   @override
   void dispose() {
-    _tabController.removeListener(_handleTabChanged);
-    _topicController.removeListener(
-      _handleTopicChanged,
-    );
-
+    _topicController.removeListener(_handleTopicChanged);
     _topicController.dispose();
+    _instructionsController.dispose();
     _scrollController.dispose();
-    _tabController.dispose();
-
     super.dispose();
   }
 
-  // ==========================================================
-  // LOAD & MANAGE FILES
-  // ==========================================================
-
-  Future<void> _loadMyFiles() async {
+  void _handleTopicChanged() {
+    if (!mounted) return;
     setState(() {
-      _isLoadingFiles = true;
-      _filesError = null;
+      _charCount = _topicController.text.length;
     });
-
-    try {
-      final data = await ApiService.instance.get(ApiConstants.writerFiles);
-      if (data is Map) {
-        final rawFiles = data['files'];
-        final quotaData = data['quota'];
-        if (rawFiles is List) {
-          _myFiles = List<Map<String, dynamic>>.from(
-            rawFiles.whereType<Map>().map((e) => Map<String, dynamic>.from(e)),
-          );
-        }
-        if (quotaData is Map) {
-          _storageQuota = Map<String, dynamic>.from(quotaData);
-        }
-      }
-    } on ApiException catch (e) {
-      _filesError = e.message;
-    } catch (_) {
-      _filesError = 'Gagal memuat daftar file.';
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingFiles = false;
-        });
-      }
-    }
   }
 
   int _resolveWriterProviderId(ChatProvider chatProvider) {
-    final selectedId = chatProvider.selectedProviderId;
-
-    if (selectedId != null &&
-        selectedId > 0 &&
-        chatProvider.aiProviders.any((provider) => provider.id == selectedId)) {
-      return selectedId;
+    if (_selectedProviderId != null &&
+        _selectedProviderId! > 0 &&
+        chatProvider.aiProviders.any((p) => p.id == _selectedProviderId)) {
+      return _selectedProviderId!;
     }
-
-    for (final provider in chatProvider.aiProviders) {
-      final code = provider.code.toLowerCase();
-      final model = provider.model.toLowerCase();
-
-      if (code.contains('gpt') || model.contains('gpt')) {
-        return provider.id;
-      }
-    }
-
-    if (chatProvider.aiProviders.isNotEmpty) {
-      return chatProvider.aiProviders.first.id;
-    }
-
-    return 1;
+    return chatProvider.selectedProviderId ??
+        (chatProvider.aiProviders.isNotEmpty ? chatProvider.aiProviders.first.id : 1);
   }
 
-  Future<File?> _resolvePickedFile(PlatformFile file) async {
-    // Prioritaskan path langsung
-    if (file.path != null && file.path!.isNotEmpty) {
-      final f = File(file.path!);
-      if (await f.exists()) return f;
-    }
+  // ==========================================================
+  // FILE UPLOAD
+  // ==========================================================
 
-    // Fallback ke bytes kalau path tidak tersedia (web/beberapa device)
-    if (file.bytes != null && file.bytes!.isNotEmpty) {
-      final tempDir = await Directory.systemTemp.createTemp('pintaraja_writer_');
-      final tempFile = File('${tempDir.path}/${file.name}');
-      await tempFile.writeAsBytes(file.bytes!);
-      return tempFile;
-    }
-
-    return null;
-  }
-
-  Future<void> _uploadFile() async {
-    final chatProvider = context.read<ChatProvider>();
-    final providerId = _resolveWriterProviderId(chatProvider);
-
+  Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'md'],
-      // withData: true agar bytes tersedia di semua device Android
+      allowedExtensions: ['txt', 'doc', 'docx', 'pdf'],
       withData: true,
     );
 
-    if (result == null || result.files.isEmpty) {
-      return;
-    }
+    if (result == null || result.files.isEmpty) return;
 
-    final selectedFile = result.files.first;
-
-    // Validasi ekstensi
-    final extension = selectedFile.extension?.toLowerCase();
-    const allowedExtensions = {'pdf', 'doc', 'docx', 'txt', 'md'};
-
-    if (extension == null || !allowedExtensions.contains(extension)) {
+    final picked = result.files.first;
+    final ext = picked.extension?.toLowerCase();
+    const allowed = {'txt', 'doc', 'docx', 'pdf'};
+    if (ext == null || !allowed.contains(ext)) {
       if (!mounted) return;
-      setState(() {
-        _filesError = 'Format tidak didukung. Gunakan PDF, DOC, DOCX, TXT, atau MD.';
-      });
-      return;
-    }
-
-    // Validasi ukuran file (max 10MB)
-    final fileSize = selectedFile.size;
-    if (fileSize > _maxFileSizeBytes) {
-      if (!mounted) return;
-      setState(() {
-        final sizeMb = (fileSize / (1024 * 1024)).toStringAsFixed(1);
-        _filesError = 'File terlalu besar (${sizeMb}MB). Maksimum 10MB.';
-      });
-      return;
-    }
-
-    final file = await _resolvePickedFile(selectedFile);
-
-    if (file == null) {
-      if (!mounted) return;
-      setState(() {
-        _filesError = 'File tidak dapat dibaca. Coba file lain.';
-      });
-      return;
-    }
-
-    setState(() {
-      _isUploadingFile = true;
-      _filesError = null;
-    });
-
-    try {
-      await ApiService.instance.postMultipart(
-        ApiConstants.writerUploadFile,
-        fields: {
-          'providerId': providerId.toString(),
-        },
-        files: {
-          'file': file,
-        },
-        timeout: const Duration(seconds: 120),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Format tidak didukung. Gunakan TXT, DOC, DOCX, atau PDF.'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
+      return;
+    }
 
+    const maxBytes = 10 * 1024 * 1024;
+    if (picked.size > maxBytes) {
       if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('File terlalu besar (${(picked.size / (1024 * 1024)).toStringAsFixed(1)}MB). Maksimum 10MB.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('✅ File berhasil diunggah!'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+    File? file;
+    if (picked.path != null && picked.path!.isNotEmpty) {
+      file = File(picked.path!);
+      if (!await file.exists()) file = null;
+    }
+    file ??= await _writeTempFile(picked);
 
-      await _loadMyFiles();
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _filesError = e.message;
-      });
+    if (file == null) return;
+    setState(() {
+      _attachedFile = file;
+      _attachedFileName = picked.name;
+    });
+  }
+
+  Future<File?> _writeTempFile(PlatformFile file) async {
+    if (file.bytes == null || file.bytes!.isEmpty) return null;
+    final tempDir = await Directory.systemTemp.createTemp('pintaraja_writer_');
+    final tempFile = File('${tempDir.path}/${file.name}');
+    await tempFile.writeAsBytes(file.bytes!);
+    return tempFile;
+  }
+
+  void _removeAttachedFile() {
+    setState(() {
+      _attachedFile = null;
+      _attachedFileName = null;
+    });
+  }
+
+  Future<void> _uploadAttachedFile(int providerId) async {
+    if (_attachedFile == null) return;
+    try {
+      final token = StorageService.getToken();
+      final uri = Uri.parse(ApiConstants.writerUploadFile);
+      final request = http.MultipartRequest('POST', uri)
+        ..headers['Authorization'] = 'Bearer $token'
+        ..fields['providerId'] = providerId.toString()
+        ..files.add(await http.MultipartFile.fromPath('file', _attachedFile!.path));
+
+      final response = await request.send().timeout(const Duration(seconds: 120));
+      final body = await response.stream.bytesToString();
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(content: Text('File berhasil diunggah!'), behavior: SnackBarBehavior.floating),
+          );
+        _removeAttachedFile();
+      } else {
+        final decoded = jsonDecode(body);
+        throw Exception(decoded['message'] ?? 'Gagal mengunggah file.');
+      }
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _filesError = 'Gagal mengunggah file. Pastikan koneksi internet stabil.';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isUploadingFile = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _deleteFile(Map<String, dynamic> fileData) async {
-    final fileId = fileData['fileId']?.toString();
-    final vectorStoreId = fileData['vectorStoreId']?.toString();
-    final providerId = fileData['providerId'] ?? 1;
-
-    if (fileId == null || vectorStoreId == null) return;
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surfaceLight,
-        title: const Text('Hapus File',
-            style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700)),
-        content: Text(
-            'Apakah kamu yakin ingin menghapus ${fileData['name'] ?? 'file ini'}?',
-            style: const TextStyle(color: AppTheme.textSecondary)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Hapus', style: TextStyle(color: Colors.red))),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    try {
-      await ApiService.instance.deleteWithBody(
-        ApiConstants.writerDeleteFile,
-        {
-          'providerId': providerId,
-          'fileId': fileId,
-          'vectorStoreId': vectorStoreId,
-        },
-      );
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('File berhasil dihapus.'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-
-      await _loadMyFiles();
-    } on ApiException catch (e) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menghapus file: ${e.message}')),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal menghapus file.')),
+        SnackBar(content: Text('Gagal upload file: $e'), behavior: SnackBarBehavior.floating),
       );
     }
-  }
-
-  // ==========================================================
-  // TOPIC
-  // ==========================================================
-
-  void _handleTopicChanged() {
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _charCount =
-          _topicController.text.length;
-    });
   }
 
   // ==========================================================
@@ -405,23 +178,31 @@ class _WriterScreenState extends State<WriterScreen>
   // ==========================================================
 
   Future<void> _generate() async {
-    final topic =
-        _topicController.text.trim();
-
+    final topic = _topicController.text.trim();
     if (topic.isEmpty) {
-      setState(() {
-        _error =
-            'Topik tidak boleh kosong.';
-      });
-
+      setState(() => _error = 'Topik tidak boleh kosong.');
       return;
     }
-
-    if (_isLoading) {
-      return;
-    }
+    if (_isLoading) return;
 
     FocusScope.of(context).unfocus();
+
+    final chatProvider = context.read<ChatProvider>();
+    final providerId = _resolveWriterProviderId(chatProvider);
+
+    final provider = chatProvider.aiProviders.where((p) => p.id == providerId).firstOrNull;
+    if (provider != null && provider.quota.isExhausted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text('Kuota ${provider.displayName} untuk hari ini sudah habis.'),
+            backgroundColor: AppTheme.warning,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -429,175 +210,195 @@ class _WriterScreenState extends State<WriterScreen>
       _result = '';
     });
 
-    try {
-      final chatProvider = context.read<ChatProvider>();
-      final providerId = _resolveWriterProviderId(chatProvider);
+    // Upload attached file first if present
+    if (_attachedFile != null) {
+      await _uploadAttachedFile(providerId);
+      if (_attachedFile != null) {
+        // Upload failed, abort generation
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _error = 'File upload gagal. Generasi dibatalkan.';
+          });
+        }
+        return;
+      }
+    }
 
+    try {
       final extraInst = _instructionsController.text.trim();
       final promptMessage = '''
-Tolong buatkan artikel/tulisan jenis "$_selectedType" dengan ketentuan berikut:
-- Format Paper: $_selectedPaper
-- Nada Tulisan: $_selectedTone
-- Bahasa: $_selectedLanguage
-- Model AI: $_selectedAiModel
-- Target Panjang: $_paragraphCount paragraf (Maksimal $_maxWords kata)
-${extraInst.isNotEmpty ? '- Instruksi Tambahan: $extraInst\n' : ''}
-Topik utama:
-$topic
+Topik: $topic
+${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
 ''';
 
-      final data =
-          await ApiService.instance.post(
-        ApiConstants.writer,
-        {
-          'providerId': providerId,
-          'message': promptMessage,
-        },
-        timeout:
-            const Duration(
-          seconds: 120,
-        ),
-      );
-
-      if (!mounted) {
-        return;
+      final token = StorageService.getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('Sesi login tidak ditemukan.');
       }
 
-      final result =
-          _extractWriterResult(
-        data,
-      );
+      final response = await http
+          .post(
+            Uri.parse(ApiConstants.writer),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json, text/event-stream',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({
+              'providerId': providerId,
+              'message': promptMessage,
+            }),
+          )
+          .timeout(const Duration(seconds: 120));
+
+      if (!mounted) return;
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        final body = response.body;
+        try {
+          final decoded = jsonDecode(body);
+          throw Exception(decoded['message'] ?? decoded['error'] ?? 'Gagal membuat tulisan.');
+        } catch (_) {
+          if (body.isNotEmpty) throw Exception(body);
+          throw Exception('Gagal membuat tulisan. (${response.statusCode})');
+        }
+      }
+
+      final raw = utf8.decode(response.bodyBytes);
+      final result = _parseWriterResponse(raw);
 
       if (result.isEmpty) {
-        setState(() {
-          _error =
-              'Writer tidak mengembalikan hasil tulisan.';
-        });
-
+        setState(() => _error = 'Writer tidak mengembalikan hasil tulisan.');
         return;
       }
 
-      setState(() {
-        _result = result;
-      });
+      setState(() => _result = result);
 
-      await context
-          .read<AuthProvider>()
-          .refreshUser();
+      await context.read<AuthProvider>().refreshUser();
 
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       _scrollToResult();
-    } on ApiException catch (e) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _error = e.message;
-      });
+    } on Exception catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _error =
-            'Gagal membuat tulisan. Coba lagi.';
-      });
+      if (!mounted) return;
+      setState(() => _error = 'Gagal membuat tulisan. Coba lagi.');
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   // ==========================================================
-  // EXTRACT RESULT
+  // PARSE RESPONSE (JSON or SSE)
   // ==========================================================
 
-  String _extractWriterResult(
-    dynamic data,
-  ) {
-    if (data is String) {
-      return _cleanHtmlFormatting(data.trim());
-    }
+  String _parseWriterResponse(String raw) {
+    final response = raw.trim();
+    if (response.isEmpty) return '';
 
-    if (data is Map) {
-      final candidates = [
-        data['result'],
-        data['content'],
-        data['text'],
-        data['output'],
-        data['answer'],
-        data['message'],
-      ];
+    // Try normal JSON
+    try {
+      final data = jsonDecode(response);
+      final text = _extractTextFromJson(data);
+      if (text.isNotEmpty) return _cleanHtmlFormatting(text);
+    } catch (_) {}
 
-      for (final value in candidates) {
-        if (value == null) {
-          continue;
-        }
-
-        final text =
-            value.toString().trim();
-
-        if (text.isNotEmpty) {
-          return _cleanHtmlFormatting(text);
-        }
-      }
-
-      final nested =
-          data['data'];
-
-      if (nested is Map) {
-        return _extractWriterResult(
-          nested,
-        );
+    // Try SSE
+    final buffer = StringBuffer();
+    final lines = response.split(RegExp(r'\r?\n'));
+    for (final rawLine in lines) {
+      final line = rawLine.trim();
+      if (!line.startsWith('data:')) continue;
+      final payload = line.substring(5).trim();
+      if (payload.isEmpty || payload == '[DONE]') continue;
+      try {
+        final data = jsonDecode(payload);
+        final text = _extractTextFromJson(data);
+        if (text.isNotEmpty) buffer.write(text);
+      } catch (_) {
+        buffer.write(payload);
       }
     }
+
+    final sseResult = buffer.toString().trim();
+    if (sseResult.isNotEmpty) return _cleanHtmlFormatting(sseResult);
+
+    return _cleanHtmlFormatting(response);
+  }
+
+  String _extractTextFromJson(dynamic data) {
+    if (data is String) return data;
+    if (data is! Map) return '';
+
+    final keys = ['result', 'content', 'text', 'output', 'answer', 'message', 'response', 'delta'];
+    for (final key in keys) {
+      final value = data[key];
+      if (value is String && value.trim().isNotEmpty) return value;
+    }
+
+    final choices = data['choices'];
+    if (choices is List && choices.isNotEmpty) {
+      final first = choices.first;
+      if (first is Map) {
+        final msg = first['message'];
+        if (msg is Map && msg['content'] is String) return msg['content'];
+        final delta = first['delta'];
+        if (delta is Map && delta['content'] is String) return delta['content'];
+        if (first['text'] is String) return first['text'];
+      }
+    }
+
+    final nested = data['data'];
+    if (nested is Map) return _extractTextFromJson(nested);
 
     return '';
   }
 
   String _cleanHtmlFormatting(String raw) {
     if (raw.isEmpty) return raw;
-
     String clean = raw;
     clean = clean.replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
     clean = clean.replaceAll(RegExp(r'</p\s*>', caseSensitive: false), '\n\n');
     clean = clean.replaceAll(RegExp(r'<p[^>]*>', caseSensitive: false), '');
     clean = clean.replaceAll(RegExp(r'</div\s*>', caseSensitive: false), '\n');
     clean = clean.replaceAll(RegExp(r'<div[^>]*>', caseSensitive: false), '');
-
-    // Convert bold HTML to Markdown
     clean = clean.replaceAll(RegExp(r'<\s*b\s*>', caseSensitive: false), '**');
     clean = clean.replaceAll(RegExp(r'<\s*/\s*b\s*>', caseSensitive: false), '**');
     clean = clean.replaceAll(RegExp(r'<\s*strong\s*>', caseSensitive: false), '**');
     clean = clean.replaceAll(RegExp(r'<\s*/\s*strong\s*>', caseSensitive: false), '**');
-
-    // Convert italic HTML to Markdown
     clean = clean.replaceAll(RegExp(r'<\s*i\s*>', caseSensitive: false), '*');
     clean = clean.replaceAll(RegExp(r'<\s*/\s*i\s*>', caseSensitive: false), '*');
     clean = clean.replaceAll(RegExp(r'<\s*em\s*>', caseSensitive: false), '*');
     clean = clean.replaceAll(RegExp(r'<\s*/\s*em\s*>', caseSensitive: false), '*');
-
-    // Convert list items
-    clean = clean.replaceAll(RegExp(r'<\s*li\s*>', caseSensitive: false), '\n• ');
-    clean = clean.replaceAll(RegExp(r'<\s*/\s*li\s*>', caseSensitive: false), '');
+    clean = clean.replaceAll(RegExp(r'<\s*li\s*>', caseSensitive: false), '\n- ');
+    clean = clean.replaceAll(RegExp(r'<\s*/?li\s*>', caseSensitive: false), '');
     clean = clean.replaceAll(RegExp(r'<\s*/?ul\s*>', caseSensitive: false), '\n');
     clean = clean.replaceAll(RegExp(r'<\s*/?ol\s*>', caseSensitive: false), '\n');
-
-    // Strip remaining HTML tags
     clean = clean.replaceAll(RegExp(r'<[^>]+>'), '');
-
-    // Normalize multiple blank lines
     clean = clean.replaceAll(RegExp(r'\n{3,}'), '\n\n');
-
     return clean.trim();
+  }
+
+  // ==========================================================
+  // PROMPT LIBRARY
+  // ==========================================================
+
+  Future<void> _showPromptLibrary() async {
+    showDialog(
+      context: context,
+      builder: (_) => _PromptLibraryDialog(
+        onInsert: (content) {
+          final current = _topicController.text;
+          final separator = current.isEmpty ? '' : '\n\n';
+          _topicController.text = current + separator + content;
+          _topicController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _topicController.text.length),
+          );
+        },
+      ),
+    );
   }
 
   // ==========================================================
@@ -605,24 +406,14 @@ $topic
   // ==========================================================
 
   void _scrollToResult() {
-    WidgetsBinding.instance
-        .addPostFrameCallback(
-      (_) {
-        if (!_scrollController.hasClients) {
-          return;
-        }
-
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration:
-              const Duration(
-            milliseconds: 350,
-          ),
-          curve:
-              Curves.easeOut,
-        );
-      },
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   // ==========================================================
@@ -630,31 +421,13 @@ $topic
   // ==========================================================
 
   Future<void> _copyResult() async {
-    if (_result.trim().isEmpty) {
-      return;
-    }
-
-    await Clipboard.setData(
-      ClipboardData(
-        text: _result,
-      ),
-    );
-
-    if (!mounted) {
-      return;
-    }
-
+    if (_result.trim().isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: _result));
+    if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
-          content:
-              Text(
-            'Hasil berhasil disalin.',
-          ),
-          behavior:
-              SnackBarBehavior.floating,
-        ),
+        const SnackBar(content: Text('Hasil berhasil disalin.'), behavior: SnackBarBehavior.floating),
       );
   }
 
@@ -664,67 +437,86 @@ $topic
 
   void _clearWriter() {
     FocusScope.of(context).unfocus();
-
     _topicController.clear();
-
     setState(() {
-      _selectedType = 'Essay';
-      _selectedTone = 'Formal';
       _result = '';
       _error = null;
       _charCount = 0;
+      _attachedFile = null;
+      _attachedFileName = null;
     });
   }
 
   // ==========================================================
-  // TOKEN
+  // TOKEN INFO
   // ==========================================================
 
   void _showTokenInfo() {
-    final auth =
-        context.read<AuthProvider>();
-
-    showDialog<void>(
+    final auth = context.read<AuthProvider>();
+    final tokenBalance = auth.tokenBalance;
+    showModalBottomSheet<void>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor:
-              AppTheme.surfaceLight,
-          title:
-              const Text(
-            'Token PintarAja',
-            style:
-                TextStyle(
-              color:
-                  AppTheme.textPrimary,
-              fontWeight:
-                  FontWeight.w700,
-            ),
-          ),
-          content:
-              Text(
-            'Saldo token kamu: ${auth.tokenBalance}',
-            style:
-                const TextStyle(
-              color:
-                  AppTheme.textSecondary,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
-              },
-              child:
-                  const Text(
-                'Tutup',
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        decoration: const BoxDecoration(
+          color: AppTheme.surfaceLight,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(color: AppTheme.borderLight, borderRadius: BorderRadius.circular(10)),
               ),
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Token & Top Up', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.textPrimary)),
+                IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(color: AppTheme.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Sisa Token Anda', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.diamond_rounded, color: Color(0xFFFCD34D), size: 24),
+                      const SizedBox(width: 8),
+                      Text('$tokenBalance', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
+                      const SizedBox(width: 4),
+                      Text('token', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -733,73 +525,72 @@ $topic
   // ==========================================================
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final auth =
-        context.watch<AuthProvider>();
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final chatProvider = context.watch<ChatProvider>();
+    final providers = chatProvider.aiProviders;
 
     return Scaffold(
       drawer: const AppSidebarDrawer(),
-      backgroundColor:
-          AppTheme.backgroundApp,
-      appBar:
-          AppBar(
-        backgroundColor:
-            AppTheme.backgroundApp,
-        elevation:
-            0,
+      backgroundColor: AppTheme.backgroundApp,
+      appBar: AppBar(
+        backgroundColor: AppTheme.backgroundApp,
+        elevation: 0,
         leading: Builder(
           builder: (drawerContext) => IconButton(
-            onPressed: () {
-              Scaffold.of(drawerContext).openDrawer();
-            },
-            icon: const Icon(
-              Icons.menu_rounded,
-              color: AppTheme.textPrimary,
-            ),
+            onPressed: () => Scaffold.of(drawerContext).openDrawer(),
+            icon: const Icon(Icons.menu_rounded, color: AppTheme.textPrimary),
             tooltip: 'Menu Sidebar',
           ),
         ),
-        title:
-            const Text(
+        title: const Text(
           'AI Writer',
-          style:
-              TextStyle(
-            color:
-                AppTheme.textPrimary,
-            fontSize:
-                19,
-            fontWeight:
-                FontWeight.w700,
-          ),
+          style: TextStyle(color: AppTheme.textPrimary, fontSize: 19, fontWeight: FontWeight.w700),
         ),
         actions: [
-          _TokenChip(
-            balance:
-                auth.tokenBalance,
-            onTap:
-                _showTokenInfo,
+          IconButton(
+            tooltip: 'Prompt Library',
+            onPressed: _showPromptLibrary,
+            icon: const Icon(Icons.library_books_rounded, color: AppTheme.primary, size: 22),
           ),
-          const SizedBox(
-            width:
-                12,
-          ),
+          _TokenChip(balance: auth.tokenBalance, onTap: _showTokenInfo),
+          const SizedBox(width: 12),
         ],
       ),
-      body:
-          Column(
+      body: Column(
         children: [
-          _buildTabs(),
           Expanded(
-            child:
-                TabBarView(
-              controller:
-                  _tabController,
-              children: [
-                _buildNewWriteTab(),
-                _buildMyFilesTab(),
-              ],
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildGradientHeader(),
+                  const SizedBox(height: 18),
+                  if (providers.isNotEmpty) ...[
+                    _buildModelSelector(providers),
+                    const SizedBox(height: 18),
+                  ],
+                  _buildInputArea(),
+                  const SizedBox(height: 16),
+                  if (_error != null) ...[
+                    _ErrorBox(message: _error!),
+                    const SizedBox(height: 16),
+                  ],
+                  _buildGenerateButton(),
+                  if (_isLoading) ...[
+                    const SizedBox(height: 28),
+                    _buildLoadingSkeleton(),
+                  ],
+                  if (_result.isNotEmpty && !_isLoading) ...[
+                    const SizedBox(height: 28),
+                    _buildResultCard(),
+                  ],
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
         ],
@@ -808,383 +599,66 @@ $topic
   }
 
   // ==========================================================
-  // TABS
+  // GRADIENT HEADER
   // ==========================================================
 
-  Widget _buildTabs() {
+  Widget _buildGradientHeader() {
     return Container(
-      decoration:
-          const BoxDecoration(
-        border:
-            Border(
-          bottom:
-              BorderSide(
-            color:
-                AppTheme.borderLight,
-          ),
-        ),
-      ),
-      child:
-          TabBar(
-        controller:
-            _tabController,
-        indicatorColor:
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
             AppTheme.primary,
-        indicatorWeight:
-            3,
-        labelColor:
-            AppTheme.textPrimary,
-        unselectedLabelColor:
-            AppTheme.textSecondary,
-        dividerColor:
-            Colors.transparent,
-        tabs:
-            const [
-          Tab(
-            text:
-                'Tulis Baru',
-          ),
-          Tab(
-            text:
-                'File Saya',
+            AppTheme.accent,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-    );
-  }
-
-  // ==========================================================
-  // NEW WRITE
-  // ==========================================================
-
-  Widget _buildNewWriteTab() {
-    return SingleChildScrollView(
-      controller: _scrollController,
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTopicCard(),
-
-          if (_error != null) ...[
-            const SizedBox(height: 10),
-            _ErrorBox(message: _error!),
-          ],
-
-          const SizedBox(height: 18),
-
-          _buildDropdownCard(
-            label: 'Jenis Tulisan',
-            value: _selectedType,
-            options: _types,
-            onChanged: (v) => setState(() => _selectedType = v),
-          ),
-
-          const SizedBox(height: 14),
-
-          _buildDropdownCard(
-            label: 'Paper Selection (Format)',
-            value: _selectedPaper,
-            options: _papers,
-            onChanged: (v) => setState(() => _selectedPaper = v),
-          ),
-
-          const SizedBox(height: 14),
-
-          _buildDropdownCard(
-            label: 'Bahasa (Language)',
-            value: _selectedLanguage,
-            options: _languages,
-            onChanged: (v) => setState(() => _selectedLanguage = v),
-          ),
-
-          const SizedBox(height: 14),
-
-          _buildDropdownCard(
-            label: 'Model AI Engine',
-            value: _selectedAiModel,
-            options: _aiModels,
-            onChanged: (v) => setState(() => _selectedAiModel = v),
-          ),
-
-          const SizedBox(height: 14),
-
-          _buildDropdownCard(
-            label: 'Nada Tulisan (Tone)',
-            value: _selectedTone,
-            options: _tones,
-            onChanged: (v) => setState(() => _selectedTone = v),
-          ),
-
-          const SizedBox(height: 18),
-
-          _buildSliderConfig(),
-
-          const SizedBox(height: 16),
-
-          _buildInstructionsInput(),
-
-          const SizedBox(height: 24),
-
-          _buildGenerateButton(),
-
-          if (_isLoading) ...[
-            const SizedBox(height: 28),
-            _buildLoadingSkeleton(),
-          ],
-
-          if (_result.isNotEmpty && !_isLoading) ...[
-            const SizedBox(height: 28),
-            _buildResultCard(),
-          ],
-
-          const SizedBox(height: 40),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDropdownCard({
-    required String label,
-    required String value,
-    required List<String> options,
-    required ValueChanged<String> onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SectionLabel(text: label),
-        const SizedBox(height: 6),
-        InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () {
-            showModalBottomSheet<void>(
-              context: context,
-              backgroundColor: AppTheme.surfaceLight,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              builder: (ctx) => Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('Pilih $label', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textPrimary)),
-                  ),
-                  const Divider(height: 1),
-                  Flexible(
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: options.map((opt) => ListTile(
-                        title: Text(opt, style: TextStyle(fontWeight: opt == value ? FontWeight.bold : FontWeight.normal, color: AppTheme.textPrimary)),
-                        trailing: opt == value ? const Icon(Icons.check_rounded, color: AppTheme.primary) : null,
-                        onTap: () {
-                          onChanged(opt);
-                          Navigator.pop(ctx);
-                        },
-                      )).toList(),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceLight,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppTheme.borderLight),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(value, style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600, fontSize: 13.5)),
-                const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSliderConfig() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const _SectionLabel(text: 'Jumlah Paragraf'),
-            Text('$_paragraphCount Paragraf', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 13)),
-          ],
-        ),
-        Slider(
-          value: _paragraphCount.toDouble(),
-          min: 1,
-          max: 10,
-          divisions: 9,
-          activeColor: AppTheme.primary,
-          onChanged: (v) => setState(() => _paragraphCount = v.toInt()),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const _SectionLabel(text: 'Maksimal Kata'),
-            Text('$_maxWords Kata', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 13)),
-          ],
-        ),
-        Slider(
-          value: _maxWords.toDouble(),
-          min: 100,
-          max: 3000,
-          divisions: 29,
-          activeColor: AppTheme.primary,
-          onChanged: (v) => setState(() => _maxWords = v.toInt()),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInstructionsInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionLabel(text: 'Instruksi Tambahan (Opsional)'),
-        const SizedBox(height: 6),
-        TextField(
-          controller: _instructionsController,
-          maxLines: 2,
-          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
-          decoration: InputDecoration(
-            hintText: 'Misal: Sertakan contoh kasus di Indonesia & kutipan jurnal...',
-            hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 12.5),
-            fillColor: AppTheme.surfaceLight,
-            filled: true,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.borderLight)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.borderLight)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primary)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ==========================================================
-  // TOPIC CARD
-  // ==========================================================
-
-  Widget _buildTopicCard() {
-    return Container(
-      width:
-          double.infinity,
-      padding:
-          const EdgeInsets.fromLTRB(
-        14,
-        12,
-        14,
-        8,
-      ),
-      decoration:
-          BoxDecoration(
-        color:
-            AppTheme.surfaceLight,
-        borderRadius:
-            BorderRadius.circular(
-          18,
-        ),
-        border:
-            Border.all(
-          color:
-              AppTheme.borderLight,
-        ),
-      ),
-      child:
-          Column(
-        children: [
-          TextField(
-            controller:
-                _topicController,
-            maxLength:
-                100,
-            maxLines:
-                5,
-            minLines:
-                4,
-            textInputAction:
-                TextInputAction.newline,
-            style:
-                const TextStyle(
-              color:
-                  AppTheme.textPrimary,
-              fontSize:
-                  14,
-              height:
-                  1.5,
-            ),
-            decoration:
-                const InputDecoration(
-              hintText:
-                  'Tuliskan topik atau judul...',
-              hintStyle:
-                  TextStyle(
-                color:
-                    AppTheme.textMuted,
-              ),
-              border:
-                  InputBorder.none,
-              enabledBorder:
-                  InputBorder.none,
-              focusedBorder:
-                  InputBorder.none,
-              filled:
-                  false,
-              contentPadding:
-                  EdgeInsets.zero,
-              counterText:
-                  '',
-            ),
-          ),
-
           Row(
             children: [
-              Expanded(
-                child:
-                    Text(
-                  _charCount >=
-                          100
-                      ? 'Batas maksimum tercapai'
-                      : 'Maksimal 100 karakter',
-                  maxLines:
-                      1,
-                  overflow:
-                      TextOverflow
-                          .ellipsis,
-                  style:
-                      const TextStyle(
-                    color:
-                        AppTheme.textMuted,
-                    fontSize:
-                        10,
-                  ),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: const Icon(Icons.edit_note_rounded, color: Colors.white, size: 24),
               ),
-              Text(
-                '$_charCount/100',
-                style:
-                    TextStyle(
-                  color:
-                      _charCount >=
-                              100
-                          ? AppTheme.primary
-                          : AppTheme.textMuted,
-                  fontSize:
-                      10.5,
-                  fontWeight:
-                      FontWeight.w600,
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI Writer',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Tulis artikel, esai, atau makalah dengan bantuan AI',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -1194,93 +668,262 @@ $topic
     );
   }
 
+  // ==========================================================
+  // MODEL SELECTOR (Horizontal Chips)
+  // ==========================================================
+
+  Widget _buildModelSelector(List<AiProvider> providers) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionLabel(text: 'Model AI'),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 38,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: providers.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final provider = providers[index];
+              final isSelected = _selectedProviderId == provider.id;
+              final isExhausted = provider.quota.isExhausted;
+              final quota = provider.quota;
+
+              return ChoiceChip(
+                label: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      provider.displayName,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        color: isSelected ? Colors.white : AppTheme.textPrimary,
+                      ),
+                    ),
+                    if (quota.hasLimit)
+                      Text(
+                        '${quota.remaining}/${quota.limit}',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: isExhausted
+                              ? (isSelected ? Colors.white70 : AppTheme.warning)
+                              : (isSelected ? Colors.white70 : AppTheme.textMuted),
+                        ),
+                      ),
+                  ],
+                ),
+                selected: isSelected,
+                onSelected: isExhausted
+                    ? (_) {
+                        ScaffoldMessenger.of(context)
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            SnackBar(
+                              content: Text('Kuota ${provider.displayName} untuk hari ini sudah habis. Sisa: ${quota.remaining}'),
+                              backgroundColor: AppTheme.warning,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                      }
+                    : (_) => setState(() => _selectedProviderId = provider.id),
+                selectedColor: AppTheme.primary,
+                backgroundColor: AppTheme.surfaceLight,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(
+                    color: isSelected
+                        ? AppTheme.primary
+                        : (isExhausted ? AppTheme.warning : AppTheme.borderLight),
+                    width: isSelected ? 1.5 : 1,
+                  ),
+                ),
+                showCheckmark: false,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ==========================================================
+  // INPUT AREA
+  // ==========================================================
+
+  Widget _buildInputArea() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceLight,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Attached file chip
+          if (_attachedFileName != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.description_rounded, size: 16, color: AppTheme.primary),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      _attachedFileName!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: _removeAttachedFile,
+                    child: const Icon(Icons.close_rounded, size: 16, color: AppTheme.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          // Text input
+          TextField(
+            controller: _topicController,
+            maxLength: _maxCharacters,
+            maxLines: 6,
+            minLines: 4,
+            textInputAction: TextInputAction.newline,
+            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, height: 1.5),
+            decoration: const InputDecoration(
+              hintText: 'Tuliskan topik atau judul tulisan...',
+              hintStyle: TextStyle(color: AppTheme.textMuted),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              filled: false,
+              contentPadding: EdgeInsets.zero,
+              counterText: '',
+            ),
+          ),
+
+          // Character counter
+          Row(
+            children: [
+              // Attachment button
+              GestureDetector(
+                onTap: _isLoading ? null : _pickFile,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceMuted,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.attach_file_rounded,
+                    size: 18,
+                    color: _isLoading ? AppTheme.textMuted : AppTheme.textSecondary,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '$_charCount/$_maxCharacters',
+                style: TextStyle(
+                  color: _charCount >= _maxCharacters ? AppTheme.warning : AppTheme.textMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          // Optional instructions
+          TextField(
+            controller: _instructionsController,
+            maxLines: 2,
+            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+            decoration: InputDecoration(
+              hintText: 'Instruksi tambahan (opsional)...',
+              hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 12.5),
+              fillColor: AppTheme.surfaceMuted,
+              filled: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: AppTheme.primary, width: 1),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   // ==========================================================
   // GENERATE BUTTON
   // ==========================================================
 
-
   Widget _buildGenerateButton() {
     return SizedBox(
-      width:
-          double.infinity,
-      height:
-          52,
-      child:
-          Material(
-        color:
-            Colors.transparent,
-        borderRadius:
-            BorderRadius.circular(
-          16,
-        ),
-        child:
-            Ink(
-          decoration:
-              BoxDecoration(
-            gradient:
-                _isLoading
-                    ? null
-                    : AppTheme
-                        .primaryGradient,
-            color:
-                _isLoading
-                    ? AppTheme
-                        .surfaceMuted
-                    : null,
-            borderRadius:
-                BorderRadius.circular(
-              16,
-            ),
+      width: double.infinity,
+      height: 52,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: _isLoading ? null : AppTheme.primaryGradient,
+            color: _isLoading ? AppTheme.surfaceMuted : null,
+            borderRadius: BorderRadius.circular(16),
           ),
-          child:
-              InkWell(
-            onTap:
-                _isLoading
-                    ? null
-                    : _generate,
-            borderRadius:
-                BorderRadius.circular(
-              16,
-            ),
-            child:
-                Center(
-              child:
-                  _isLoading
-                      ? const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.2,
-                                color: AppTheme.primary,
-                              ),
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              'Sedang membuat...',
-                              style: TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        )
-                      : const Text(
-                          'Buat Sekarang ✨',
-                          style:
-                              TextStyle(
-                            color:
-                                Colors.white,
-                            fontWeight:
-                                FontWeight.w700,
-                            fontSize:
-                                14.5,
-                          ),
+          child: InkWell(
+            onTap: _isLoading ? null : _generate,
+            borderRadius: BorderRadius.circular(16),
+            child: Center(
+              child: _isLoading
+                  ? const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2.2, color: AppTheme.primary),
                         ),
+                        SizedBox(width: 10),
+                        Text(
+                          'Sedang membuat...',
+                          style: TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.w600, fontSize: 14),
+                        ),
+                      ],
+                    )
+                  : const Text(
+                      'Buat Sekarang',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
             ),
           ),
         ),
@@ -1330,409 +973,258 @@ $topic
 
   Widget _buildResultCard() {
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             const Expanded(
-              child:
-                  Text(
+              child: Text(
                 'Hasil Tulisan',
-                style:
-                    TextStyle(
-                  color:
-                      AppTheme.textPrimary,
-                  fontWeight:
-                      FontWeight.w700,
-                  fontSize:
-                      15,
-                ),
+                style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
               ),
             ),
-
-            // Tombol Regenerate
             IconButton(
-              tooltip:
-                  'Buat Ulang',
-              onPressed:
-                  _isLoading ? null : _generate,
-              icon:
-                  const Icon(
-                Icons.refresh_rounded,
-                color:
-                    AppTheme.primary,
-                size:
-                    19,
-              ),
+              tooltip: 'Buat Ulang',
+              onPressed: _isLoading ? null : _generate,
+              icon: const Icon(Icons.refresh_rounded, color: AppTheme.primary, size: 19),
             ),
-
             IconButton(
-              tooltip:
-                  'Salin',
-              onPressed:
-                  _copyResult,
-              icon:
-                  const Icon(
-                Icons.copy_rounded,
-                color:
-                    AppTheme
-                        .textSecondary,
-                size:
-                    18,
-              ),
+              tooltip: 'Salin',
+              onPressed: _copyResult,
+              icon: const Icon(Icons.copy_rounded, color: AppTheme.textSecondary, size: 18),
             ),
-
             IconButton(
-              tooltip:
-                  'Bersihkan',
-              onPressed:
-                  _clearWriter,
-              icon:
-                  const Icon(
-                Icons
-                    .delete_outline_rounded,
-                color:
-                    AppTheme
-                        .textSecondary,
-                size:
-                    19,
-              ),
+              tooltip: 'Bersihkan',
+              onPressed: _clearWriter,
+              icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.textSecondary, size: 19),
             ),
           ],
         ),
-
-        const SizedBox(
-          height:
-              7,
-        ),
-
-        // FIX: Gunakan flutter_markdown untuk render hasil
+        const SizedBox(height: 7),
         Container(
-          width:
-              double.infinity,
-          padding:
-              const EdgeInsets.all(
-            16,
-          ),
-          decoration:
-              BoxDecoration(
-            color:
-                AppTheme.surfaceLight,
-            borderRadius:
-                BorderRadius.circular(
-              16,
-            ),
-            border:
-                Border.all(
-              color:
-                  AppTheme.borderLight,
-            ),
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceLight,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.borderLight),
           ),
           child: MarkdownBody(
             data: _result,
             selectable: true,
             styleSheet: MarkdownStyleSheet(
-              p: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 13.5,
-                height: 1.65,
-              ),
-              strong: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 13.5,
-              ),
-              em: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontStyle: FontStyle.italic,
-                fontSize: 13.5,
-              ),
-              h1: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-              h2: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-              h3: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 14.5,
-                fontWeight: FontWeight.w700,
-              ),
-              listBullet: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 13.5,
-              ),
-              blockquote: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 13.5,
-                fontStyle: FontStyle.italic,
-              ),
-              code: const TextStyle(
-                color: AppTheme.primary,
-                fontSize: 12.5,
-                backgroundColor: Color(0xFFF1F5F9),
-              ),
+              p: const TextStyle(color: AppTheme.textPrimary, fontSize: 13.5, height: 1.65),
+              strong: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700, fontSize: 13.5),
+              em: const TextStyle(color: AppTheme.textPrimary, fontStyle: FontStyle.italic, fontSize: 13.5),
+              h1: const TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
+              h2: const TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
+              h3: const TextStyle(color: AppTheme.textPrimary, fontSize: 14.5, fontWeight: FontWeight.w700),
+              listBullet: const TextStyle(color: AppTheme.textPrimary, fontSize: 13.5),
+              blockquote: const TextStyle(color: AppTheme.textSecondary, fontSize: 13.5, fontStyle: FontStyle.italic),
+              code: const TextStyle(color: AppTheme.primary, fontSize: 12.5, backgroundColor: Color(0xFFF1F5F9)),
             ),
           ),
         ),
       ],
     );
   }
+}
 
-  // ==========================================================
-  // MY FILES
-  // ==========================================================
+// ============================================================
+// PROMPT LIBRARY DIALOG
+// ============================================================
 
-  Widget _buildMyFilesTab() {
-    if (_isLoadingFiles && _myFiles.isEmpty) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+class _PromptLibraryDialog extends StatefulWidget {
+  final ValueChanged<String> onInsert;
+
+  const _PromptLibraryDialog({required this.onInsert});
+
+  @override
+  State<_PromptLibraryDialog> createState() => _PromptLibraryDialogState();
+}
+
+class _PromptLibraryDialogState extends State<_PromptLibraryDialog> {
+  List<Map<String, dynamic>> _prompts = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrompts();
+  }
+
+  Future<void> _loadPrompts() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final token = StorageService.getToken();
+      final response = await http.get(
+        Uri.parse(ApiConstants.prompts),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception('Gagal memuat prompt library.');
+      }
+
+      final decoded = jsonDecode(response.body);
+      final data = decoded is Map ? decoded['data'] : decoded;
+      if (data is List) {
+        _prompts = data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
 
-    final limit = _storageQuota?['limit'] ?? 524288000;
-    final used = _storageQuota?['used'] ?? 0;
-    final double usedMb = (used / (1024 * 1024));
-    final double limitMb = (limit / (1024 * 1024));
-    final double progress = limit > 0 ? (used / limit).clamp(0.0, 1.0) : 0.0;
-
-    return RefreshIndicator(
-      onRefresh: _loadMyFiles,
-      color: AppTheme.primary,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Storage Quota Card
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceLight,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.borderLight),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: AppTheme.surfaceLight,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(maxHeight: 500),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Penyimpanan Dokumen AI',
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      '${usedMb.toStringAsFixed(1)}MB / ${limitMb.toStringAsFixed(0)}MB',
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 8,
-                    backgroundColor: AppTheme.surfaceMuted,
-                    color: AppTheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 6),
                 const Text(
-                  'Max upload per file: 10MB • Format: PDF, DOC, DOCX, TXT, MD',
-                  style: TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 10.5,
-                  ),
+                  'Prompt Library',
+                  style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700, fontSize: 17),
                 ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _isUploadingFile ? null : _uploadFile,
-                    icon: _isUploadingFile
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
-                          )
-                        : const Icon(Icons.upload_file_rounded, size: 18, color: AppTheme.primary),
-                    label: Text(
-                      _isUploadingFile ? 'Mengunggah...' : 'Upload Dokumen Baru',
-                      style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.primary),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppTheme.primary),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: AppTheme.textSecondary),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
               ],
             ),
-          ),
-
-          if (_filesError != null) ...[
+            const SizedBox(height: 4),
+            const Text(
+              'Pilih prompt untuk dimasukkan ke topik',
+              style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+            ),
             const SizedBox(height: 14),
-            _ErrorBox(message: _filesError!),
-          ],
-
-          const SizedBox(height: 20),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'File Saya (${_myFiles.length})',
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
+            if (_isLoading)
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(color: AppTheme.primary),
                 ),
-              ),
-              IconButton(
-                onPressed: _isLoadingFiles ? null : _loadMyFiles,
-                icon: _isLoadingFiles
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
-                      )
-                    : const Icon(Icons.refresh_rounded, color: AppTheme.textSecondary, size: 20),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-
-          if (_myFiles.isEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceLight,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.borderLight),
-              ),
-              child: const Column(
-                children: [
-                  Icon(Icons.folder_open_rounded, color: AppTheme.textMuted, size: 48),
-                  SizedBox(height: 12),
-                  Text(
-                    'Belum Ada Dokumen',
-                    style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Upload file PDF/Doc untuk dijadikan referensi AI Writer.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
-                  ),
-                ],
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _myFiles.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final file = _myFiles[index];
-                final fileName = file['name']?.toString() ?? 'File';
-                final fileSize = () {
-                  final raw = file['size'];
-                  if (raw == null) return '0';
-                  final bytes = raw is num ? raw : num.tryParse(raw.toString()) ?? 0;
-                  return (bytes / 1024).toStringAsFixed(1);
-                }();
-                final fileStatus = file['status']?.toString() ?? 'ready';
-
-                return Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceLight,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.borderLight),
-                  ),
-                  child: Row(
+              )
+            else if (_error != null)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
+                      const Icon(Icons.error_outline, color: AppTheme.error, size: 36),
+                      const SizedBox(height: 10),
+                      Text(_error!, style: const TextStyle(color: AppTheme.error, fontSize: 13), textAlign: TextAlign.center),
+                      const SizedBox(height: 12),
+                      TextButton(onPressed: _loadPrompts, child: const Text('Coba Lagi')),
+                    ],
+                  ),
+                ),
+              )
+            else if (_prompts.isEmpty)
+              const Expanded(
+                child: Center(
+                  child: Text('Belum ada prompt tersedia.', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.separated(
+                  itemCount: _prompts.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final prompt = _prompts[index];
+                    final title = prompt['title']?.toString() ?? 'Prompt';
+                    final content = prompt['content']?.toString() ?? '';
+
+                    return InkWell(
+                      onTap: () {
+                        widget.onInsert(content);
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context)
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            const SnackBar(
+                              content: Text('Prompt berhasil ditambahkan!'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppTheme.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
+                          color: AppTheme.surfaceMuted,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.borderLight),
                         ),
-                        child: const Icon(Icons.description_rounded, color: AppTheme.primary, size: 22),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              fileName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: AppTheme.textPrimary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
                               ),
+                              child: const Icon(Icons.lightbulb_rounded, color: AppTheme.primary, size: 18),
                             ),
-                            const SizedBox(height: 3),
-                            Row(
-                              children: [
-                                Text(
-                                  '$fileSize KB',
-                                  style: const TextStyle(
-                                    color: AppTheme.textMuted,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: fileStatus == 'ready'
-                                        ? Colors.green.withValues(alpha: 0.1)
-                                        : Colors.orange.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    fileStatus.toUpperCase(),
-                                    style: TextStyle(
-                                      color: fileStatus == 'ready' ? Colors.green : Colors.orange,
-                                      fontSize: 9,
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    style: const TextStyle(
+                                      color: AppTheme.textPrimary,
                                       fontWeight: FontWeight.w700,
+                                      fontSize: 13,
                                     ),
                                   ),
-                                ),
-                              ],
+                                  if (content.isNotEmpty) ...[
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      content.length > 100 ? '${content.substring(0, 100)}...' : content,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11.5),
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textMuted),
                           ],
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => _deleteFile(file),
-                        icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                        tooltip: 'Hapus file',
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-        ],
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -1746,10 +1238,7 @@ class _TokenChip extends StatelessWidget {
   final dynamic balance;
   final VoidCallback onTap;
 
-  const _TokenChip({
-    required this.balance,
-    required this.onTap,
-  });
+  const _TokenChip({required this.balance, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1766,22 +1255,14 @@ class _TokenChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.diamond_rounded,
-              color: Color(0xFFF59E0B),
-              size: 14,
-            ),
+            const Icon(Icons.diamond_rounded, color: Color(0xFFF59E0B), size: 14),
             const SizedBox(width: 4),
             Flexible(
               child: Text(
                 '$balance',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 11, fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -1795,29 +1276,16 @@ class _TokenChip extends StatelessWidget {
 // SECTION LABEL
 // ============================================================
 
-class _SectionLabel
-    extends StatelessWidget {
+class _SectionLabel extends StatelessWidget {
   final String text;
 
-  const _SectionLabel({
-    required this.text,
-  });
+  const _SectionLabel({required this.text});
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Text(
       text,
-      style:
-          const TextStyle(
-        color:
-            AppTheme.textPrimary,
-        fontWeight:
-            FontWeight.w600,
-        fontSize:
-            14,
-      ),
+      style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
     );
   }
 }
@@ -1826,70 +1294,28 @@ class _SectionLabel
 // ERROR BOX
 // ============================================================
 
-class _ErrorBox
-    extends StatelessWidget {
+class _ErrorBox extends StatelessWidget {
   final String message;
 
-  const _ErrorBox({
-    required this.message,
-  });
+  const _ErrorBox({required this.message});
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Container(
-      width:
-          double.infinity,
-      padding:
-          const EdgeInsets.all(
-        12,
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.error.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.error.withValues(alpha: 0.25)),
       ),
-      decoration:
-          BoxDecoration(
-        color:
-            AppTheme.error.withValues(
-          alpha: 0.09,
-        ),
-        borderRadius:
-            BorderRadius.circular(
-          12,
-        ),
-        border:
-            Border.all(
-          color:
-              AppTheme.error.withValues(
-            alpha: 0.25,
-          ),
-        ),
-      ),
-      child:
-          Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.error_outline_rounded,
-            color:
-                AppTheme.error,
-            size:
-                16,
-          ),
-          const SizedBox(
-            width: 8,
-          ),
+          const Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 16),
+          const SizedBox(width: 8),
           Expanded(
-            child:
-                Text(
-              message,
-              style:
-                  const TextStyle(
-                color:
-                    AppTheme.error,
-                fontSize:
-                    12.5,
-              ),
-            ),
+            child: Text(message, style: const TextStyle(color: AppTheme.error, fontSize: 12.5)),
           ),
         ],
       ),
@@ -1898,17 +1324,14 @@ class _ErrorBox
 }
 
 // ============================================================
-// SKELETON LINE — Loading placeholder
+// SKELETON LINE
 // ============================================================
 
 class _SkeletonLine extends StatefulWidget {
   final double width;
   final double height;
 
-  const _SkeletonLine({
-    required this.width,
-    required this.height,
-  });
+  const _SkeletonLine({required this.width, required this.height});
 
   @override
   State<_SkeletonLine> createState() => _SkeletonLineState();

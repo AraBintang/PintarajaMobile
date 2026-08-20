@@ -18,10 +18,12 @@ import '../../features/settings/settings_screen.dart';
 import '../../features/chat/chat_screen.dart';
 import '../../features/writer/writer_screen.dart';
 import '../../features/tools/tools_screen.dart';
+import '../../features/paraphrase/paraphrase_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/shared/widgets/app_sidebar_drawer.dart';
 import '../../features/plan/plan_screen.dart';
 import '../../features/plagiarism/plagiarism_screen.dart';
+import '../../features/transcribe/transcribe_screen.dart';
 
 class AppRouter {
   static GoRouter router(AuthProvider auth) {
@@ -283,6 +285,16 @@ class AppRouter {
             ),
 
             // --------------------------------------------------
+            // PARAPHRASE
+            // --------------------------------------------------
+
+            GoRoute(
+              path: '/paraphrase',
+              builder: (_, __) =>
+                  const ParaphraseScreen(),
+            ),
+
+            // --------------------------------------------------
             // PROFILE
             // --------------------------------------------------
 
@@ -300,6 +312,16 @@ class AppRouter {
               path: '/settings',
               builder: (_, __) =>
                   const SettingsScreen(),
+            ),
+
+            // --------------------------------------------------
+            // TRANSCRIBE
+            // --------------------------------------------------
+
+            GoRoute(
+              path: '/transcribe',
+              builder: (_, __) =>
+                  const TranscribeScreen(),
             ),
           ],
         ),

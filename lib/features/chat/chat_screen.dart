@@ -1,3 +1,4 @@
+import 'dart:convert';
 // ============================================================
 // PINTARAJA — CHAT SCREEN
 // Floating Sidebar + Blur + Token + AI Provider + Conversations
@@ -5,19 +6,19 @@
 // ============================================================
 
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/providers/chat_provider.dart';
 import '../shared/widgets/payment_sheet.dart';
+import '../shared/widgets/app_sidebar_drawer.dart';
 
 class ChatScreen extends StatefulWidget {
   final int? conversationId;
@@ -31,32 +32,20 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen>
-    with SingleTickerProviderStateMixin {
+class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController =
       TextEditingController();
 
   final ScrollController _scrollController =
       ScrollController();
 
-  late final AnimationController _drawerController;
-
-  bool get _isDrawerVisible =>
-      _drawerController.value > 0;
+  bool _shouldOpenDrawerAfterSearch = false;
+  File? _pendingAttachedFile;
+  String? _pendingAttachedFileName;
 
   @override
   void initState() {
     super.initState();
-
-    _drawerController = AnimationController(
-      vsync: this,
-      duration: const Duration(
-        milliseconds: 280,
-      ),
-      reverseDuration: const Duration(
-        milliseconds: 220,
-      ),
-    );
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
@@ -80,7 +69,6 @@ class _ChatScreenState extends State<ChatScreen>
 
   @override
   void dispose() {
-    _drawerController.dispose();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -89,23 +77,6 @@ class _ChatScreenState extends State<ChatScreen>
   // ==========================================================
   // DRAWER
   // ==========================================================
-
-  void _openDrawer() {
-    FocusScope.of(context).unfocus();
-    _drawerController.forward();
-  }
-
-  void _closeDrawer() {
-    _drawerController.reverse();
-  }
-
-  void _toggleDrawer() {
-    if (_drawerController.value > 0) {
-      _closeDrawer();
-    } else {
-      _openDrawer();
-    }
-  }
 
   // ==========================================================
   // NEW CHAT
@@ -125,32 +96,7 @@ class _ChatScreenState extends State<ChatScreen>
       return;
     }
 
-    _closeDrawer();
-    _scrollToBottom();
-  }
-
-  // ==========================================================
-  // OPEN CONVERSATION
-  // ==========================================================
-
-  Future<void> _openConversation(
-    Conversation conversation,
-  ) async {
-    FocusScope.of(context).unfocus();
-
-    _closeDrawer();
-
-    final chat =
-        context.read<ChatProvider>();
-
-    await chat.selectConversation(
-      conversation.id,
-    );
-
-    if (!mounted) {
-      return;
-    }
-
+    Navigator.pop(context);
     _scrollToBottom();
   }
 
@@ -162,7 +108,7 @@ class _ChatScreenState extends State<ChatScreen>
     final message =
         _messageController.text.trim();
 
-    if (message.isEmpty) {
+    if (message.isEmpty && _pendingAttachedFile == null) {
       return;
     }
 
@@ -173,13 +119,32 @@ class _ChatScreenState extends State<ChatScreen>
       return;
     }
 
+    final attachedFile = _pendingAttachedFile;
+    final attachedFileName = _pendingAttachedFileName;
+
     _messageController.clear();
+    _pendingAttachedFile = null;
+    _pendingAttachedFileName = null;
 
     FocusScope.of(context).unfocus();
 
-    await chat.sendMessage(
-      message,
-    );
+    try {
+      await chat.sendMessage(
+        message,
+        attachedFile: attachedFile,
+        attachedFileName: attachedFileName,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengirim pesan: $e'),
+          backgroundColor: AppTheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     if (!mounted) {
       return;
@@ -352,7 +317,15 @@ class _ChatScreenState extends State<ChatScreen>
           search: query,
         );
 
-    _openDrawer();
+    _shouldOpenDrawerAfterSearch = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _shouldOpenDrawerAfterSearch) {
+        _shouldOpenDrawerAfterSearch = false;
+        if (mounted) {
+          Scaffold.of(context).openDrawer();
+        }
+      }
+    });
   }
 
   // ==========================================================
@@ -421,12 +394,19 @@ class _ChatScreenState extends State<ChatScreen>
                               return _ProviderOption(
                                 provider: provider,
                                 selected: chat.selectedProviderId == provider.id,
-                                onTap: provider.isLimited
-                                    ? null
-                                    : () {
-                                        chat.selectProvider(provider.id);
-                                        Navigator.of(context).pop();
-                                      },
+                                onTap: () {
+                                  if (provider.isLimited) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Model ini telah mencapai limit harian. Silakan upgrade plan atau gunakan model lain.'),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  chat.selectProvider(provider.id);
+                                  Navigator.of(context).pop();
+                                },
                               );
                             }).toList(),
                           ),
@@ -448,13 +428,203 @@ class _ChatScreenState extends State<ChatScreen>
   // ==========================================================
 
   void _showTokenDialog() {
-    PaymentSelectionSheet.show(
-      context,
-      itemTitle: 'Top Up Token PintarAja',
-      amount: 50000,
-      onPaymentSuccess: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Top up token berhasil!')),
+    final authProvider = context.read<AuthProvider>();
+    final tokenBalance = authProvider.tokenBalance;
+    
+    int selectedCoins = 50;
+    final TextEditingController coinsController = TextEditingController(text: '50');
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+            final pricePerCoin = 1000;
+            final totalPrice = selectedCoins * pricePerCoin;
+
+            return Padding(
+              padding: EdgeInsets.only(bottom: bottomPadding),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                decoration: BoxDecoration(
+                  color: AppTheme.getSurface(context),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(color: AppTheme.getBorder(context), borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Token & Top Up', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.getTextColor(context))),
+                          IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Sisa Token Card
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.8)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primary.withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Sisa Token Anda', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.diamond_rounded, color: Color(0xFFFCD34D), size: 24),
+                                const SizedBox(width: 8),
+                                Text('$tokenBalance', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
+                                const SizedBox(width: 4),
+                                Text('token', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Top Up Section
+                      Text('Top Up Token', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.getTextColor(context))),
+                      const SizedBox(height: 4),
+                      Text('Harga: Rp $pricePerCoin / token', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                      const SizedBox(height: 10),
+
+                      // Preset Amount Buttons
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [10, 50, 100, 500, 1000].map((amount) {
+                          final isSelected = selectedCoins == amount;
+                          return GestureDetector(
+                            onTap: () {
+                              setModalState(() {
+                                selectedCoins = amount;
+                                coinsController.text = '$amount';
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isSelected ? AppTheme.primary : AppTheme.surfaceMuted,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: isSelected ? AppTheme.primary : AppTheme.borderLight),
+                              ),
+                              child: Text('$amount', style: TextStyle(color: isSelected ? Colors.white : AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Custom Amount
+                      TextField(
+                        controller: coinsController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Jumlah Token (Min. 10)',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          prefixIcon: const Icon(Icons.diamond_rounded),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                        onChanged: (val) {
+                          final parsed = int.tryParse(val);
+                          if (parsed != null) {
+                            setModalState(() => selectedCoins = parsed);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Total Price
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total Harga:', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textSecondary, fontSize: 13)),
+                            Text('Rp ${totalPrice.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.primary, fontSize: 16)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Top Up Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 2,
+                          ),
+                          onPressed: selectedCoins < 10 ? null : () {
+                            Navigator.pop(ctx);
+                            PaymentSelectionSheet.show(
+                              this.context,
+                              itemTitle: 'Top Up $selectedCoins Token',
+                              amount: totalPrice,
+                              onPaymentSuccess: () async {
+                                await context.read<AuthProvider>().refreshUser();
+                                if (this.context.mounted) {
+                                  ScaffoldMessenger.of(this.context).showSnackBar(
+                                    const SnackBar(content: Text('Top up berhasil! Token sudah ditambahkan.')),
+                                  );
+                                }
+                              },
+                            );
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.qr_code_2_rounded, size: 20),
+                              const SizedBox(width: 8),
+                              Text('Bayar via QRIS - Rp ${totalPrice.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -465,29 +635,11 @@ class _ChatScreenState extends State<ChatScreen>
   // ==========================================================
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return AnimatedBuilder(
-      animation:
-          _drawerController,
-      builder: (
-        context,
-        _,
-      ) {
-        return Scaffold(
-          backgroundColor:
-              AppTheme.backgroundApp,
-          body: Stack(
-            children: [
-              _buildChatContent(),
-
-              if (_isDrawerVisible)
-                _buildFloatingDrawer(),
-            ],
-          ),
-        );
-      },
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundApp,
+      drawer: AppSidebarDrawer(onSearchTap: _showConversationSearch),
+      body: _buildChatContent(),
     );
   }
 
@@ -577,6 +729,18 @@ class _ChatScreenState extends State<ChatScreen>
                 _messageController,
             onSend:
                 _sendMessage,
+            attachedFile: _pendingAttachedFile,
+            attachedFileName: _pendingAttachedFileName,
+            onFileChanged: (file) {
+              setState(() {
+                _pendingAttachedFile = file;
+              });
+            },
+            onFileNameChanged: (name) {
+              setState(() {
+                _pendingAttachedFileName = name;
+              });
+            },
           ),
         ],
       ),
@@ -588,6 +752,7 @@ class _ChatScreenState extends State<ChatScreen>
   // ==========================================================
 
   Widget _buildAppBar() {
+    return Builder(builder: (context) {
     final tokenBalance =
         context
             .watch<AuthProvider>()
@@ -626,8 +791,10 @@ class _ChatScreenState extends State<ChatScreen>
             ),
             child:
                 InkWell(
-              onTap:
-                  _toggleDrawer,
+              onTap: () {
+                FocusScope.of(context).unfocus();
+                Scaffold.of(context).openDrawer();
+              },
               borderRadius:
                   BorderRadius.circular(
                 12,
@@ -684,45 +851,6 @@ class _ChatScreenState extends State<ChatScreen>
                     -0.6,
               ),
             ),
-          ),
-
-          // SEARCH
-          Material(
-            color:
-                Colors.transparent,
-            borderRadius:
-                BorderRadius.circular(
-              10,
-            ),
-            child:
-                InkWell(
-              onTap:
-                  _showConversationSearch,
-              borderRadius:
-                  BorderRadius.circular(
-                10,
-              ),
-              child:
-                  const Padding(
-                padding:
-                    EdgeInsets.all(
-                  8,
-                ),
-                child:
-                    Icon(
-                  Icons.search_rounded,
-                  color:
-                      AppTheme
-                          .textSecondary,
-                  size:
-                      21,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(
-            width: 2,
           ),
 
           const Spacer(),
@@ -850,11 +978,8 @@ class _ChatScreenState extends State<ChatScreen>
         ],
       ),
     );
+    });
   }
-
-  // ==========================================================
-  // ERROR
-  // ==========================================================
 
   Widget _buildError(
     String error,
@@ -928,1210 +1053,11 @@ class _ChatScreenState extends State<ChatScreen>
       ),
     );
   }
-
-  // ==========================================================
-  // FLOATING DRAWER
-  // ==========================================================
-
-  Widget _buildFloatingDrawer() {
-    final size =
-        MediaQuery.sizeOf(
-      context,
-    );
-
-    final drawerWidth =
-        (size.width * 0.78).clamp(
-      280.0,
-      360.0,
-    );
-
-    final progress =
-        Curves.easeOutCubic.transform(
-      _drawerController.value,
-    );
-
-    final leftPosition =
-        -drawerWidth +
-            (drawerWidth * progress);
-
-    return Positioned.fill(
-      child:
-          Stack(
-        children: [
-          // BLUR OVERLAY
-          Positioned.fill(
-            child:
-                GestureDetector(
-              behavior:
-                  HitTestBehavior.opaque,
-              onTap:
-                  _closeDrawer,
-              child:
-                  BackdropFilter(
-                filter:
-                    ImageFilter.blur(
-                  sigmaX:
-                      5 *
-                          _drawerController
-                              .value,
-                  sigmaY:
-                      5 *
-                          _drawerController
-                              .value,
-                ),
-                child:
-                    Container(
-                  color:
-                      Colors.black
-                          .withValues(
-                    alpha:
-                        0.24 *
-                            _drawerController
-                                .value,
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // FLOATING PANEL
-          Positioned(
-            left:
-                leftPosition,
-            top:
-                8,
-            bottom:
-                8,
-            width:
-                drawerWidth,
-            child:
-                Material(
-              color:
-                  Colors.transparent,
-              elevation:
-                  18,
-              shadowColor:
-                  Colors.black
-                      .withValues(
-                alpha:
-                    0.18,
-              ),
-              borderRadius:
-                  const BorderRadius.only(
-                topRight:
-                    Radius.circular(
-                  24,
-                ),
-                bottomRight:
-                    Radius.circular(
-                  24,
-                ),
-              ),
-              child:
-                  Container(
-                decoration:
-                    BoxDecoration(
-                  color:
-                      AppTheme
-                          .backgroundApp,
-                  borderRadius:
-                      const BorderRadius
-                          .only(
-                    topRight:
-                        Radius.circular(
-                      24,
-                    ),
-                    bottomRight:
-                        Radius.circular(
-                      24,
-                    ),
-                  ),
-                  border:
-                      Border.all(
-                    color:
-                        Colors.white
-                            .withValues(
-                      alpha:
-                          0.75,
-                    ),
-                  ),
-                ),
-                child:
-                    _SidebarSurface(
-                  onClose:
-                      _closeDrawer,
-                  onNewChat:
-                      _startNewChat,
-                  onConversationTap:
-                      _openConversation,
-                  onSettings: () {
-                      _closeDrawer();
-                      context.push('/settings');
-                     },
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================
-// SIDEBAR
-// ============================================================
-
-class _SidebarSurface
-    extends StatelessWidget {
-  final VoidCallback onClose;
-  final VoidCallback onNewChat;
-  final ValueChanged<Conversation>
-      onConversationTap;
-  final VoidCallback onSettings;
-
-  const _SidebarSurface({
-    required this.onClose,
-    required this.onNewChat,
-    required this.onConversationTap,
-    required this.onSettings,
-  });
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return SafeArea(
-      child:
-          Column(
-        children: [
-          // HEADER
-          _SidebarHeader(
-            onClose:
-                onClose,
-          ),
-
-          const Divider(
-            height: 1,
-            color:
-                AppTheme
-                    .borderLight,
-          ),
-
-          const SizedBox(
-            height: 12,
-          ),
-
-          // NEW CHAT
-          Padding(
-            padding:
-                const EdgeInsets
-                    .symmetric(
-              horizontal: 14,
-            ),
-            child:
-                _SidebarNewChatButton(
-              onTap:
-                  onNewChat,
-            ),
-          ),
-
-          const SizedBox(
-            height: 14,
-          ),
-
-          // WORKSPACE
-          const Padding(
-            padding:
-                EdgeInsets
-                    .fromLTRB(
-              20,
-              0,
-              20,
-              6,
-            ),
-            child:
-                Align(
-              alignment:
-                  Alignment.centerLeft,
-              child:
-                  Text(
-                'Workspace',
-                style:
-                    TextStyle(
-                  color:
-                      AppTheme
-                          .textMuted,
-                  fontSize:
-                      11,
-                  fontWeight:
-                      FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-
-          _SidebarItem(
-            icon:
-                Icons.edit_outlined,
-            title:
-                'Writer',
-            onTap:
-                () {
-              onClose();
-              context.go(
-                '/writer',
-              );
-            },
-          ),
-
-          _SidebarItem(
-            icon:
-                Icons.grid_view_rounded,
-            title:
-                'AI Tools',
-            onTap:
-                () {
-              onClose();
-              context.go(
-                '/tools',
-              );
-            },
-          ),
-
-          const SizedBox(
-            height: 10,
-          ),
-
-          const Divider(
-            height: 1,
-            color:
-                AppTheme
-                    .borderLight,
-          ),
-
-          const SizedBox(
-            height: 6,
-          ),
-
-          // CONVERSATIONS
-          Expanded(
-            child:
-                Consumer<ChatProvider>(
-              builder: (
-                context,
-                chat,
-                _,
-              ) {
-                return ListView(
-                  physics:
-                      const ClampingScrollPhysics(),
-                  padding:
-                      const EdgeInsets
-                          .fromLTRB(
-                    14,
-                    2,
-                    14,
-                    10,
-                  ),
-                  children: [
-                    const Padding(
-                      padding:
-                          EdgeInsets
-                              .fromLTRB(
-                        6,
-                        6,
-                        6,
-                        5,
-                      ),
-                      child:
-                          Text(
-                        'Percakapan',
-                        style:
-                            TextStyle(
-                          color:
-                              AppTheme
-                                  .textMuted,
-                          fontSize:
-                              11,
-                          fontWeight:
-                              FontWeight.w600,
-                        ),
-                      ),
-                    ),
-
-                    if (chat
-                        .conversations
-                        .isEmpty)
-                      const Padding(
-                        padding:
-                            EdgeInsets
-                                .fromLTRB(
-                          8,
-                          12,
-                          8,
-                          16,
-                        ),
-                        child:
-                            Text(
-                          'Belum ada percakapan.',
-                          style:
-                              TextStyle(
-                            color:
-                                AppTheme
-                                    .textMuted,
-                            fontSize:
-                                11,
-                          ),
-                        ),
-                      )
-                    else
-                      ...chat
-                          .conversations
-                          .map(
-                        (
-                          conversation,
-                        ) {
-                          return _ConversationItem(
-                            conversation:
-                                conversation,
-                            selected:
-                                chat.currentConversationId ==
-                                    conversation
-                                        .id,
-                            onTap:
-                                () {
-                              onConversationTap(
-                                conversation,
-                              );
-                            },
-                            onDelete:
-                                () {
-                              context
-                                  .read<
-                                      ChatProvider>()
-                                  .deleteConversation(
-                                    conversation
-                                        .id,
-                                  );
-                            },
-                            onRename:
-                                (
-                              title,
-                            ) {
-                              context
-                                  .read<
-                                      ChatProvider>()
-                                  .renameConversation(
-                                    conversation
-                                        .id,
-                                    title,
-                                  );
-                            },
-                          );
-                        },
-                      ),
-                  ],
-                );
-              },
-            ),
-          ),
-
-          // SETTINGS
-          Container(
-            width:
-                double.infinity,
-            padding:
-                const EdgeInsets
-                    .fromLTRB(
-              14,
-              8,
-              14,
-              8,
-            ),
-            decoration:
-                const BoxDecoration(
-              border:
-                  Border(
-                top:
-                    BorderSide(
-                  color:
-                      AppTheme
-                          .borderLight,
-                ),
-              ),
-            ),
-            child:
-                _SidebarItem(
-              icon:
-                  Icons.settings_outlined,
-              title:
-                  'Pengaturan',
-              onTap:
-                  onSettings,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ============================================================
 // CONVERSATION ITEM
 // ============================================================
-
-class _ConversationItem
-    extends StatelessWidget {
-  final Conversation conversation;
-  final bool selected;
-  final VoidCallback onTap;
-  final VoidCallback onDelete;
-  final ValueChanged<String> onRename;
-
-  const _ConversationItem({
-    required this.conversation,
-    required this.selected,
-    required this.onTap,
-    required this.onDelete,
-    required this.onRename,
-  });
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return Padding(
-      padding:
-          const EdgeInsets.only(
-        bottom: 3,
-      ),
-      child:
-          Material(
-        color:
-            selected
-                ? AppTheme
-                    .primary
-                    .withValues(
-                  alpha:
-                      0.08,
-                )
-                : Colors.transparent,
-        borderRadius:
-            BorderRadius.circular(
-          13,
-        ),
-        child:
-            InkWell(
-          onTap:
-              onTap,
-          borderRadius:
-              BorderRadius.circular(
-            13,
-          ),
-          child:
-              Padding(
-            padding:
-                const EdgeInsets
-                    .fromLTRB(
-              10,
-              10,
-              4,
-              10,
-            ),
-            child:
-                Row(
-              children: [
-                Icon(
-                  Icons
-                      .chat_bubble_outline_rounded,
-                  color:
-                      selected
-                          ? AppTheme
-                              .primary
-                          : AppTheme
-                              .textSecondary,
-                  size:
-                      18,
-                ),
-
-                const SizedBox(
-                  width: 10,
-                ),
-
-                Expanded(
-                  child:
-                      Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
-                    children: [
-                      Text(
-                        conversation
-                            .title,
-                        maxLines:
-                            1,
-                        overflow:
-                            TextOverflow
-                                .ellipsis,
-                        style:
-                            TextStyle(
-                          color:
-                              selected
-                                  ? AppTheme
-                                      .primary
-                                  : AppTheme
-                                      .textPrimary,
-                          fontSize:
-                              12.5,
-                          fontWeight:
-                              selected
-                                  ? FontWeight
-                                      .w700
-                                  : FontWeight
-                                      .w500,
-                        ),
-                      ),
-
-                      const SizedBox(
-                        height: 3,
-                      ),
-
-                      Text(
-                        conversation
-                            .lastUpdated,
-                        maxLines:
-                            1,
-                        overflow:
-                            TextOverflow
-                                .ellipsis,
-                        style:
-                            const TextStyle(
-                          color:
-                              AppTheme
-                                  .textMuted,
-                          fontSize:
-                              9.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                PopupMenuButton<String>(
-                  padding:
-                      EdgeInsets.zero,
-                  icon:
-                      const Icon(
-                    Icons
-                        .more_vert_rounded,
-                    color:
-                        AppTheme
-                            .textMuted,
-                    size:
-                        18,
-                  ),
-                  onSelected:
-                      (value) async {
-                    if (value ==
-                        'rename') {
-                      if (!context.mounted) return;
-                      await _renameConversation(
-                        context,
-                      );
-                    }
-
-                    if (value ==
-                        'delete') {
-                      if (!context.mounted) return;
-                      await _confirmDelete(
-                        context,
-                      );
-                    }
-                  },
-                  itemBuilder:
-                      (context) {
-                    return const [
-                      PopupMenuItem<String>(
-                        value:
-                            'rename',
-                        child:
-                            Text(
-                          'Ubah nama',
-                        ),
-                      ),
-                      PopupMenuItem<String>(
-                        value:
-                            'delete',
-                        child:
-                            Text(
-                          'Hapus',
-                        ),
-                      ),
-                    ];
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _renameConversation(
-    BuildContext context,
-  ) async {
-    final controller =
-        TextEditingController(
-      text:
-          conversation.title,
-    );
-
-    final result =
-        await showDialog<String>(
-      context:
-          context,
-      builder:
-          (dialogContext) {
-        return AlertDialog(
-          backgroundColor:
-              AppTheme
-                  .surfaceLight,
-          title:
-              const Text(
-            'Ubah nama percakapan',
-            style:
-                TextStyle(
-              color:
-                  AppTheme
-                      .textPrimary,
-            ),
-          ),
-          content:
-              TextField(
-            controller:
-                controller,
-            autofocus:
-                true,
-            maxLength:
-                50,
-            decoration:
-                const InputDecoration(
-              hintText:
-                  'Nama percakapan',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed:
-                  () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
-              },
-              child:
-                  const Text(
-                'Batal',
-              ),
-            ),
-            ElevatedButton(
-              onPressed:
-                  () {
-                final title =
-                    controller
-                        .text
-                        .trim();
-
-                if (title.isEmpty) {
-                  return;
-                }
-
-                Navigator.of(
-                  dialogContext,
-                ).pop(
-                  title,
-                );
-              },
-              child:
-                  const Text(
-                'Simpan',
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    controller.dispose();
-
-    if (result == null ||
-        result.trim().isEmpty) {
-      return;
-    }
-
-    onRename(
-      result.trim(),
-    );
-  }
-
-  Future<void> _confirmDelete(
-    BuildContext context,
-  ) async {
-    final confirmed =
-        await showDialog<bool>(
-      context:
-          context,
-      builder:
-          (dialogContext) {
-        return AlertDialog(
-          backgroundColor:
-              AppTheme
-                  .surfaceLight,
-          title:
-              const Text(
-            'Hapus percakapan?',
-            style:
-                TextStyle(
-              color:
-                  AppTheme
-                      .textPrimary,
-            ),
-          ),
-          content:
-              const Text(
-            'Percakapan ini akan dihapus dari akun kamu.',
-            style:
-                TextStyle(
-              color:
-                  AppTheme
-                      .textSecondary,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed:
-                  () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(
-                  false,
-                );
-              },
-              child:
-                  const Text(
-                'Batal',
-              ),
-            ),
-            TextButton(
-              onPressed:
-                  () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(
-                  true,
-                );
-              },
-              child:
-                  const Text(
-                'Hapus',
-                style:
-                    TextStyle(
-                  color:
-                      AppTheme
-                          .error,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed ==
-        true) {
-      onDelete();
-    }
-  }
-}
-
-// ============================================================
-// SIDEBAR HEADER
-// ============================================================
-
-class _SidebarHeader
-    extends StatelessWidget {
-  final VoidCallback onClose;
-
-  const _SidebarHeader({
-    required this.onClose,
-  });
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return Padding(
-      padding:
-          const EdgeInsets
-              .fromLTRB(
-        16,
-        14,
-        10,
-        14,
-      ),
-      child:
-          Row(
-        children: [
-          Container(
-            width:
-                42,
-            height:
-                42,
-            padding:
-                const EdgeInsets.all(
-              6,
-            ),
-            decoration:
-                BoxDecoration(
-              color:
-                  Colors.white,
-              borderRadius:
-                  BorderRadius.circular(
-                13,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color:
-                      Colors.black
-                          .withValues(
-                    alpha:
-                        0.05,
-                  ),
-                  blurRadius:
-                      12,
-                  offset:
-                      const Offset(
-                    0,
-                    5,
-                  ),
-                ),
-              ],
-            ),
-            child:
-                Image.asset(
-              'assets/images/pintaraja.webp',
-              fit:
-                  BoxFit.contain,
-            ),
-          ),
-
-          const SizedBox(
-            width: 7,
-          ),
-
-          const Expanded(
-            child:
-                Text(
-              'intaraja',
-              style:
-                  TextStyle(
-                color:
-                    AppTheme
-                        .textPrimary,
-                fontSize:
-                    21,
-                fontWeight:
-                    FontWeight.w700,
-                letterSpacing:
-                    -0.7,
-              ),
-            ),
-          ),
-
-          Material(
-            color:
-                Colors.transparent,
-            borderRadius:
-                BorderRadius.circular(
-              12,
-            ),
-            child:
-                InkWell(
-              onTap:
-                  onClose,
-              borderRadius:
-                  BorderRadius.circular(
-                12,
-              ),
-              child:
-                  const Padding(
-                padding:
-                    EdgeInsets.all(
-                  9,
-                ),
-                child:
-                    Icon(
-                  Icons
-                      .close_rounded,
-                  color:
-                      AppTheme
-                          .textSecondary,
-                  size:
-                      21,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================
-// NEW CHAT BUTTON
-// ============================================================
-
-class _SidebarNewChatButton
-    extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _SidebarNewChatButton({
-    required this.onTap,
-  });
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return Material(
-      color:
-          AppTheme.primary,
-      borderRadius:
-          BorderRadius.circular(
-        16,
-      ),
-      child:
-          InkWell(
-        onTap:
-            onTap,
-        borderRadius:
-            BorderRadius.circular(
-          16,
-        ),
-        child:
-            const Padding(
-          padding:
-              EdgeInsets.all(
-            13,
-          ),
-          child:
-              Row(
-            children: [
-              SizedBox(
-                width:
-                    38,
-                height:
-                    38,
-                child:
-                    DecoratedBox(
-                  decoration:
-                      BoxDecoration(
-                    color:
-                        Color.fromRGBO(
-                      255,
-                      255,
-                      255,
-                      0.14,
-                    ),
-                    borderRadius:
-                        BorderRadius.all(
-                      Radius.circular(
-                        11,
-                      ),
-                    ),
-                  ),
-                  child:
-                      Icon(
-                    Icons
-                        .add_comment_outlined,
-                    color:
-                        Colors.white,
-                    size:
-                        20,
-                  ),
-                ),
-              ),
-
-              SizedBox(
-                width:
-                    11,
-              ),
-
-              Expanded(
-                child:
-                    Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
-                  children: [
-                    Text(
-                      'Obrolan baru',
-                      style:
-                          TextStyle(
-                        color:
-                            Colors.white,
-                        fontSize:
-                            13,
-                        fontWeight:
-                            FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(
-                      height:
-                          2,
-                    ),
-                    Text(
-                      'Mulai percakapan baru',
-                      style:
-                          TextStyle(
-                        color:
-                            Color.fromRGBO(
-                          255,
-                          255,
-                          255,
-                          0.72,
-                        ),
-                        fontSize:
-                            10.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              Icon(
-                Icons
-                    .arrow_forward_ios_rounded,
-                color:
-                    Colors.white70,
-                size:
-                    13,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ============================================================
-// SIDEBAR ITEM
-// ============================================================
-
-class _SidebarItem
-    extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-
-  const _SidebarItem({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return Padding(
-      padding:
-          const EdgeInsets
-              .symmetric(
-        horizontal: 10,
-        vertical: 1,
-      ),
-      child:
-          Material(
-        color:
-            Colors.transparent,
-        borderRadius:
-            BorderRadius.circular(
-          13,
-        ),
-        child:
-            InkWell(
-          onTap:
-              onTap,
-          borderRadius:
-              BorderRadius.circular(
-            13,
-          ),
-          child:
-              Padding(
-            padding:
-                const EdgeInsets
-                    .symmetric(
-              horizontal: 10,
-              vertical: 10,
-            ),
-            child:
-                Row(
-              children: [
-                Icon(
-                  icon,
-                  color:
-                      AppTheme
-                          .textSecondary,
-                  size:
-                      20,
-                ),
-
-                const SizedBox(
-                  width: 13,
-                ),
-
-                Expanded(
-                  child:
-                      Text(
-                    title,
-                    maxLines:
-                        1,
-                    overflow:
-                        TextOverflow
-                            .ellipsis,
-                    style:
-                        const TextStyle(
-                      color:
-                          AppTheme
-                              .textPrimary,
-                      fontSize:
-                          13,
-                      fontWeight:
-                          FontWeight.w500,
-                    ),
-                  ),
-                ),
-
-                const Icon(
-                  Icons
-                      .chevron_right_rounded,
-                  color:
-                      AppTheme.textMuted,
-                  size:
-                      18,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // ============================================================
 // EMPTY CHAT
@@ -2404,15 +1330,129 @@ class _MessageBubble extends StatelessWidget {
                   ),
                   border: isUser ? null : Border.all(color: AppTheme.borderLight),
                 ),
-                child: Text(
-                  message.content,
-                  softWrap: true,
-                  style: TextStyle(
-                    color: isUser ? Colors.white : AppTheme.textPrimary,
-                    fontSize: 14,
-                    height: 1.5,
-                  ),
-                ),
+                child: Builder(builder: (context) {
+                  // Check if content is a JSON array
+                  if (message.content.trim().startsWith('[') && message.content.trim().endsWith(']')) {
+                    try {
+                      final parsed = jsonDecode(message.content);
+                      if (parsed is List) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: parsed.map<Widget>((part) {
+                            if (part is Map) {
+                              if (part['type'] == 'text') {
+                                return Text(
+                                  part['text'] ?? '',
+                                  style: TextStyle(color: isUser ? Colors.white : AppTheme.textPrimary, fontSize: 14, height: 1.5),
+                                );
+                              } else if (part['type'] == 'image_url') {
+                                final url = part['image_url']['url'];
+                                if (url != null && url.toString().startsWith('data:image')) {
+                                  final base64Str = url.toString().split(',').last;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.memory(base64Decode(base64Str), fit: BoxFit.cover),
+                                    ),
+                                  );
+                                }
+                              } else if (part['type'] == 'file') {
+                                return Container(
+                                  margin: const EdgeInsets.only(top: 8),
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.insert_drive_file, color: Colors.white, size: 16),
+                                      const SizedBox(width: 4),
+                                      Text(part['name'] ?? 'File', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                                    ],
+                                  ),
+                                );
+                              }
+                            }
+                            return const SizedBox.shrink();
+                          }).toList(),
+                        );
+                      }
+                    } catch (e) {
+                      // fallback
+                    }
+                  }
+                  
+                  if (isUser) {
+                    return Text(
+                      message.content,
+                      softWrap: true,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    );
+                  }
+
+                  return MarkdownBody(
+                    data: message.content,
+                    styleSheet: MarkdownStyleSheet(
+                      p: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                      strong: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      em: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 14,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      del: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                      code: TextStyle(
+                        color: AppTheme.primary,
+                        fontSize: 13,
+                        backgroundColor: AppTheme.surfaceMuted,
+                      ),
+                      codeblockDecoration: BoxDecoration(
+                        color: AppTheme.surfaceMuted,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      codeblockPadding: const EdgeInsets.all(10),
+                      h1: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      h2: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      h3: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      listBullet: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 14,
+                      ),
+                      blockquote: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  );
+                }),
               ),
             ),
           ),
@@ -2444,10 +1484,18 @@ class _MessageBubble extends StatelessWidget {
 class _ChatInput extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
+  final File? attachedFile;
+  final String? attachedFileName;
+  final ValueChanged<File?> onFileChanged;
+  final ValueChanged<String?> onFileNameChanged;
 
   const _ChatInput({
     required this.controller,
     required this.onSend,
+    this.attachedFile,
+    this.attachedFileName,
+    required this.onFileChanged,
+    required this.onFileNameChanged,
   });
 
   @override
@@ -2455,9 +1503,6 @@ class _ChatInput extends StatefulWidget {
 }
 
 class _ChatInputState extends State<_ChatInput> {
-  File? _attachedFile;
-  String? _attachedFileName;
-
   void _pickAttachment() {
     showModalBottomSheet<void>(
       context: context,
@@ -2481,10 +1526,8 @@ class _ChatInputState extends State<_ChatInput> {
                   final picker = ImagePicker();
                   final picked = await picker.pickImage(source: ImageSource.gallery);
                   if (picked != null) {
-                    setState(() {
-                      _attachedFile = File(picked.path);
-                      _attachedFileName = picked.name;
-                    });
+                    widget.onFileChanged(File(picked.path));
+                    widget.onFileNameChanged(picked.name);
                   }
                 },
               ),
@@ -2496,10 +1539,8 @@ class _ChatInputState extends State<_ChatInput> {
                   final picker = ImagePicker();
                   final picked = await picker.pickImage(source: ImageSource.camera);
                   if (picked != null) {
-                    setState(() {
-                      _attachedFile = File(picked.path);
-                      _attachedFileName = picked.name;
-                    });
+                    widget.onFileChanged(File(picked.path));
+                    widget.onFileNameChanged(picked.name);
                   }
                 },
               ),
@@ -2510,10 +1551,8 @@ class _ChatInputState extends State<_ChatInput> {
                   Navigator.pop(ctx);
                   final result = await FilePicker.platform.pickFiles();
                   if (result != null && result.files.single.path != null) {
-                    setState(() {
-                      _attachedFile = File(result.files.single.path!);
-                      _attachedFileName = result.files.single.name;
-                    });
+                    widget.onFileChanged(File(result.files.single.path!));
+                    widget.onFileNameChanged(result.files.single.name);
                   }
                 },
               ),
@@ -2525,18 +1564,6 @@ class _ChatInputState extends State<_ChatInput> {
   }
 
   void _handleSend() {
-    if (_attachedFile != null) {
-      final fileName = _attachedFileName ?? 'lampiran';
-      if (widget.controller.text.trim().isEmpty) {
-        widget.controller.text = '[Lampiran File: $fileName]';
-      } else {
-        widget.controller.text = '${widget.controller.text.trim()}\n\n[Lampiran File: $fileName]';
-      }
-      setState(() {
-        _attachedFile = null;
-        _attachedFileName = null;
-      });
-    }
     widget.onSend();
   }
 
@@ -2559,10 +1586,10 @@ class _ChatInputState extends State<_ChatInput> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (_attachedFile != null)
+                if (widget.attachedFile != null)
                   Container(
                     margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: AppTheme.surfaceLight,
                       borderRadius: BorderRadius.circular(12),
@@ -2570,29 +1597,31 @@ class _ChatInputState extends State<_ChatInput> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.attach_file_rounded, color: AppTheme.primary, size: 18),
-                        const SizedBox(width: 8),
+                        if (widget.attachedFileName != null && (widget.attachedFileName!.toLowerCase().endsWith('.jpg') || widget.attachedFileName!.toLowerCase().endsWith('.jpeg') || widget.attachedFileName!.toLowerCase().endsWith('.png')))
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(widget.attachedFile!, width: 40, height: 40, fit: BoxFit.cover),
+                          )
+                        else
+                          Container(
+                            width: 40, height: 40,
+                            decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                            child: const Icon(Icons.insert_drive_file_rounded, color: AppTheme.primary, size: 24),
+                          ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            _attachedFileName ?? 'Lampiran terpilih',
+                            widget.attachedFileName ?? 'Lampiran terpilih',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
                           ),
                         ),
                         IconButton(
-                          constraints: const BoxConstraints(),
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(Icons.close_rounded, size: 18, color: AppTheme.textMuted),
+                          icon: const Icon(Icons.close_rounded, size: 20, color: AppTheme.textMuted),
                           onPressed: () {
-                            setState(() {
-                              _attachedFile = null;
-                              _attachedFileName = null;
-                            });
+                            widget.onFileChanged(null);
+                            widget.onFileNameChanged(null);
                           },
                         ),
                       ],
@@ -2643,20 +1672,20 @@ class _ChatInputState extends State<_ChatInput> {
                       // MODEL SELECTOR BUTTON
                       GestureDetector(
                         onTap: () {
-                          // Access _showModelSelector from parent state
                           final chatScreenState = context.findAncestorStateOfType<_ChatScreenState>();
                           chatScreenState?._showModelSelector();
                         },
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 4, right: 4),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                           decoration: BoxDecoration(
                             color: AppTheme.surfaceMuted,
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: AppTheme.borderLight),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               const Icon(Icons.auto_awesome_rounded, color: AppTheme.primary, size: 13),
                               const SizedBox(width: 3),
@@ -2668,11 +1697,12 @@ class _ChatInputState extends State<_ChatInput> {
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: AppTheme.textSecondary,
-                                    fontSize: 10,
+                                    fontSize: 10.5,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
+                              const SizedBox(width: 1),
                               const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary, size: 13),
                             ],
                           ),
@@ -2733,11 +1763,9 @@ class _ProviderOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleColor = provider.isLimited
-        ? AppTheme.textMuted
-        : selected
-            ? AppTheme.primary
-            : AppTheme.textPrimary;
+    final titleColor = selected
+        ? AppTheme.primary
+        : AppTheme.textPrimary;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -2753,7 +1781,7 @@ class _ProviderOption extends StatelessWidget {
               children: [
                 Icon(
                   Icons.auto_awesome_rounded,
-                  color: provider.isLimited ? AppTheme.textMuted : AppTheme.primary,
+                  color: AppTheme.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
@@ -2774,9 +1802,7 @@ class _ProviderOption extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (provider.isLimited)
-                  const Icon(Icons.lock_outline_rounded, color: AppTheme.textMuted, size: 18)
-                else if (selected)
+                if (selected)
                   const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 20),
               ],
             ),

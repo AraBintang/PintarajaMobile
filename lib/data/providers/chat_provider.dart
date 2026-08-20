@@ -1,3 +1,4 @@
+import 'dart:io';
 // ============================================================
 // PINTARAJA — CHAT PROVIDER
 // AI Provider + Daily Quota + Token-aware Chat
@@ -1073,11 +1074,13 @@ class ChatProvider
   Future<void> sendMessage(
     String message, {
     String? model,
+    File? attachedFile,
+    String? attachedFileName,
   }) async {
     final cleanMessage =
         message.trim();
 
-    if (cleanMessage.isEmpty) {
+    if (cleanMessage.isEmpty && attachedFile == null) {
       return;
     }
 
@@ -1149,11 +1152,35 @@ class ChatProvider
     // ========================================================
     // LOCAL USER MESSAGE
     // ========================================================
+    String finalContent = cleanMessage;
+    String? base64Str;
+    if (attachedFile != null) {
+      try {
+        final bytes = await attachedFile.readAsBytes();
+        base64Str = base64Encode(bytes);
+        final name = attachedFileName ?? 'file';
+        final isImage = name.toLowerCase().endsWith('.jpg') || name.toLowerCase().endsWith('.jpeg') || name.toLowerCase().endsWith('.png');
+        
+        final arr = [];
+        if (cleanMessage.isNotEmpty) {
+          arr.add({"type": "text", "text": cleanMessage});
+        }
+        if (isImage) {
+          arr.add({"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,$base64Str"}, "name": name});
+        } else {
+          arr.add({"type": "file", "name": name});
+        }
+        finalContent = jsonEncode(arr);
+      } catch (e) {
+        // Fallback
+        finalContent = cleanMessage;
+      }
+    }
 
     _messages.add(
       ChatMessage(
         role: 'user',
-        content: cleanMessage,
+        content: finalContent,
         timestamp:
             DateTime.now(),
         conversationId:
@@ -1212,7 +1239,7 @@ class ChatProvider
         'conversationId':
             conversationId,
         'message':
-            cleanMessage,
+            finalContent,
         'messageToAi':
             messageToAi,
       };
@@ -1276,7 +1303,7 @@ class ChatProvider
         ),
       );
 
-      final finalContent =
+      final aiResponse =
           content.trim().isEmpty
               ? 'AI tidak memberikan respons.'
               : content.trim();
@@ -1289,7 +1316,7 @@ class ChatProvider
           role:
               'assistant',
           content:
-              finalContent,
+              aiResponse,
           timestamp:
               DateTime.now(),
           conversationId:

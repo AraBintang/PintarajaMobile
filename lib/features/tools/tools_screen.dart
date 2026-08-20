@@ -24,7 +24,7 @@ class ToolsScreen extends StatefulWidget {
 
 class _ToolsScreenState
     extends State<ToolsScreen> {
-  String _activeTab = 'paraphrase';
+  String _activeTab = 'humanizer';
 
   final TextEditingController _textController =
       TextEditingController();
@@ -38,7 +38,6 @@ class _ToolsScreenState
   double? _plagiarismPercent;
 
   String _selectedLanguage = 'Indonesia';
-  String _selectedParaMode = 'standard';
   String _selectedHumanMode = 'basic';
   String _selectedPlagService = 'turnitin';
   File? _selectedPlagFile;
@@ -51,16 +50,6 @@ class _ToolsScreenState
   bool _excludeQuotes = false;
 
   final List<String> _languages = ['Indonesia', 'English'];
-  final List<String> _paraModes = [
-    'standard',
-    'fluency',
-    'formal',
-    'academic',
-    'simple',
-    'creative',
-    'expand',
-    'shorten'
-  ];
   final List<String> _humanModes = ['basic', 'advanced'];
 
   @override
@@ -188,20 +177,11 @@ class _ToolsScreenState
 
         case 'paraphrase':
         default:
-          data =
-              await ApiService.instance.post(
-            ApiConstants.paraphrase,
-            {
-              'language': _selectedLanguage,
-              'mode': _selectedParaMode,
-              'text': text,
-            },
-            timeout:
-                const Duration(
-              seconds: 120,
-            ),
-          );
-          break;
+          setState(() {
+            _isLoading = false;
+            _error = 'Paraphrase sudah tersedia di menu terpisah.';
+          });
+          return;
       }
 
       if (!mounted) {
@@ -246,24 +226,14 @@ class _ToolsScreenState
         final result =
             _extractText(
           data,
-          _activeTab ==
-                  'paraphrase'
-              ? const [
-                  'result',
-                  'paraphrased_text',
-                  'content',
-                  'text',
-                  'output',
-                  'answer',
-                ]
-              : const [
-                  'result',
-                  'humanized_text',
-                  'content',
-                  'text',
-                  'output',
-                  'answer',
-                ],
+          const [
+            'result',
+            'humanized_text',
+            'content',
+            'text',
+            'output',
+            'answer',
+          ],
         );
 
         if (result.isEmpty) {
@@ -465,42 +435,71 @@ class _ToolsScreenState
   void _showTokenInfo() {
     final auth =
         context.read<AuthProvider>();
+    final tokenBalance = auth.tokenBalance;
 
-    showDialog<void>(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor:
-              AppTheme.surfaceLight,
-          title: const Text(
-            'Token PintarAja',
-            style: TextStyle(
-              color:
-                  AppTheme.textPrimary,
-              fontWeight:
-                  FontWeight.w700,
-            ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          decoration: BoxDecoration(
+            color: AppTheme.getSurface(ctx),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          content: Text(
-            'Saldo token kamu: ${auth.tokenBalance}',
-            style: const TextStyle(
-              color:
-                  AppTheme.textSecondary,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
-              },
-              child:
-                  const Text(
-                'Tutup',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(color: AppTheme.getBorder(ctx), borderRadius: BorderRadius.circular(10)),
+                ),
               ),
-            ),
-          ],
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Token & Top Up', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.textPrimary)),
+                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(color: AppTheme.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Sisa Token Anda', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.diamond_rounded, color: Color(0xFFFCD34D), size: 24),
+                        const SizedBox(width: 8),
+                        Text('$tokenBalance', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
+                        const SizedBox(width: 4),
+                        Text('token', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
         );
       },
     );
@@ -825,9 +824,6 @@ class _ToolsScreenState
       );
     }
 
-    final modes = _activeTab == 'paraphrase' ? _paraModes : _humanModes;
-    final currentMode = _activeTab == 'paraphrase' ? _selectedParaMode : _selectedHumanMode;
-
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -869,8 +865,8 @@ class _ToolsScreenState
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: modes.map((m) {
-                final selected = m == currentMode;
+              children: _humanModes.map((m) {
+                final selected = m == _selectedHumanMode;
                 return Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
@@ -881,11 +877,7 @@ class _ToolsScreenState
                     onSelected: (val) {
                       if (val) {
                         setState(() {
-                          if (_activeTab == 'paraphrase') {
-                            _selectedParaMode = m;
-                          } else {
-                            _selectedHumanMode = m;
-                          }
+                          _selectedHumanMode = m;
                         });
                       }
                     },
@@ -905,65 +897,23 @@ class _ToolsScreenState
 
   Widget _buildTabSelector() {
     return SizedBox(
-      width:
-          double.infinity,
-      child:
-          Row(
+      width: double.infinity,
+      child: Row(
         children: [
           Expanded(
-            child:
-                _ToolTabButton(
-              label:
-                  'Paraphrase',
-              active:
-                  _activeTab ==
-                      'paraphrase',
-              onTap:
-                  () =>
-                      _changeTab(
-                'paraphrase',
-              ),
-            ),
-          ),
-
-          const SizedBox(
-            width: 7,
-          ),
-
-          Expanded(
-            child:
-                _ToolTabButton(
-              label:
-                  'Humanizer',
-              active:
-                  _activeTab ==
-                      'humanizer',
+            child: _ToolTabButton(
+              label: 'Humanizer',
+              active: _activeTab == 'humanizer',
               isSoon: true,
-              onTap:
-                  () =>
-                      _changeTab(
-                'humanizer',
-              ),
+              onTap: () => _changeTab('humanizer'),
             ),
           ),
-
-          const SizedBox(
-            width: 7,
-          ),
-
+          const SizedBox(width: 7),
           Expanded(
-            child:
-                _ToolTabButton(
-              label:
-                  'Plagiarism',
-              active:
-                  _activeTab ==
-                      'plagiarism',
-              onTap:
-                  () =>
-                      _changeTab(
-                'plagiarism',
-              ),
+            child: _ToolTabButton(
+              label: 'Plagiarism',
+              active: _activeTab == 'plagiarism',
+              onTap: () => _changeTab('plagiarism'),
             ),
           ),
         ],
@@ -982,10 +932,6 @@ class _ToolsScreenState
         'plagiarism') {
       title =
           'Masukkan Teks yang Mau Dicek';
-    } else if (_activeTab ==
-        'humanizer') {
-      title =
-          'Masukkan Teks Asli';
     } else {
       title =
           'Masukkan Teks Asli';
@@ -1139,15 +1085,12 @@ class _ToolsScreenState
 
   String _getButtonLabel() {
     switch (_activeTab) {
-      case 'humanizer':
-        return 'Humanize Teks ✨';
-
       case 'plagiarism':
-        return 'Periksa Plagiarisme 🔍';
+        return 'Periksa Plagiarisme';
 
-      case 'paraphrase':
+      case 'humanizer':
       default:
-        return 'Paraphrase Teks 🔄';
+        return 'Humanize Teks';
     }
   }
 
@@ -1156,16 +1099,6 @@ class _ToolsScreenState
   // ==========================================================
 
   LinearGradient _getButtonGradient() {
-    if (_activeTab ==
-        'humanizer') {
-      return const LinearGradient(
-        colors: [
-          Color(0xFF11998E),
-          Color(0xFF38EF7D),
-        ],
-      );
-    }
-
     if (_activeTab ==
         'plagiarism') {
       return const LinearGradient(
@@ -1176,7 +1109,12 @@ class _ToolsScreenState
       );
     }
 
-    return AppTheme.primaryGradient;
+    return const LinearGradient(
+      colors: [
+        Color(0xFF11998E),
+        Color(0xFF38EF7D),
+      ],
+    );
   }
 
   // ==========================================================
