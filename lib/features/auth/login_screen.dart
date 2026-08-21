@@ -16,20 +16,15 @@ class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() =>
-      _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState
-    extends State<LoginScreen> {
-  final _formKey =
-      GlobalKey<FormState>();
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
 
-  final _emailController =
-      TextEditingController();
+  final _emailController = TextEditingController();
 
-  final _passwordController =
-      TextEditingController();
+  final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
 
@@ -56,8 +51,7 @@ class _LoginScreenState
       return;
     }
 
-    final auth =
-        context.read<AuthProvider>();
+    final auth = context.read<AuthProvider>();
 
     final success = await auth.login(
       _emailController.text.trim(),
@@ -71,8 +65,7 @@ class _LoginScreenState
 
     if (!success) {
       _showError(
-        auth.error ??
-            'Email atau password salah.',
+        auth.error ?? 'Email atau password salah.',
       );
 
       return;
@@ -80,8 +73,7 @@ class _LoginScreenState
 
     await _showSuccessDialog(
       title: 'Login berhasil',
-      message:
-          'Selamat datang kembali di PintarAja.',
+      message: 'Selamat datang kembali di PintarAja.',
     );
 
     if (!mounted) {
@@ -136,12 +128,9 @@ class _LoginScreenState
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor:
-              AppTheme.error,
-          behavior:
-              SnackBarBehavior.floating,
-          margin:
-              const EdgeInsets.all(16),
+          backgroundColor: AppTheme.error,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
         ),
       );
   }
@@ -153,8 +142,7 @@ class _LoginScreenState
   String? _validateEmail(
     String? value,
   ) {
-    final email =
-        value?.trim() ?? '';
+    final email = value?.trim() ?? '';
 
     if (email.isEmpty) {
       return 'Email wajib diisi';
@@ -174,8 +162,7 @@ class _LoginScreenState
   String? _validatePassword(
     String? value,
   ) {
-    final password =
-        value ?? '';
+    final password = value ?? '';
 
     if (password.isEmpty) {
       return 'Password wajib diisi';
@@ -196,15 +183,12 @@ class _LoginScreenState
   Widget build(
     BuildContext context,
   ) {
-    final keyboardHeight =
-        MediaQuery.viewInsetsOf(
-          context,
-        ).bottom;
+    final keyboardHeight = MediaQuery.viewInsetsOf(
+      context,
+    ).bottom;
 
     return Scaffold(
-      backgroundColor:
-          AppTheme.backgroundLight,
-
+      backgroundColor: AppTheme.backgroundLight,
       body: Stack(
         children: [
           Positioned(
@@ -212,34 +196,25 @@ class _LoginScreenState
             left: -120,
             child: _GlowCircle(
               size: 360,
-              color: AppTheme
-                  .primaryLight
-                  .withValues(
+              color: AppTheme.primaryLight.withValues(
                 alpha: 0.22,
               ),
             ),
           ),
-
           Positioned(
             bottom: -120,
             right: -120,
             child: _GlowCircle(
               size: 340,
-              color: AppTheme
-                  .accent
-                  .withValues(
+              color: AppTheme.accent.withValues(
                 alpha: 0.10,
               ),
             ),
           ),
-
           SafeArea(
             child: SingleChildScrollView(
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior
-                      .onDrag,
-              padding:
-                  EdgeInsets.fromLTRB(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.fromLTRB(
                 24,
                 20,
                 24,
@@ -258,8 +233,7 @@ class _LoginScreenState
                     // ==================================================
 
                     Row(
-                      mainAxisSize:
-                          MainAxisSize.min,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Image.asset(
                           'assets/images/pintaraja.webp',
@@ -267,22 +241,17 @@ class _LoginScreenState
                           height: 38,
                         ),
                         Transform.translate(
-                          offset:
-                              const Offset(
+                          offset: const Offset(
                             -2,
                             2,
                           ),
                           child: const Text(
                             'intaraja',
-                            style:
-                                TextStyle(
-                              color: AppTheme
-                                  .textPrimary,
+                            style: TextStyle(
+                              color: AppTheme.textPrimary,
                               fontSize: 21,
-                              fontWeight:
-                                  FontWeight.w700,
-                              letterSpacing:
-                                  -0.6,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.6,
                             ),
                           ),
                         ),
@@ -298,37 +267,25 @@ class _LoginScreenState
                     // ==================================================
 
                     Container(
-                      width:
-                          double.infinity,
-                      padding:
-                          const EdgeInsets
-                              .all(24),
-                      decoration:
-                          BoxDecoration(
-                        color: Colors.white
-                            .withValues(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(
                           alpha: 0.88,
                         ),
-                        borderRadius:
-                            BorderRadius
-                                .circular(
+                        borderRadius: BorderRadius.circular(
                           24,
                         ),
-                        border:
-                            Border.all(
-                          color:
-                              Colors.white,
+                        border: Border.all(
+                          color: Colors.white,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors
-                                .black
-                                .withValues(
+                            color: Colors.black.withValues(
                               alpha: 0.05,
                             ),
                             blurRadius: 30,
-                            offset:
-                                const Offset(
+                            offset: const Offset(
                               0,
                               12,
                             ),
@@ -336,300 +293,204 @@ class _LoginScreenState
                         ],
                       ),
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment
-                                .start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
                             'Welcome back',
-                            style:
-                                TextStyle(
-                              color: AppTheme
-                                  .textPrimary,
+                            style: TextStyle(
+                              color: AppTheme.textPrimary,
                               fontSize: 25,
-                              fontWeight:
-                                  FontWeight
-                                      .w700,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-
                           const SizedBox(
                             height: 6,
                           ),
-
                           const Text(
                             'Sign in to continue using Pintaraja',
-                            style:
-                                TextStyle(
-                              color: AppTheme
-                                  .textSecondary,
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
                               fontSize: 13,
                             ),
                           ),
-
                           const SizedBox(
                             height: 26,
                           ),
-
                           const _FieldLabel(
-                            text:
-                                'Email',
+                            text: 'Email',
                           ),
-
                           const SizedBox(
                             height: 8,
                           ),
-
                           TextFormField(
-                            controller:
-                                _emailController,
-                            keyboardType:
-                                TextInputType
-                                    .emailAddress,
-                            textInputAction:
-                                TextInputAction
-                                    .next,
-                            validator:
-                                _validateEmail,
-                            decoration:
-                                const InputDecoration(
-                              hintText:
-                                  'you@example.com',
-                              prefixIcon:
-                                  Icon(
-                                Icons
-                                    .mail_outline_rounded,
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            validator: _validateEmail,
+                            decoration: const InputDecoration(
+                              hintText: 'you@example.com',
+                              prefixIcon: Icon(
+                                Icons.mail_outline_rounded,
                                 size: 20,
                               ),
                             ),
                           ),
-
                           const SizedBox(
                             height: 18,
                           ),
-
                           const _FieldLabel(
-                            text:
-                                'Password',
+                            text: 'Password',
                           ),
-
                           const SizedBox(
                             height: 8,
                           ),
-
                           TextFormField(
-                            controller:
-                                _passwordController,
-                            obscureText:
-                                _obscurePassword,
-                            textInputAction:
-                                TextInputAction
-                                    .done,
-                            validator:
-                                _validatePassword,
-                            onFieldSubmitted:
-                                (_) {
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.done,
+                            validator: _validatePassword,
+                            onFieldSubmitted: (_) {
                               _handleLogin();
                             },
-                            decoration:
-                                InputDecoration(
-                              hintText:
-                                  '••••••••',
-                              prefixIcon:
-                                  const Icon(
-                                Icons
-                                    .lock_outline_rounded,
+                            decoration: InputDecoration(
+                              hintText: '••••••••',
+                              prefixIcon: const Icon(
+                                Icons.lock_outline_rounded,
                                 size: 20,
                               ),
-                              suffixIcon:
-                                  IconButton(
-                                onPressed:
-                                    () {
+                              suffixIcon: IconButton(
+                                onPressed: () {
                                   setState(
                                     () {
-                                      _obscurePassword =
-                                          !_obscurePassword;
+                                      _obscurePassword = !_obscurePassword;
                                     },
                                   );
                                 },
-                                icon:
-                                    Icon(
+                                icon: Icon(
                                   _obscurePassword
-                                      ? Icons
-                                          .visibility_outlined
-                                      : Icons
-                                          .visibility_off_outlined,
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
                                   size: 20,
                                 ),
                               ),
                             ),
                           ),
-
                           const SizedBox(
                             height: 10,
                           ),
-
                           Row(
                             children: [
                               Expanded(
                                 child: Row(
                                   children: [
                                     Checkbox(
-                                      value:
-                                          _rememberMe,
-                                      activeColor:
-                                          AppTheme
-                                              .primary,
-                                      onChanged:
-                                          (value) {
+                                      value: _rememberMe,
+                                      activeColor: AppTheme.primary,
+                                      onChanged: (value) {
                                         setState(
                                           () {
-                                            _rememberMe =
-                                                value ??
-                                                    false;
+                                            _rememberMe = value ?? false;
                                           },
                                         );
                                       },
                                     ),
                                     const Flexible(
-                                      child:
-                                          Text(
+                                      child: Text(
                                         'Remember me',
-                                        style:
-                                            TextStyle(
-                                          color: AppTheme
-                                              .textSecondary,
-                                          fontSize:
-                                              12.5,
+                                        style: TextStyle(
+                                          color: AppTheme.textSecondary,
+                                          fontSize: 12.5,
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-
                               TextButton(
-                                onPressed:
-                                    () {
+                                onPressed: () {
                                   context.go(
                                     '/auth/forgot-password',
                                   );
                                 },
-                                child:
-                                    const Text(
+                                child: const Text(
                                   'Forgot password?',
-                                  style:
-                                      TextStyle(
-                                    color:
-                                        Color(
+                                  style: TextStyle(
+                                    color: Color(
                                       0xFFF59E0B,
                                     ),
-                                    fontSize:
-                                        12.5,
-                                    fontWeight:
-                                        FontWeight
-                                            .w600,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-
                           const SizedBox(
                             height: 22,
                           ),
-
-                          Consumer<
-                              AuthProvider>(
-                            builder:
-                                (
+                          Consumer<AuthProvider>(
+                            builder: (
                               context,
                               auth,
                               _,
                             ) {
                               return SizedBox(
-                                width:
-                                    double.infinity,
+                                width: double.infinity,
                                 height: 50,
-                                child:
-                                    ElevatedButton(
+                                child: ElevatedButton(
                                   onPressed:
-                                      auth.isLoading
-                                          ? null
-                                          : _handleLogin,
-                                  child:
-                                      auth.isLoading
-                                          ? const SizedBox(
-                                              width:
-                                                  20,
-                                              height:
-                                                  20,
-                                              child:
-                                                  CircularProgressIndicator(
-                                                strokeWidth:
-                                                    2.2,
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                        Color>(
-                                                  Colors
-                                                      .white,
-                                                ),
-                                              ),
-                                            )
-                                          : const Text(
-                                              'Sign in',
+                                      auth.isLoading ? null : _handleLogin,
+                                  child: auth.isLoading
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
                                             ),
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Sign in',
+                                        ),
                                 ),
                               );
                             },
                           ),
-
                           const SizedBox(
                             height: 22,
                           ),
-
                           const Row(
                             children: [
                               Expanded(
-                                child:
-                                    Divider(
-                                  color: AppTheme
-                                      .borderLight,
+                                child: Divider(
+                                  color: AppTheme.borderLight,
                                 ),
                               ),
                               Padding(
-                                padding:
-                                    EdgeInsets
-                                        .symmetric(
-                                  horizontal:
-                                      12,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12,
                                 ),
-                                child:
-                                    Text(
+                                child: Text(
                                   'or',
-                                  style:
-                                      TextStyle(
-                                    color: AppTheme
-                                        .textMuted,
-                                    fontSize:
-                                        12,
+                                  style: TextStyle(
+                                    color: AppTheme.textMuted,
+                                    fontSize: 12,
                                   ),
                                 ),
                               ),
                               Expanded(
-                                child:
-                                    Divider(
-                                  color: AppTheme
-                                      .borderLight,
+                                child: Divider(
+                                  color: AppTheme.borderLight,
                                 ),
                               ),
                             ],
                           ),
-
                           const SizedBox(
                             height: 20,
                           ),
-
                           SizedBox(
                             width: double.infinity,
                             height: 48,
@@ -640,10 +501,14 @@ class _LoginScreenState
                                   final googleSignIn = GoogleSignIn(
                                     scopes: ['email', 'profile'],
                                   );
-                                  await googleSignIn.signOut(); // ensure fresh sign-in
-                                  final googleUser = await googleSignIn.signIn();
-                                  if (googleUser == null) return; // user cancelled
-                                  final googleAuth = await googleUser.authentication;
+                                  await googleSignIn
+                                      .signOut(); // ensure fresh sign-in
+                                  final googleUser =
+                                      await googleSignIn.signIn();
+                                  if (googleUser == null)
+                                    return; // user cancelled
+                                  final googleAuth =
+                                      await googleUser.authentication;
                                   final idToken = googleAuth.idToken;
                                   final accessToken = googleAuth.accessToken;
                                   final success = await auth.loginWithGoogle(
@@ -654,10 +519,12 @@ class _LoginScreenState
                                   if (success) {
                                     context.go('/chat');
                                   } else {
-                                    _showError(auth.error ?? 'Login dengan Google tidak dapat diproses saat ini.');
+                                    _showError(auth.error ??
+                                        'Login dengan Google tidak dapat diproses saat ini.');
                                   }
                                 } catch (e) {
-                                  _showError('Gagal memulai login Google. Pastikan koneksi internet Anda aktif.');
+                                  _showError(
+                                      'Gagal memulai login Google. Pastikan koneksi internet Anda aktif.');
                                 }
                               },
                               child: const Row(
@@ -677,30 +544,22 @@ class _LoginScreenState
                               ),
                             ),
                           ),
-
                           const SizedBox(
                             height: 22,
                           ),
-
                           Center(
-                            child:
-                                GestureDetector(
+                            child: GestureDetector(
                               onTap: () {
                                 context.go(
                                   '/auth/register',
                                 );
                               },
-                              child:
-                                  const Text(
+                              child: const Text(
                                 "Don't have an account? Create one",
-                                style:
-                                    TextStyle(
-                                  color: AppTheme
-                                      .primary,
-                                  fontWeight:
-                                      FontWeight.w700,
-                                  fontSize:
-                                      12.5,
+                                style: TextStyle(
+                                  color: AppTheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12.5,
                                 ),
                               ),
                             ),
@@ -715,12 +574,9 @@ class _LoginScreenState
 
                     const Text(
                       'PintarAja — Platform AI untuk mahasiswa Indonesia',
-                      textAlign:
-                          TextAlign.center,
-                      style:
-                          TextStyle(
-                        color:
-                            AppTheme.textMuted,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppTheme.textMuted,
                         fontSize: 10.5,
                       ),
                     ),
@@ -739,30 +595,24 @@ class _LoginScreenState
 // SUCCESS DIALOG
 // ============================================================
 
-class _SuccessDialog
-    extends StatefulWidget {
+class _SuccessDialog extends StatefulWidget {
   const _SuccessDialog();
 
   @override
-  State<_SuccessDialog> createState() =>
-      _SuccessDialogState();
+  State<_SuccessDialog> createState() => _SuccessDialogState();
 }
 
-class _SuccessDialogState
-    extends State<_SuccessDialog>
+class _SuccessDialogState extends State<_SuccessDialog>
     with SingleTickerProviderStateMixin {
-  late final AnimationController
-      _controller;
+  late final AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
 
-    _controller =
-        AnimationController(
+    _controller = AnimationController(
       vsync: this,
-      duration:
-          const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 700),
     )..forward();
   }
 
@@ -781,32 +631,25 @@ class _SuccessDialogState
       child: ScaleTransition(
         scale: CurvedAnimation(
           parent: _controller,
-          curve:
-              Curves.easeOutBack,
+          curve: Curves.easeOutBack,
         ),
         child: Dialog(
-          backgroundColor:
-              Colors.transparent,
+          backgroundColor: Colors.transparent,
           elevation: 0,
           child: Container(
-            padding:
-                const EdgeInsets.all(28),
-            decoration:
-                BoxDecoration(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius:
-                  BorderRadius.circular(
+              borderRadius: BorderRadius.circular(
                 24,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black
-                      .withValues(
+                  color: Colors.black.withValues(
                     alpha: 0.10,
                   ),
                   blurRadius: 30,
-                  offset:
-                      const Offset(
+                  offset: const Offset(
                     0,
                     15,
                   ),
@@ -814,28 +657,20 @@ class _SuccessDialogState
               ],
             ),
             child: Column(
-              mainAxisSize:
-                  MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   width: 68,
                   height: 68,
-                  decoration:
-                      BoxDecoration(
-                    color: AppTheme
-                        .success
-                        .withValues(
+                  decoration: BoxDecoration(
+                    color: AppTheme.success.withValues(
                       alpha: 0.12,
                     ),
-                    shape:
-                        BoxShape.circle,
+                    shape: BoxShape.circle,
                   ),
-                  child:
-                      const Icon(
-                    Icons
-                        .check_rounded,
-                    color: AppTheme
-                        .success,
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: AppTheme.success,
                     size: 38,
                   ),
                 ),
@@ -844,13 +679,10 @@ class _SuccessDialogState
                 ),
                 const Text(
                   'Berhasil!',
-                  style:
-                      TextStyle(
-                    color: AppTheme
-                        .textPrimary,
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
                     fontSize: 21,
-                    fontWeight:
-                        FontWeight.w700,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(
@@ -858,12 +690,9 @@ class _SuccessDialogState
                 ),
                 const Text(
                   'Mengalihkan ke PintarAja Chat...',
-                  textAlign:
-                      TextAlign.center,
-                  style:
-                      TextStyle(
-                    color: AppTheme
-                        .textSecondary,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
                     fontSize: 13,
                   ),
                 ),
@@ -873,11 +702,9 @@ class _SuccessDialogState
                 const SizedBox(
                   width: 22,
                   height: 22,
-                  child:
-                      CircularProgressIndicator(
+                  child: CircularProgressIndicator(
                     strokeWidth: 2.4,
-                    color:
-                        AppTheme.primary,
+                    color: AppTheme.primary,
                   ),
                 ),
               ],
@@ -889,8 +716,7 @@ class _SuccessDialogState
   }
 }
 
-class _FieldLabel
-    extends StatelessWidget {
+class _FieldLabel extends StatelessWidget {
   final String text;
 
   const _FieldLabel({
@@ -903,20 +729,16 @@ class _FieldLabel
   ) {
     return Text(
       text,
-      style:
-          const TextStyle(
-        color:
-            AppTheme.textSecondary,
+      style: const TextStyle(
+        color: AppTheme.textSecondary,
         fontSize: 12.5,
-        fontWeight:
-            FontWeight.w500,
+        fontWeight: FontWeight.w500,
       ),
     );
   }
 }
 
-class _GlowCircle
-    extends StatelessWidget {
+class _GlowCircle extends StatelessWidget {
   final double size;
   final Color color;
 
@@ -933,10 +755,8 @@ class _GlowCircle
       child: Container(
         width: size,
         height: size,
-        decoration:
-            BoxDecoration(
-          shape:
-              BoxShape.circle,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
           color: color,
         ),
       ),

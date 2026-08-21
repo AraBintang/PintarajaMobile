@@ -29,20 +29,14 @@ class AppRouter {
   static GoRouter router(AuthProvider auth) {
     return GoRouter(
       initialLocation: '/splash',
-
       redirect: (context, state) {
-        final isLoggedIn =
-            auth.isLoggedIn;
+        final isLoggedIn = auth.isLoggedIn;
 
-        final isUnknown =
-            auth.status ==
-                AuthStatus.unknown;
+        final isUnknown = auth.status == AuthStatus.unknown;
 
-        final location =
-            state.matchedLocation;
+        final location = state.matchedLocation;
 
-        final isSplash =
-            location == '/splash';
+        final isSplash = location == '/splash';
 
         // ======================================================
         // RESET PASSWORD
@@ -52,10 +46,7 @@ class AppRouter {
         // ======================================================
 
         final isResetPassword =
-            location ==
-                '/reset-password' ||
-            location ==
-                '/auth/new-password';
+            location == '/reset-password' || location == '/auth/new-password';
 
         if (isResetPassword) {
           return null;
@@ -65,8 +56,7 @@ class AppRouter {
         // AUTH ROUTE
         // ======================================================
 
-        final isAuthRoute =
-            location.startsWith('/auth');
+        final isAuthRoute = location.startsWith('/auth');
 
         // ======================================================
         // AUTH STATUS UNKNOWN
@@ -85,17 +75,14 @@ class AppRouter {
         // ======================================================
 
         if (isSplash) {
-          return isLoggedIn
-              ? '/chat'
-              : '/auth/login';
+          return isLoggedIn ? '/chat' : '/auth/login';
         }
 
         // ======================================================
         // BELUM LOGIN
         // ======================================================
 
-        if (!isLoggedIn &&
-            !isAuthRoute) {
+        if (!isLoggedIn && !isAuthRoute) {
           return '/auth/login';
         }
 
@@ -103,16 +90,13 @@ class AppRouter {
         // SUDAH LOGIN + AUTH ROUTE
         // ======================================================
 
-        if (isLoggedIn &&
-            isAuthRoute) {
+        if (isLoggedIn && isAuthRoute) {
           return null;
         }
 
         return null;
       },
-
       refreshListenable: auth,
-
       routes: [
         // ======================================================
         // SPLASH
@@ -120,8 +104,7 @@ class AppRouter {
 
         GoRoute(
           path: '/splash',
-          builder: (_, __) =>
-              const SplashScreen(),
+          builder: (_, __) => const SplashScreen(),
         ),
 
         // ======================================================
@@ -130,20 +113,17 @@ class AppRouter {
 
         GoRoute(
           path: '/auth/login',
-          builder: (_, __) =>
-              const LoginScreen(),
+          builder: (_, __) => const LoginScreen(),
         ),
 
         GoRoute(
           path: '/auth/register',
-          builder: (_, __) =>
-              const RegisterScreen(),
+          builder: (_, __) => const RegisterScreen(),
         ),
 
         GoRoute(
           path: '/auth/forgot-password',
-          builder: (_, __) =>
-              const ForgotPasswordScreen(),
+          builder: (_, __) => const ForgotPasswordScreen(),
         ),
 
         // ======================================================
@@ -165,13 +145,9 @@ class AppRouter {
         GoRoute(
           path: '/reset-password',
           builder: (_, state) {
-            final email =
-                state.uri.queryParameters[
-                    'email'];
+            final email = state.uri.queryParameters['email'];
 
-            final token =
-                state.uri.queryParameters[
-                    'token'];
+            final token = state.uri.queryParameters['token'];
 
             if (email == null ||
                 email.isEmpty ||
@@ -197,13 +173,9 @@ class AppRouter {
         GoRoute(
           path: '/auth/new-password',
           builder: (_, state) {
-            final email =
-                state.uri.queryParameters[
-                    'email'];
+            final email = state.uri.queryParameters['email'];
 
-            final token =
-                state.uri.queryParameters[
-                    'token'];
+            final token = state.uri.queryParameters['token'];
 
             if (email == null ||
                 email.isEmpty ||
@@ -242,12 +214,10 @@ class AppRouter {
             GoRoute(
               path: '/chat',
               builder: (_, state) {
-                final conversationId =
-                    state.extra as int?;
+                final conversationId = state.extra as int?;
 
                 return ChatScreen(
-                  conversationId:
-                      conversationId,
+                  conversationId: conversationId,
                 );
               },
             ),
@@ -270,8 +240,7 @@ class AppRouter {
 
             GoRoute(
               path: '/writer',
-              builder: (_, __) =>
-                  const WriterScreen(),
+              builder: (_, __) => const WriterScreen(),
             ),
 
             // --------------------------------------------------
@@ -280,8 +249,7 @@ class AppRouter {
 
             GoRoute(
               path: '/tools',
-              builder: (_, __) =>
-                  const ToolsScreen(),
+              builder: (_, __) => const ToolsScreen(),
             ),
 
             // --------------------------------------------------
@@ -290,8 +258,7 @@ class AppRouter {
 
             GoRoute(
               path: '/paraphrase',
-              builder: (_, __) =>
-                  const ParaphraseScreen(),
+              builder: (_, __) => const ParaphraseScreen(),
             ),
 
             // --------------------------------------------------
@@ -300,8 +267,7 @@ class AppRouter {
 
             GoRoute(
               path: '/profile',
-              builder: (_, __) =>
-                  const ProfileScreen(),
+              builder: (_, __) => const ProfileScreen(),
             ),
 
             // --------------------------------------------------
@@ -310,8 +276,7 @@ class AppRouter {
 
             GoRoute(
               path: '/settings',
-              builder: (_, __) =>
-                  const SettingsScreen(),
+              builder: (_, __) => const SettingsScreen(),
             ),
 
             // --------------------------------------------------
@@ -320,8 +285,7 @@ class AppRouter {
 
             GoRoute(
               path: '/transcribe',
-              builder: (_, __) =>
-                  const TranscribeScreen(),
+              builder: (_, __) => const TranscribeScreen(),
             ),
           ],
         ),
@@ -332,20 +296,17 @@ class AppRouter {
 
         GoRoute(
           path: '/plans',
-          builder: (_, __) =>
-              const PlanScreen(),
+          builder: (_, __) => const PlanScreen(),
         ),
 
         GoRoute(
           path: '/plagiarism',
-          builder: (_, __) =>
-              const PlagiarismScreen(),
+          builder: (_, __) => const PlagiarismScreen(),
         ),
       ],
     );
   }
 }
-
 
 // ============================================================
 // MAIN SHELL
@@ -376,13 +337,11 @@ class MainShell extends StatelessWidget {
 // INVALID RESET LINK
 // ============================================================
 
-class _InvalidResetLinkScreen
-    extends StatelessWidget {
+class _InvalidResetLinkScreen extends StatelessWidget {
   const _InvalidResetLinkScreen();
 
   @override
-  Widget build(
-    BuildContext context) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -391,46 +350,35 @@ class _InvalidResetLinkScreen
       ),
       body: Center(
         child: Padding(
-          padding:
-              const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Column(
-            mainAxisSize:
-                MainAxisSize.min,
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(
                 Icons.link_off_rounded,
                 size: 56,
               ),
-
               const SizedBox(
                 height: 16,
               ),
-
               const Text(
                 'Link reset password tidak valid.',
-                textAlign:
-                    TextAlign.center,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
-                  fontWeight:
-                      FontWeight.w700,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-
               const SizedBox(
                 height: 8,
               ),
-
               const Text(
                 'Silakan minta link reset password baru.',
-                textAlign:
-                    TextAlign.center,
+                textAlign: TextAlign.center,
               ),
-
               const SizedBox(
                 height: 20,
               ),
-
               ElevatedButton(
                 onPressed: () {
                   context.go(

@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/api_constants.dart';
-import '../../../core/theme/app_theme.dart';
+
 import '../../../data/providers/auth_provider.dart';
 import '../../../data/services/api_service.dart';
 import 'qris_payment_sheet.dart';
@@ -72,7 +72,8 @@ class TripayPaymentService {
         'item': 'Upgrade $planName',
         'phone': phone.isEmpty ? '081234567890' : phone,
       };
-      final response = await ApiService.instance.post(ApiConstants.payments, body);
+      final response =
+          await ApiService.instance.post(ApiConstants.payments, body);
       if (!context.mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
       if (response['status'] == 'success') {

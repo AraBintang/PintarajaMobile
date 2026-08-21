@@ -19,8 +19,7 @@ class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() =>
-      _RegisterScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
@@ -28,38 +27,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // FORM
   // ==========================================================
 
-  final _formKey =
-      GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
-  final _nameController =
-      TextEditingController();
+  final _nameController = TextEditingController();
 
-  final _emailController =
-      TextEditingController();
+  final _emailController = TextEditingController();
 
-  final _passwordController =
-      TextEditingController();
+  final _passwordController = TextEditingController();
 
-  final _confirmPasswordController =
-      TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
-  final _referralController =
-      TextEditingController();
+  final _referralController = TextEditingController();
 
   // ==========================================================
   // OTP
   // ==========================================================
 
-  final List<TextEditingController>
-      _otpControllers =
-      List.generate(
+  final List<TextEditingController> _otpControllers = List.generate(
     6,
     (_) => TextEditingController(),
   );
 
-  final List<FocusNode>
-      _otpFocusNodes =
-      List.generate(
+  final List<FocusNode> _otpFocusNodes = List.generate(
     6,
     (_) => FocusNode(),
   );
@@ -70,8 +59,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscurePassword = true;
 
-  bool _obscureConfirmPassword =
-      true;
+  bool _obscureConfirmPassword = true;
 
   bool _isOtpStep = false;
 
@@ -91,13 +79,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _confirmPasswordController.dispose();
     _referralController.dispose();
 
-    for (final controller
-        in _otpControllers) {
+    for (final controller in _otpControllers) {
       controller.dispose();
     }
 
-    for (final focusNode
-        in _otpFocusNodes) {
+    for (final focusNode in _otpFocusNodes) {
       focusNode.dispose();
     }
 
@@ -117,8 +103,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    if (_passwordController.text !=
-        _confirmPasswordController.text) {
+    if (_passwordController.text != _confirmPasswordController.text) {
       _showError(
         'Password dan konfirmasi password tidak cocok.',
       );
@@ -130,14 +115,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     // TURNSTILE
     // ========================================================
 
-    final turnstileToken =
-        await Navigator.of(context)
-            .push<String>(
+    final turnstileToken = await Navigator.of(context).push<String>(
       MaterialPageRoute(
-        builder: (_) =>
-            const TurnstileScreen(
-          siteKey:
-              '0x4AAAAAACr3b_AwhmbkxsbO',
+        builder: (_) => const TurnstileScreen(
+          siteKey: '0x4AAAAAACr3b_AwhmbkxsbO',
         ),
       ),
     );
@@ -146,8 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    if (turnstileToken == null ||
-        turnstileToken.isEmpty) {
+    if (turnstileToken == null || turnstileToken.isEmpty) {
       _showError(
         'Verifikasi keamanan diperlukan.',
       );
@@ -159,18 +139,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     // REGISTER
     // ========================================================
 
-    final auth =
-        context.read<AuthProvider>();
+    final auth = context.read<AuthProvider>();
 
-    final success =
-        await auth.register(
+    final success = await auth.register(
       _nameController.text.trim(),
       _emailController.text.trim(),
       _passwordController.text,
-      referralCode:
-          _referralController.text.trim(),
-      turnstileToken:
-          turnstileToken,
+      referralCode: _referralController.text.trim(),
+      turnstileToken: turnstileToken,
     );
 
     if (!mounted) {
@@ -179,8 +155,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!success) {
       _showError(
-        auth.error ??
-            'Registrasi gagal.',
+        auth.error ?? 'Registrasi gagal.',
       );
 
       return;
@@ -191,10 +166,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     // ========================================================
 
     await _showSuccessDialog(
-      title:
-          'Registrasi berhasil',
-      message:
-          'Kode OTP telah dikirim ke email kamu.',
+      title: 'Registrasi berhasil',
+      message: 'Kode OTP telah dikirim ke email kamu.',
     );
 
     if (!mounted) {
@@ -235,8 +208,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final otp = _otpControllers
         .map(
-          (controller) =>
-              controller.text,
+          (controller) => controller.text,
         )
         .join();
 
@@ -248,11 +220,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    final auth =
-        context.read<AuthProvider>();
+    final auth = context.read<AuthProvider>();
 
-    final success =
-        await auth.verifyOtp(
+    final success = await auth.verifyOtp(
       _emailController.text.trim(),
       otp,
     );
@@ -265,8 +235,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _clearOtp();
 
       _showError(
-        auth.error ??
-            'Kode OTP tidak valid.',
+        auth.error ?? 'Kode OTP tidak valid.',
       );
 
       await Future.delayed(
@@ -276,9 +245,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       if (mounted) {
-        _otpFocusNodes
-            .first
-            .requestFocus();
+        _otpFocusNodes.first.requestFocus();
       }
 
       return;
@@ -289,10 +256,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     // ========================================================
 
     await _showSuccessDialog(
-      title:
-          'Verifikasi berhasil',
-      message:
-          'Akun kamu sudah aktif. Selamat datang di PintarAja!',
+      title: 'Verifikasi berhasil',
+      message: 'Akun kamu sudah aktif. Selamat datang di PintarAja!',
     );
 
     if (!mounted) {
@@ -315,11 +280,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    final auth =
-        context.read<AuthProvider>();
+    final auth = context.read<AuthProvider>();
 
-    final success =
-        await auth.resendOtp(
+    final success = await auth.resendOtp(
       _emailController.text.trim(),
     );
 
@@ -329,8 +292,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!success) {
       _showError(
-        auth.error ??
-            'Gagal mengirim ulang OTP.',
+        auth.error ?? 'Gagal mengirim ulang OTP.',
       );
 
       return;
@@ -355,8 +317,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     int index,
     String value,
   ) {
-    final digits =
-        value.replaceAll(
+    final digits = value.replaceAll(
       RegExp(r'\D'),
       '',
     );
@@ -382,28 +343,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     // NORMAL INPUT
     // ========================================================
 
-    _otpControllers[index].text =
-        digits.substring(
+    _otpControllers[index].text = digits.substring(
       0,
       1,
     );
 
-    _otpControllers[index].selection =
-        TextSelection.fromPosition(
+    _otpControllers[index].selection = TextSelection.fromPosition(
       TextPosition(
-        offset:
-            _otpControllers[index]
-                .text
-                .length,
+        offset: _otpControllers[index].text.length,
       ),
     );
 
     if (index < 5) {
-      _otpFocusNodes[index + 1]
-          .requestFocus();
+      _otpFocusNodes[index + 1].requestFocus();
     } else {
-      FocusScope.of(context)
-          .unfocus();
+      FocusScope.of(context).unfocus();
     }
 
     setState(() {});
@@ -422,24 +376,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     // BACKSPACE
-    if (event.logicalKey ==
-            LogicalKeyboardKey.backspace &&
-        _otpControllers[index]
-            .text
-            .isEmpty &&
+    if (event.logicalKey == LogicalKeyboardKey.backspace &&
+        _otpControllers[index].text.isEmpty &&
         index > 0) {
-      _otpControllers[index - 1]
-          .clear();
+      _otpControllers[index - 1].clear();
 
-      _otpFocusNodes[index - 1]
-          .requestFocus();
+      _otpFocusNodes[index - 1].requestFocus();
 
       return;
     }
 
     // ENTER
-    if (event.logicalKey ==
-        LogicalKeyboardKey.enter) {
+    if (event.logicalKey == LogicalKeyboardKey.enter) {
       _handleVerifyOtp();
     }
   }
@@ -451,8 +399,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _fillOtpFromString(
     String value,
   ) {
-    final digits =
-        value.replaceAll(
+    final digits = value.replaceAll(
       RegExp(r'\D'),
       '',
     );
@@ -461,36 +408,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    final limited =
-        digits.length > 6
-            ? digits.substring(
-                0,
-                6,
-              )
-            : digits;
+    final limited = digits.length > 6
+        ? digits.substring(
+            0,
+            6,
+          )
+        : digits;
 
-    for (int i = 0;
-        i < 6;
-        i++) {
-      _otpControllers[i].text =
-          i < limited.length
-              ? limited[i]
-              : '';
+    for (int i = 0; i < 6; i++) {
+      _otpControllers[i].text = i < limited.length ? limited[i] : '';
     }
 
-    final nextEmptyIndex =
-        _otpControllers.indexWhere(
-      (controller) =>
-          controller.text.isEmpty,
+    final nextEmptyIndex = _otpControllers.indexWhere(
+      (controller) => controller.text.isEmpty,
     );
 
     if (nextEmptyIndex != -1) {
-      _otpFocusNodes[
-              nextEmptyIndex]
-          .requestFocus();
+      _otpFocusNodes[nextEmptyIndex].requestFocus();
     } else {
-      FocusScope.of(context)
-          .unfocus();
+      FocusScope.of(context).unfocus();
     }
 
     setState(() {});
@@ -501,8 +437,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // ==========================================================
 
   void _clearOtp() {
-    for (final controller
-        in _otpControllers) {
+    for (final controller in _otpControllers) {
       controller.clear();
     }
 
@@ -581,8 +516,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) =>
-          _SuccessDialog(
+      builder: (_) => _SuccessDialog(
         title: title,
         message: message,
       ),
@@ -598,8 +532,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    if (Navigator.of(context)
-        .canPop()) {
+    if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
     }
   }
@@ -615,19 +548,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content:
-              Text(message),
-          backgroundColor:
-              AppTheme.error,
-          behavior:
-              SnackBarBehavior
-                  .floating,
-          margin:
-              const EdgeInsets.all(
+          content: Text(message),
+          backgroundColor: AppTheme.error,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(
             16,
           ),
-          duration:
-              const Duration(
+          duration: const Duration(
             seconds: 3,
           ),
         ),
@@ -645,15 +572,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content:
-              Text(message),
-          backgroundColor:
-              AppTheme.success,
-          behavior:
-              SnackBarBehavior
-                  .floating,
-          margin:
-              const EdgeInsets.all(
+          content: Text(message),
+          backgroundColor: AppTheme.success,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(
             16,
           ),
         ),
@@ -667,8 +589,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _validateName(
     String? value,
   ) {
-    final name =
-        value?.trim() ?? '';
+    final name = value?.trim() ?? '';
 
     if (name.isEmpty) {
       return 'Nama wajib diisi';
@@ -684,8 +605,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _validateEmail(
     String? value,
   ) {
-    final email =
-        value?.trim() ?? '';
+    final email = value?.trim() ?? '';
 
     if (email.isEmpty) {
       return 'Email wajib diisi';
@@ -705,8 +625,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _validatePassword(
     String? value,
   ) {
-    final password =
-        value ?? '';
+    final password = value ?? '';
 
     if (password.isEmpty) {
       return 'Password wajib diisi';
@@ -722,15 +641,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _validateConfirmPassword(
     String? value,
   ) {
-    final confirm =
-        value ?? '';
+    final confirm = value ?? '';
 
     if (confirm.isEmpty) {
       return 'Konfirmasi password wajib diisi';
     }
 
-    if (confirm !=
-        _passwordController.text) {
+    if (confirm != _passwordController.text) {
       return 'Password tidak sama';
     }
 
@@ -745,84 +662,58 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(
     BuildContext context,
   ) {
-    final keyboardHeight =
-        MediaQuery.viewInsetsOf(
+    final keyboardHeight = MediaQuery.viewInsetsOf(
       context,
     ).bottom;
 
     return Scaffold(
-      backgroundColor:
-          AppTheme.backgroundLight,
-
+      backgroundColor: AppTheme.backgroundLight,
       body: Stack(
         children: [
           Positioned(
             top: -120,
             left: -120,
-            child:
-                _GlowCircle(
+            child: _GlowCircle(
               size: 340,
-              color: AppTheme
-                  .primaryLight
-                  .withValues(
+              color: AppTheme.primaryLight.withValues(
                 alpha: 0.20,
               ),
             ),
           ),
-
           Positioned(
             bottom: -130,
             right: -140,
-            child:
-                _GlowCircle(
+            child: _GlowCircle(
               size: 340,
-              color: AppTheme
-                  .accent
-                  .withValues(
+              color: AppTheme.accent.withValues(
                 alpha: 0.10,
               ),
             ),
           ),
-
           SafeArea(
-            child:
-                SingleChildScrollView(
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior
-                      .onDrag,
-              padding:
-                  EdgeInsets.fromLTRB(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.fromLTRB(
                 24,
                 12,
                 24,
-                24 +
-                    keyboardHeight,
+                24 + keyboardHeight,
               ),
-              child:
-                  Column(
+              child: Column(
                 children: [
                   // ==================================================
                   // BACK
                   // ==================================================
 
                   Align(
-                    alignment:
-                        Alignment
-                            .centerLeft,
-                    child:
-                        IconButton(
-                      onPressed:
-                          _handleBack,
-                      icon:
-                          const Icon(
-                        Icons
-                            .arrow_back_rounded,
-                        color:
-                            AppTheme
-                                .textPrimary,
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      onPressed: _handleBack,
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: AppTheme.textPrimary,
                       ),
-                      tooltip:
-                          'Kembali',
+                      tooltip: 'Kembali',
                     ),
                   ),
 
@@ -835,47 +726,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   // ==================================================
 
                   GestureDetector(
-                    onTap:
-                        () {
+                    onTap: () {
                       context.go('/');
                     },
-                    child:
-                        Row(
-                      mainAxisSize:
-                          MainAxisSize
-                              .min,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Image.asset(
                           'assets/images/pintaraja.webp',
-                          width:
-                              38,
-                          height:
-                              38,
-                          fit:
-                              BoxFit.contain,
+                          width: 38,
+                          height: 38,
+                          fit: BoxFit.contain,
                         ),
-
                         Transform.translate(
-                          offset:
-                              const Offset(
+                          offset: const Offset(
                             -2,
                             2,
                           ),
-                          child:
-                              const Text(
+                          child: const Text(
                             'intaraja',
-                            style:
-                                TextStyle(
-                              color:
-                                  AppTheme
-                                      .textPrimary,
-                              fontSize:
-                                  21,
-                              fontWeight:
-                                  FontWeight
-                                      .w700,
-                              letterSpacing:
-                                  -0.6,
+                            style: TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontSize: 21,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.6,
                             ),
                           ),
                         ),
@@ -892,15 +766,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   // ==================================================
 
                   AnimatedSwitcher(
-                    duration:
-                        const Duration(
-                      milliseconds:
-                          250,
+                    duration: const Duration(
+                      milliseconds: 250,
                     ),
-                    child:
-                        _isOtpStep
-                            ? _buildOtpCard()
-                            : _buildRegisterCard(),
+                    child: _isOtpStep ? _buildOtpCard() : _buildRegisterCard(),
                   ),
 
                   const SizedBox(
@@ -909,15 +778,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                   const Text(
                     'PintarAja — Platform AI untuk mahasiswa Indonesia',
-                    textAlign:
-                        TextAlign.center,
-                    style:
-                        TextStyle(
-                      color:
-                          AppTheme
-                              .textMuted,
-                      fontSize:
-                          10.5,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 10.5,
                     ),
                   ),
                 ],
@@ -935,42 +799,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildRegisterCard() {
     return Container(
-      key:
-          const ValueKey(
+      key: const ValueKey(
         'register',
       ),
-      width:
-          double.infinity,
-      padding:
-          const EdgeInsets.all(
+      width: double.infinity,
+      padding: const EdgeInsets.all(
         24,
       ),
-      decoration:
-          _cardDecoration(),
-      child:
-          Form(
-        key:
-            _formKey,
-        child:
-            Column(
-          crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
+      decoration: _cardDecoration(),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'Create your account',
-              style:
-                  TextStyle(
-                color:
-                    AppTheme
-                        .textPrimary,
-                fontSize:
-                    25,
-                fontWeight:
-                    FontWeight
-                        .w700,
-                letterSpacing:
-                    -0.4,
+              style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 25,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.4,
               ),
             ),
 
@@ -980,15 +828,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             const Text(
               'Join Pintaraja and start exploring smarter learning',
-              style:
-                  TextStyle(
-                color:
-                    AppTheme
-                        .textSecondary,
-                fontSize:
-                    13,
-                height:
-                    1.45,
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 13,
+                height: 1.45,
               ),
             ),
 
@@ -997,8 +840,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             const _FieldLabel(
-              text:
-                  'Full name',
+              text: 'Full name',
             ),
 
             const SizedBox(
@@ -1006,23 +848,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             TextFormField(
-              controller:
-                  _nameController,
-              textInputAction:
-                  TextInputAction
-                      .next,
-              validator:
-                  _validateName,
-              decoration:
-                  const InputDecoration(
-                hintText:
-                    'Your full name',
-                prefixIcon:
-                    Icon(
-                  Icons
-                      .person_outline_rounded,
-                  size:
-                      20,
+              controller: _nameController,
+              textInputAction: TextInputAction.next,
+              validator: _validateName,
+              decoration: const InputDecoration(
+                hintText: 'Your full name',
+                prefixIcon: Icon(
+                  Icons.person_outline_rounded,
+                  size: 20,
                 ),
               ),
             ),
@@ -1032,8 +865,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             const _FieldLabel(
-              text:
-                  'Email',
+              text: 'Email',
             ),
 
             const SizedBox(
@@ -1041,26 +873,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             TextFormField(
-              controller:
-                  _emailController,
-              keyboardType:
-                  TextInputType
-                      .emailAddress,
-              textInputAction:
-                  TextInputAction
-                      .next,
-              validator:
-                  _validateEmail,
-              decoration:
-                  const InputDecoration(
-                hintText:
-                    'you@example.com',
-                prefixIcon:
-                    Icon(
-                  Icons
-                      .mail_outline_rounded,
-                  size:
-                      20,
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              validator: _validateEmail,
+              decoration: const InputDecoration(
+                hintText: 'you@example.com',
+                prefixIcon: Icon(
+                  Icons.mail_outline_rounded,
+                  size: 20,
                 ),
               ),
             ),
@@ -1070,8 +891,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             const _FieldLabel(
-              text:
-                  'Password',
+              text: 'Password',
             ),
 
             const SizedBox(
@@ -1079,46 +899,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             TextFormField(
-              controller:
-                  _passwordController,
-              obscureText:
-                  _obscurePassword,
-              textInputAction:
-                  TextInputAction
-                      .next,
-              validator:
-                  _validatePassword,
-              decoration:
-                  InputDecoration(
-                hintText:
-                    '••••••••',
-                prefixIcon:
-                    const Icon(
-                  Icons
-                      .lock_outline_rounded,
-                  size:
-                      20,
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              textInputAction: TextInputAction.next,
+              validator: _validatePassword,
+              decoration: InputDecoration(
+                hintText: '••••••••',
+                prefixIcon: const Icon(
+                  Icons.lock_outline_rounded,
+                  size: 20,
                 ),
-                suffixIcon:
-                    IconButton(
-                  onPressed:
-                      () {
+                suffixIcon: IconButton(
+                  onPressed: () {
                     setState(
                       () {
-                        _obscurePassword =
-                            !_obscurePassword;
+                        _obscurePassword = !_obscurePassword;
                       },
                     );
                   },
-                  icon:
-                      Icon(
+                  icon: Icon(
                     _obscurePassword
-                        ? Icons
-                            .visibility_outlined
-                        : Icons
-                            .visibility_off_outlined,
-                    size:
-                        20,
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    size: 20,
                   ),
                 ),
               ),
@@ -1129,8 +932,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             const _FieldLabel(
-              text:
-                  'Confirm password',
+              text: 'Confirm password',
             ),
 
             const SizedBox(
@@ -1138,46 +940,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             TextFormField(
-              controller:
-                  _confirmPasswordController,
-              obscureText:
-                  _obscureConfirmPassword,
-              textInputAction:
-                  TextInputAction
-                      .next,
-              validator:
-                  _validateConfirmPassword,
-              decoration:
-                  InputDecoration(
-                hintText:
-                    '••••••••',
-                prefixIcon:
-                    const Icon(
-                  Icons
-                      .lock_outline_rounded,
-                  size:
-                      20,
+              controller: _confirmPasswordController,
+              obscureText: _obscureConfirmPassword,
+              textInputAction: TextInputAction.next,
+              validator: _validateConfirmPassword,
+              decoration: InputDecoration(
+                hintText: '••••••••',
+                prefixIcon: const Icon(
+                  Icons.lock_outline_rounded,
+                  size: 20,
                 ),
-                suffixIcon:
-                    IconButton(
-                  onPressed:
-                      () {
+                suffixIcon: IconButton(
+                  onPressed: () {
                     setState(
                       () {
-                        _obscureConfirmPassword =
-                            !_obscureConfirmPassword;
+                        _obscureConfirmPassword = !_obscureConfirmPassword;
                       },
                     );
                   },
-                  icon:
-                      Icon(
+                  icon: Icon(
                     _obscureConfirmPassword
-                        ? Icons
-                            .visibility_outlined
-                        : Icons
-                            .visibility_off_outlined,
-                    size:
-                        20,
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    size: 20,
                   ),
                 ),
               ),
@@ -1188,8 +973,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             const _FieldLabel(
-              text:
-                  'Referral code (optional)',
+              text: 'Referral code (optional)',
             ),
 
             const SizedBox(
@@ -1197,26 +981,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             TextFormField(
-              controller:
-                  _referralController,
-              textInputAction:
-                  TextInputAction
-                      .done,
-              maxLength:
-                  10,
-              decoration:
-                  const InputDecoration(
-                hintText:
-                    'Enter referral code',
-                prefixIcon:
-                    Icon(
-                  Icons
-                      .card_giftcard_outlined,
-                  size:
-                      20,
+              controller: _referralController,
+              textInputAction: TextInputAction.done,
+              maxLength: 10,
+              decoration: const InputDecoration(
+                hintText: 'Enter referral code',
+                prefixIcon: Icon(
+                  Icons.card_giftcard_outlined,
+                  size: 20,
                 ),
-                counterText:
-                    '',
+                counterText: '',
               ),
             ),
 
@@ -1228,47 +1002,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
             // CREATE ACCOUNT
             // ==================================================
 
-            Consumer<
-                AuthProvider>(
-              builder:
-                  (
+            Consumer<AuthProvider>(
+              builder: (
                 context,
                 auth,
                 _,
               ) {
                 return SizedBox(
-                  width:
-                      double.infinity,
-                  height:
-                      50,
-                  child:
-                      ElevatedButton(
-                    onPressed:
-                        auth.isLoading
-                            ? null
-                            : _handleRegister,
-                    child:
-                        auth.isLoading
-                            ? const SizedBox(
-                                width:
-                                    20,
-                                height:
-                                    20,
-                                child:
-                                    CircularProgressIndicator(
-                                  strokeWidth:
-                                      2.2,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<
-                                          Color>(
-                                    Colors
-                                        .white,
-                                  ),
-                                ),
-                              )
-                            : const Text(
-                                'Create account',
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: auth.isLoading ? null : _handleRegister,
+                    child: auth.isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
                               ),
+                            ),
+                          )
+                        : const Text(
+                            'Create account',
+                          ),
                   ),
                 );
               },
@@ -1281,39 +1039,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const Row(
               children: [
                 Expanded(
-                  child:
-                      Divider(
-                    color:
-                        AppTheme
-                            .borderLight,
+                  child: Divider(
+                    color: AppTheme.borderLight,
                   ),
                 ),
                 Padding(
-                  padding:
-                      EdgeInsets
-                          .symmetric(
-                    horizontal:
-                        12,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12,
                   ),
-                  child:
-                      Text(
+                  child: Text(
                     'or',
-                    style:
-                        TextStyle(
-                      color:
-                          AppTheme
-                              .textMuted,
-                      fontSize:
-                          12,
+                    style: TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 12,
                     ),
                   ),
                 ),
                 Expanded(
-                  child:
-                      Divider(
-                    color:
-                        AppTheme
-                            .borderLight,
+                  child: Divider(
+                    color: AppTheme.borderLight,
                   ),
                 ),
               ],
@@ -1345,10 +1089,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (success) {
                       context.go('/chat');
                     } else {
-                      _showError(auth.error ?? 'Registrasi/login dengan Google gagal.');
+                      _showError(auth.error ??
+                          'Registrasi/login dengan Google gagal.');
                     }
                   } catch (e) {
-                    _showError('Gagal memulai login Google. Pastikan koneksi internet Anda aktif.');
+                    _showError(
+                        'Gagal memulai login Google. Pastikan koneksi internet Anda aktif.');
                   }
                 },
                 child: const Row(
@@ -1374,27 +1120,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             Center(
-              child:
-                  GestureDetector(
-                onTap:
-                    () {
+              child: GestureDetector(
+                onTap: () {
                   context.go(
                     '/auth/login',
                   );
                 },
-                child:
-                    const Text(
+                child: const Text(
                   'Already have an account? Sign in',
-                  style:
-                      TextStyle(
-                    color:
-                        AppTheme
-                            .primary,
-                    fontSize:
-                        12.5,
-                    fontWeight:
-                        FontWeight
-                            .w700,
+                  style: TextStyle(
+                    color: AppTheme.primary,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -1411,48 +1148,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildOtpCard() {
     return Container(
-      key:
-          const ValueKey(
+      key: const ValueKey(
         'otp',
       ),
-      width:
-          double.infinity,
-      padding:
-          const EdgeInsets.all(
+      width: double.infinity,
+      padding: const EdgeInsets.all(
         24,
       ),
-      decoration:
-          _cardDecoration(),
-      child:
-          Column(
+      decoration: _cardDecoration(),
+      child: Column(
         children: [
           Container(
-            width:
-                58,
-            height:
-                58,
-            decoration:
-                BoxDecoration(
-              color:
-                  AppTheme
-                      .primary
-                      .withValues(
-                alpha:
-                    0.10,
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(
+                alpha: 0.10,
               ),
-              borderRadius:
-                  BorderRadius.circular(
+              borderRadius: BorderRadius.circular(
                 18,
               ),
             ),
-            child:
-                const Icon(
-              Icons
-                  .verified_user_outlined,
-              color:
-                  AppTheme.primary,
-              size:
-                  28,
+            child: const Icon(
+              Icons.verified_user_outlined,
+              color: AppTheme.primary,
+              size: 28,
             ),
           ),
 
@@ -1462,19 +1182,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           const Text(
             'Verify your email',
-            textAlign:
-                TextAlign.center,
-            style:
-                TextStyle(
-              color:
-                  AppTheme.textPrimary,
-              fontSize:
-                  25,
-              fontWeight:
-                  FontWeight
-                      .w700,
-              letterSpacing:
-                  -0.4,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 25,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.4,
             ),
           ),
 
@@ -1484,17 +1197,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           Text(
             'We sent a 6-digit code to\n${_emailController.text.trim()}',
-            textAlign:
-                TextAlign.center,
-            style:
-                const TextStyle(
-              color:
-                  AppTheme
-                      .textSecondary,
-              fontSize:
-                  13,
-              height:
-                  1.5,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 13,
+              height: 1.5,
             ),
           ),
 
@@ -1504,14 +1211,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           const Text(
             'Kode berlaku selama 5 menit.',
-            textAlign:
-                TextAlign.center,
-            style:
-                TextStyle(
-              color:
-                  AppTheme.textMuted,
-              fontSize:
-                  12,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 12,
             ),
           ),
 
@@ -1524,58 +1227,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // ==================================================
 
           LayoutBuilder(
-            builder:
-                (
+            builder: (
               context,
               constraints,
             ) {
-              const gap =
-                  6.0;
+              const gap = 6.0;
 
-              final availableWidth =
-                  constraints.maxWidth;
+              final availableWidth = constraints.maxWidth;
 
-              final boxWidth =
-                  ((availableWidth -
-                              (gap * 5)) /
-                          6)
-                      .clamp(
-                    36.0,
-                    48.0,
-                  );
+              final boxWidth = ((availableWidth - (gap * 5)) / 6).clamp(
+                36.0,
+                48.0,
+              );
 
               return Row(
-                mainAxisAlignment:
-                    MainAxisAlignment
-                        .center,
-                children:
-                    List.generate(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
                   6,
                   (
                     index,
                   ) {
                     return Padding(
-                      padding:
-                          EdgeInsets.only(
-                        right:
-                            index == 5
-                                ? 0
-                                : gap,
+                      padding: EdgeInsets.only(
+                        right: index == 5 ? 0 : gap,
                       ),
-                      child:
-                          SizedBox(
-                        width:
-                            boxWidth,
-                        child:
-                            _OtpInputBox(
-                          controller:
-                              _otpControllers[
-                                  index],
-                          focusNode:
-                              _otpFocusNodes[
-                                  index],
-                          onChanged:
-                              (
+                      child: SizedBox(
+                        width: boxWidth,
+                        child: _OtpInputBox(
+                          controller: _otpControllers[index],
+                          focusNode: _otpFocusNodes[index],
+                          onChanged: (
                             value,
                           ) {
                             _handleOtpChanged(
@@ -1583,8 +1264,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               value,
                             );
                           },
-                          onKeyEvent:
-                              (
+                          onKeyEvent: (
                             event,
                           ) {
                             _handleOtpKeyEvent(
@@ -1609,47 +1289,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // VERIFY
           // ==================================================
 
-          Consumer<
-              AuthProvider>(
-            builder:
-                (
+          Consumer<AuthProvider>(
+            builder: (
               context,
               auth,
               _,
             ) {
               return SizedBox(
-                width:
-                    double.infinity,
-                height:
-                    50,
-                child:
-                    ElevatedButton(
-                  onPressed:
-                      auth.isLoading
-                          ? null
-                          : _handleVerifyOtp,
-                  child:
-                      auth.isLoading
-                          ? const SizedBox(
-                              width:
-                                  20,
-                              height:
-                                  20,
-                              child:
-                                  CircularProgressIndicator(
-                                strokeWidth:
-                                    2.2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<
-                                        Color>(
-                                  Colors
-                                      .white,
-                                ),
-                              ),
-                            )
-                          : const Text(
-                              'Verify code',
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: auth.isLoading ? null : _handleVerifyOtp,
+                  child: auth.isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
                             ),
+                          ),
+                        )
+                      : const Text(
+                          'Verify code',
+                        ),
                 ),
               );
             },
@@ -1663,31 +1327,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // RESEND
           // ==================================================
 
-          if (_resendCooldown >
-              0)
+          if (_resendCooldown > 0)
             Text(
               'Resend code in ${_resendCooldown}s',
-              style:
-                  const TextStyle(
-                color:
-                    AppTheme.textMuted,
-                fontSize:
-                    13,
+              style: const TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 13,
               ),
             )
           else
             TextButton.icon(
-              onPressed:
-                  _handleResendOtp,
-              icon:
-                  const Icon(
-                Icons
-                    .refresh_rounded,
-                size:
-                    17,
+              onPressed: _handleResendOtp,
+              icon: const Icon(
+                Icons.refresh_rounded,
+                size: 17,
               ),
-              label:
-                  const Text(
+              label: const Text(
                 'Resend code',
               ),
             ),
@@ -1697,10 +1352,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
 
           TextButton(
-            onPressed:
-                _handleBack,
-            child:
-                const Text(
+            onPressed: _handleBack,
+            child: const Text(
               'Back to registration',
             ),
           ),
@@ -1715,29 +1368,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
-      color:
-          Colors.white.withValues(
+      color: Colors.white.withValues(
         alpha: 0.88,
       ),
-      borderRadius:
-          BorderRadius.circular(
+      borderRadius: BorderRadius.circular(
         24,
       ),
-      border:
-          Border.all(
-        color:
-            Colors.white,
+      border: Border.all(
+        color: Colors.white,
       ),
       boxShadow: [
         BoxShadow(
-          color:
-              Colors.black.withValues(
+          color: Colors.black.withValues(
             alpha: 0.05,
           ),
-          blurRadius:
-              30,
-          offset:
-              const Offset(
+          blurRadius: 30,
+          offset: const Offset(
             0,
             12,
           ),
@@ -1751,18 +1397,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 // OTP INPUT BOX
 // ============================================================
 
-class _OtpInputBox
-    extends StatefulWidget {
-  final TextEditingController
-      controller;
+class _OtpInputBox extends StatefulWidget {
+  final TextEditingController controller;
 
   final FocusNode focusNode;
 
-  final ValueChanged<String>
-      onChanged;
+  final ValueChanged<String> onChanged;
 
-  final ValueChanged<KeyEvent>
-      onKeyEvent;
+  final ValueChanged<KeyEvent> onKeyEvent;
 
   const _OtpInputBox({
     required this.controller,
@@ -1772,27 +1414,22 @@ class _OtpInputBox
   });
 
   @override
-  State<_OtpInputBox> createState() =>
-      _OtpInputBoxState();
+  State<_OtpInputBox> createState() => _OtpInputBoxState();
 }
 
-class _OtpInputBoxState
-    extends State<_OtpInputBox> {
-  late final FocusNode
-      _keyboardFocusNode;
+class _OtpInputBoxState extends State<_OtpInputBox> {
+  late final FocusNode _keyboardFocusNode;
 
   @override
   void initState() {
     super.initState();
 
-    _keyboardFocusNode =
-        FocusNode();
+    _keyboardFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
-    _keyboardFocusNode
-        .dispose();
+    _keyboardFocusNode.dispose();
 
     super.dispose();
   }
@@ -1802,78 +1439,46 @@ class _OtpInputBoxState
     BuildContext context,
   ) {
     return SizedBox(
-      height:
-          52,
-      child:
-          KeyboardListener(
-        focusNode:
-            _keyboardFocusNode,
-        onKeyEvent:
-            widget.onKeyEvent,
-        child:
-            TextField(
-          controller:
-              widget.controller,
-          focusNode:
-              widget.focusNode,
-          textAlign:
-              TextAlign.center,
-          keyboardType:
-              TextInputType.number,
-          textInputAction:
-              TextInputAction.next,
+      height: 52,
+      child: KeyboardListener(
+        focusNode: _keyboardFocusNode,
+        onKeyEvent: widget.onKeyEvent,
+        child: TextField(
+          controller: widget.controller,
+          focusNode: widget.focusNode,
+          textAlign: TextAlign.center,
+          keyboardType: TextInputType.number,
+          textInputAction: TextInputAction.next,
           inputFormatters: [
-            FilteringTextInputFormatter
-                .digitsOnly,
+            FilteringTextInputFormatter.digitsOnly,
           ],
-          maxLength:
-              1,
-          style:
-              const TextStyle(
-            color:
-                AppTheme.textPrimary,
-            fontSize:
-                18,
-            fontWeight:
-                FontWeight.w700,
+          maxLength: 1,
+          style: const TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
           ),
-          onChanged:
-              widget.onChanged,
-          decoration:
-              InputDecoration(
-            counterText:
-                '',
-            contentPadding:
-                EdgeInsets.zero,
-            filled:
-                true,
-            fillColor:
-                Colors.white,
-            enabledBorder:
-                OutlineInputBorder(
-              borderRadius:
-                  BorderRadius.circular(
+          onChanged: widget.onChanged,
+          decoration: InputDecoration(
+            counterText: '',
+            contentPadding: EdgeInsets.zero,
+            filled: true,
+            fillColor: Colors.white,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(
                 12,
               ),
-              borderSide:
-                  const BorderSide(
-                color:
-                    AppTheme
-                        .borderLight,
+              borderSide: const BorderSide(
+                color: AppTheme.borderLight,
               ),
             ),
-            focusedBorder:
-                OutlineInputBorder(
-              borderRadius:
-                  BorderRadius.circular(
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(
                 12,
               ),
-              borderSide:
-                  const BorderSide(
-                color:
-                    AppTheme.primary,
-                width:
-                    1.5,
+              borderSide: const BorderSide(
+                color: AppTheme.primary,
+                width: 1.5,
               ),
             ),
           ),
@@ -1887,8 +1492,7 @@ class _OtpInputBoxState
 // SUCCESS DIALOG
 // ============================================================
 
-class _SuccessDialog
-    extends StatefulWidget {
+class _SuccessDialog extends StatefulWidget {
   final String title;
   final String message;
 
@@ -1898,41 +1502,29 @@ class _SuccessDialog
   });
 
   @override
-  State<_SuccessDialog> createState() =>
-      _SuccessDialogState();
+  State<_SuccessDialog> createState() => _SuccessDialogState();
 }
 
-class _SuccessDialogState
-    extends State<_SuccessDialog>
-    with
-        SingleTickerProviderStateMixin {
-  late final AnimationController
-      _controller;
+class _SuccessDialogState extends State<_SuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
 
-  late final Animation<double>
-      _scaleAnimation;
+  late final Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    _controller =
-        AnimationController(
-      duration:
-          const Duration(
-        milliseconds:
-            650,
+    _controller = AnimationController(
+      duration: const Duration(
+        milliseconds: 650,
       ),
-      vsync:
-          this,
+      vsync: this,
     );
 
-    _scaleAnimation =
-        CurvedAnimation(
-      parent:
-          _controller,
-      curve:
-          Curves.easeOutBack,
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
     );
 
     _controller.forward();
@@ -1950,143 +1542,84 @@ class _SuccessDialogState
     BuildContext context,
   ) {
     return Center(
-      child:
-          ScaleTransition(
-        scale:
-            _scaleAnimation,
-        child:
-            Dialog(
-          backgroundColor:
-              Colors.transparent,
-          elevation:
-              0,
-          child:
-              Container(
-            padding:
-                const EdgeInsets
-                    .all(
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: const EdgeInsets.all(
               28,
             ),
-            decoration:
-                BoxDecoration(
-              color:
-                  Colors.white,
-              borderRadius:
-                  BorderRadius.circular(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(
                 24,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors
-                      .black
-                      .withValues(
-                    alpha:
-                        0.10,
+                  color: Colors.black.withValues(
+                    alpha: 0.10,
                   ),
-                  blurRadius:
-                      30,
-                  offset:
-                      const Offset(
+                  blurRadius: 30,
+                  offset: const Offset(
                     0,
                     15,
                   ),
                 ),
               ],
             ),
-            child:
-                Column(
-              mainAxisSize:
-                  MainAxisSize.min,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width:
-                      68,
-                  height:
-                      68,
-                  decoration:
-                      BoxDecoration(
-                    color:
-                        AppTheme
-                            .success
-                            .withValues(
-                      alpha:
-                          0.12,
+                  width: 68,
+                  height: 68,
+                  decoration: BoxDecoration(
+                    color: AppTheme.success.withValues(
+                      alpha: 0.12,
                     ),
-                    shape:
-                        BoxShape.circle,
+                    shape: BoxShape.circle,
                   ),
-                  child:
-                      const Icon(
-                    Icons
-                        .check_rounded,
-                    color:
-                        AppTheme
-                            .success,
-                    size:
-                        38,
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: AppTheme.success,
+                    size: 38,
                   ),
                 ),
-
                 const SizedBox(
-                  height:
-                      18,
+                  height: 18,
                 ),
-
                 Text(
                   widget.title,
-                  textAlign:
-                      TextAlign.center,
-                  style:
-                      const TextStyle(
-                    color:
-                        AppTheme
-                            .textPrimary,
-                    fontSize:
-                        21,
-                    fontWeight:
-                        FontWeight
-                            .w700,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-
                 const SizedBox(
-                  height:
-                      6,
+                  height: 6,
                 ),
-
                 Text(
                   widget.message,
-                  textAlign:
-                      TextAlign.center,
-                  style:
-                      const TextStyle(
-                    color:
-                        AppTheme
-                            .textSecondary,
-                    fontSize:
-                        13,
-                    height:
-                        1.4,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 13,
+                    height: 1.4,
                   ),
                 ),
-
                 const SizedBox(
-                  height:
-                      20,
+                  height: 20,
                 ),
-
                 const SizedBox(
-                  width:
-                      22,
-                  height:
-                      22,
-                  child:
-                      CircularProgressIndicator(
-                    strokeWidth:
-                        2.4,
-                    color:
-                        AppTheme
-                            .primary,
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: AppTheme.primary,
                   ),
                 ),
               ],
@@ -2102,8 +1635,7 @@ class _SuccessDialogState
 // FIELD LABEL
 // ============================================================
 
-class _FieldLabel
-    extends StatelessWidget {
+class _FieldLabel extends StatelessWidget {
   final String text;
 
   const _FieldLabel({
@@ -2116,15 +1648,10 @@ class _FieldLabel
   ) {
     return Text(
       text,
-      style:
-          const TextStyle(
-        color:
-            AppTheme
-                .textSecondary,
-        fontSize:
-            12.5,
-        fontWeight:
-            FontWeight.w500,
+      style: const TextStyle(
+        color: AppTheme.textSecondary,
+        fontSize: 12.5,
+        fontWeight: FontWeight.w500,
       ),
     );
   }
@@ -2134,8 +1661,7 @@ class _FieldLabel
 // GLOW CIRCLE
 // ============================================================
 
-class _GlowCircle
-    extends StatelessWidget {
+class _GlowCircle extends StatelessWidget {
   final double size;
   final Color color;
 
@@ -2149,18 +1675,12 @@ class _GlowCircle
     BuildContext context,
   ) {
     return IgnorePointer(
-      child:
-          Container(
-        width:
-            size,
-        height:
-            size,
-        decoration:
-            BoxDecoration(
-          shape:
-              BoxShape.circle,
-          color:
-              color,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color,
         ),
       ),
     );

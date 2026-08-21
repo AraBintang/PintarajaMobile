@@ -11,7 +11,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
@@ -95,7 +95,8 @@ class _TranscribeScreenState extends State<TranscribeScreen>
 
     if (sizeMB > 25) {
       setState(() {
-        _error = 'File terlalu besar (${sizeMB.toStringAsFixed(1)}MB). Maksimum 25MB.';
+        _error =
+            'File terlalu besar (${sizeMB.toStringAsFixed(1)}MB). Maksimum 25MB.';
       });
       return;
     }
@@ -370,10 +371,10 @@ class _TranscribeScreenState extends State<TranscribeScreen>
             final status = data['status']?.toString() ?? 'processing';
 
             if (status != 'completed' && status != 'failed') {
-            setState(() {
-              _isProcessing = true;
-              _transcriptionStatus = status;
-            });
+              setState(() {
+                _isProcessing = true;
+                _transcriptionStatus = status;
+              });
               _startPolling(id);
             }
           }
@@ -837,7 +838,6 @@ class _TranscribeScreenState extends State<TranscribeScreen>
           ),
         ),
         const SizedBox(height: 10),
-
         if (_selectedFile != null) ...[
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -901,7 +901,6 @@ class _TranscribeScreenState extends State<TranscribeScreen>
           ),
           const SizedBox(height: 8),
         ],
-
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
@@ -937,8 +936,12 @@ class _TranscribeScreenState extends State<TranscribeScreen>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
-          Expanded(child: Text(text, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11))),
+          const Text('• ',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+          Expanded(
+              child: Text(text,
+                  style: const TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 11))),
         ],
       ),
     );
@@ -983,9 +986,9 @@ class _TranscribeScreenState extends State<TranscribeScreen>
             ),
           ),
           onChanged: (v) {
-            if (_youtubeError != null) {
-              setState(() => _youtubeError = null);
-            }
+            setState(() {
+              _youtubeError = null;
+            });
           },
         ),
         const SizedBox(height: 16),
@@ -1000,12 +1003,17 @@ class _TranscribeScreenState extends State<TranscribeScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('YouTube Video Requirements', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 12)),
+              const Text('YouTube Video Requirements',
+                  style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12)),
               const SizedBox(height: 6),
               _buildBulletPoint('Maximum duration 2 hours'),
               _buildBulletPoint('Videos must be public or unlisted'),
               _buildBulletPoint('Videos must have clear audio'),
-              _buildBulletPoint('Content with strict copyright may not be processed.'),
+              _buildBulletPoint(
+                  'Content with strict copyright may not be processed.'),
             ],
           ),
         ),
@@ -1070,7 +1078,9 @@ class _TranscribeScreenState extends State<TranscribeScreen>
               ),
               const SizedBox(height: 10),
               Text(
-                _isRecording ? 'Menekan untuk berhenti...' : 'Tekan untuk mulai rekam',
+                _isRecording
+                    ? 'Menekan untuk berhenti...'
+                    : 'Tekan untuk mulai rekam',
                 style: TextStyle(
                   color: AppTheme.getTextSecondary(context),
                   fontSize: 12,
@@ -1207,7 +1217,8 @@ class _TranscribeScreenState extends State<TranscribeScreen>
       width: double.infinity,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: _canSubmit ? AppTheme.accentPurple : AppTheme.surfaceMuted,
+          backgroundColor:
+              _canSubmit ? AppTheme.accentPurple : AppTheme.surfaceMuted,
           foregroundColor: _canSubmit ? Colors.white : AppTheme.textMuted,
           disabledBackgroundColor: AppTheme.surfaceMuted,
           disabledForegroundColor: AppTheme.textMuted,
@@ -1405,7 +1416,6 @@ class _TranscribeScreenState extends State<TranscribeScreen>
           ],
         ),
         const SizedBox(height: 10),
-
         if (_isLoadingHistory)
           const Center(
             child: Padding(
@@ -1472,9 +1482,7 @@ class _TranscribeScreenState extends State<TranscribeScreen>
         color: Colors.transparent,
         child: InkWell(
           onTap: () => _viewResult(item),
-          onLongPress: id != null
-              ? () => _showDeleteDialog(id, name)
-              : null,
+          onLongPress: id != null ? () => _showDeleteDialog(id, name) : null,
           borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.symmetric(
@@ -1660,9 +1668,7 @@ class _MethodCard extends StatelessWidget {
               : AppTheme.getSurface(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected
-                ? AppTheme.accentPurple
-                : AppTheme.borderLight,
+            color: isSelected ? AppTheme.accentPurple : AppTheme.borderLight,
             width: isSelected ? 2 : 1,
           ),
         ),

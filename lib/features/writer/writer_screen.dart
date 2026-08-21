@@ -14,6 +14,7 @@ import '../../data/providers/auth_provider.dart';
 import '../../data/providers/chat_provider.dart';
 import '../../data/services/storage_service.dart';
 import '../shared/widgets/app_sidebar_drawer.dart';
+import '../shared/widgets/payment_sheet.dart';
 
 class WriterScreen extends StatefulWidget {
   const WriterScreen({super.key});
@@ -33,6 +34,8 @@ class _WriterScreenState extends State<WriterScreen> {
   String? _error;
   bool _isLoading = false;
   int _charCount = 0;
+
+  final List<Map<String, String>> _history = [];
 
   // File upload state
   File? _attachedFile;
@@ -69,7 +72,9 @@ class _WriterScreenState extends State<WriterScreen> {
       return _selectedProviderId!;
     }
     return chatProvider.selectedProviderId ??
-        (chatProvider.aiProviders.isNotEmpty ? chatProvider.aiProviders.first.id : 1);
+        (chatProvider.aiProviders.isNotEmpty
+            ? chatProvider.aiProviders.first.id
+            : 1);
   }
 
   // ==========================================================
@@ -92,7 +97,8 @@ class _WriterScreenState extends State<WriterScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Format tidak didukung. Gunakan TXT, DOC, DOCX, atau PDF.'),
+          content:
+              Text('Format tidak didukung. Gunakan TXT, DOC, DOCX, atau PDF.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -104,7 +110,8 @@ class _WriterScreenState extends State<WriterScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('File terlalu besar (${(picked.size / (1024 * 1024)).toStringAsFixed(1)}MB). Maksimum 10MB.'),
+          content: Text(
+              'File terlalu besar (${(picked.size / (1024 * 1024)).toStringAsFixed(1)}MB). Maksimum 10MB.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -148,9 +155,11 @@ class _WriterScreenState extends State<WriterScreen> {
       final request = http.MultipartRequest('POST', uri)
         ..headers['Authorization'] = 'Bearer $token'
         ..fields['providerId'] = providerId.toString()
-        ..files.add(await http.MultipartFile.fromPath('file', _attachedFile!.path));
+        ..files.add(
+            await http.MultipartFile.fromPath('file', _attachedFile!.path));
 
-      final response = await request.send().timeout(const Duration(seconds: 120));
+      final response =
+          await request.send().timeout(const Duration(seconds: 120));
       final body = await response.stream.bytesToString();
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -158,7 +167,9 @@ class _WriterScreenState extends State<WriterScreen> {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(
-            const SnackBar(content: Text('File berhasil diunggah!'), behavior: SnackBarBehavior.floating),
+            const SnackBar(
+                content: Text('File berhasil diunggah!'),
+                behavior: SnackBarBehavior.floating),
           );
         _removeAttachedFile();
       } else {
@@ -168,7 +179,9 @@ class _WriterScreenState extends State<WriterScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal upload file: $e'), behavior: SnackBarBehavior.floating),
+        SnackBar(
+            content: Text('Gagal upload file: $e'),
+            behavior: SnackBarBehavior.floating),
       );
     }
   }
@@ -190,13 +203,15 @@ class _WriterScreenState extends State<WriterScreen> {
     final chatProvider = context.read<ChatProvider>();
     final providerId = _resolveWriterProviderId(chatProvider);
 
-    final provider = chatProvider.aiProviders.where((p) => p.id == providerId).firstOrNull;
+    final provider =
+        chatProvider.aiProviders.where((p) => p.id == providerId).firstOrNull;
     if (provider != null && provider.quota.isExhausted) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text('Kuota ${provider.displayName} untuk hari ini sudah habis.'),
+            content: Text(
+                'Kuota ${provider.displayName} untuk hari ini sudah habis.'),
             backgroundColor: AppTheme.warning,
             behavior: SnackBarBehavior.floating,
           ),
@@ -258,7 +273,9 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
         final body = response.body;
         try {
           final decoded = jsonDecode(body);
-          throw Exception(decoded['message'] ?? decoded['error'] ?? 'Gagal membuat tulisan.');
+          throw Exception(decoded['message'] ??
+              decoded['error'] ??
+              'Gagal membuat tulisan.');
         } catch (_) {
           if (body.isNotEmpty) throw Exception(body);
           throw Exception('Gagal membuat tulisan. (${response.statusCode})');
@@ -273,7 +290,14 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
         return;
       }
 
-      setState(() => _result = result);
+      setState(() {
+        _result = result;
+        _history.insert(0, {
+          'topic': topic,
+          'result': result,
+          'time': DateTime.now().toString(),
+        });
+      });
 
       await context.read<AuthProvider>().refreshUser();
 
@@ -332,7 +356,16 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
     if (data is String) return data;
     if (data is! Map) return '';
 
-    final keys = ['result', 'content', 'text', 'output', 'answer', 'message', 'response', 'delta'];
+    final keys = [
+      'result',
+      'content',
+      'text',
+      'output',
+      'answer',
+      'message',
+      'response',
+      'delta'
+    ];
     for (final key in keys) {
       final value = data[key];
       if (value is String && value.trim().isNotEmpty) return value;
@@ -365,17 +398,25 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
     clean = clean.replaceAll(RegExp(r'</div\s*>', caseSensitive: false), '\n');
     clean = clean.replaceAll(RegExp(r'<div[^>]*>', caseSensitive: false), '');
     clean = clean.replaceAll(RegExp(r'<\s*b\s*>', caseSensitive: false), '**');
-    clean = clean.replaceAll(RegExp(r'<\s*/\s*b\s*>', caseSensitive: false), '**');
-    clean = clean.replaceAll(RegExp(r'<\s*strong\s*>', caseSensitive: false), '**');
-    clean = clean.replaceAll(RegExp(r'<\s*/\s*strong\s*>', caseSensitive: false), '**');
+    clean =
+        clean.replaceAll(RegExp(r'<\s*/\s*b\s*>', caseSensitive: false), '**');
+    clean =
+        clean.replaceAll(RegExp(r'<\s*strong\s*>', caseSensitive: false), '**');
+    clean = clean.replaceAll(
+        RegExp(r'<\s*/\s*strong\s*>', caseSensitive: false), '**');
     clean = clean.replaceAll(RegExp(r'<\s*i\s*>', caseSensitive: false), '*');
-    clean = clean.replaceAll(RegExp(r'<\s*/\s*i\s*>', caseSensitive: false), '*');
+    clean =
+        clean.replaceAll(RegExp(r'<\s*/\s*i\s*>', caseSensitive: false), '*');
     clean = clean.replaceAll(RegExp(r'<\s*em\s*>', caseSensitive: false), '*');
-    clean = clean.replaceAll(RegExp(r'<\s*/\s*em\s*>', caseSensitive: false), '*');
-    clean = clean.replaceAll(RegExp(r'<\s*li\s*>', caseSensitive: false), '\n- ');
+    clean =
+        clean.replaceAll(RegExp(r'<\s*/\s*em\s*>', caseSensitive: false), '*');
+    clean =
+        clean.replaceAll(RegExp(r'<\s*li\s*>', caseSensitive: false), '\n- ');
     clean = clean.replaceAll(RegExp(r'<\s*/?li\s*>', caseSensitive: false), '');
-    clean = clean.replaceAll(RegExp(r'<\s*/?ul\s*>', caseSensitive: false), '\n');
-    clean = clean.replaceAll(RegExp(r'<\s*/?ol\s*>', caseSensitive: false), '\n');
+    clean =
+        clean.replaceAll(RegExp(r'<\s*/?ul\s*>', caseSensitive: false), '\n');
+    clean =
+        clean.replaceAll(RegExp(r'<\s*/?ol\s*>', caseSensitive: false), '\n');
     clean = clean.replaceAll(RegExp(r'<[^>]+>'), '');
     clean = clean.replaceAll(RegExp(r'\n{3,}'), '\n\n');
     return clean.trim();
@@ -390,11 +431,11 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
       context: context,
       builder: (_) => _PromptLibraryDialog(
         onInsert: (content) {
-          final current = _topicController.text;
+          final current = _instructionsController.text;
           final separator = current.isEmpty ? '' : '\n\n';
-          _topicController.text = current + separator + content;
-          _topicController.selection = TextSelection.fromPosition(
-            TextPosition(offset: _topicController.text.length),
+          _instructionsController.text = current + separator + content;
+          _instructionsController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _instructionsController.text.length),
           );
         },
       ),
@@ -427,7 +468,9 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(content: Text('Hasil berhasil disalin.'), behavior: SnackBarBehavior.floating),
+        const SnackBar(
+            content: Text('Hasil berhasil disalin.'),
+            behavior: SnackBarBehavior.floating),
       );
   }
 
@@ -451,70 +494,337 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
   // TOKEN INFO
   // ==========================================================
 
-  void _showTokenInfo() {
-    final auth = context.read<AuthProvider>();
-    final tokenBalance = auth.tokenBalance;
+  void _showTokenDialog() {
+    final authProvider = context.read<AuthProvider>();
+    final tokenBalance = authProvider.tokenBalance;
+
+    int selectedCoins = 50;
+    final TextEditingController coinsController =
+        TextEditingController(text: '50');
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        decoration: const BoxDecoration(
-          color: AppTheme.surfaceLight,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+            final pricePerCoin = 1000;
+            final totalPrice = selectedCoins * pricePerCoin;
+
+            return Padding(
+              padding: EdgeInsets.only(bottom: bottomPadding),
               child: Container(
-                width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(color: AppTheme.borderLight, borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Token & Top Up', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.textPrimary)),
-                IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                decoration: BoxDecoration(
+                  color: AppTheme.getSurface(context),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24)),
                 ),
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(color: AppTheme.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Sisa Token Anda', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  Row(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.diamond_rounded, color: Color(0xFFFCD34D), size: 24),
-                      const SizedBox(width: 8),
-                      Text('$tokenBalance', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
-                      const SizedBox(width: 4),
-                      Text('token', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14)),
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                              color: AppTheme.getBorder(context),
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Token & Top Up',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: AppTheme.getTextColor(context))),
+                          IconButton(
+                              icon: const Icon(Icons.close_rounded),
+                              onPressed: () => Navigator.pop(ctx)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Sisa Token Card
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.primary,
+                              AppTheme.primary.withValues(alpha: 0.8)
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primary.withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Sisa Token Anda',
+                                style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.85),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.diamond_rounded,
+                                    color: Color(0xFFFCD34D), size: 24),
+                                const SizedBox(width: 8),
+                                Text('$tokenBalance',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w800)),
+                                const SizedBox(width: 4),
+                                Text('token',
+                                    style: TextStyle(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.7),
+                                        fontSize: 14)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Top Up Section
+                      Text('Top Up Token',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: AppTheme.getTextColor(context))),
+                      const SizedBox(height: 4),
+                      Text('Harga: Rp $pricePerCoin / token',
+                          style: const TextStyle(
+                              color: AppTheme.textSecondary, fontSize: 12)),
+                      const SizedBox(height: 10),
+
+                      // Preset Amount Buttons
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [10, 50, 100, 500, 1000].map((amount) {
+                          final isSelected = selectedCoins == amount;
+                          return GestureDetector(
+                            onTap: () {
+                              setModalState(() {
+                                selectedCoins = amount;
+                                coinsController.text = '$amount';
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppTheme.primary
+                                    : AppTheme.surfaceMuted,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: isSelected
+                                        ? AppTheme.primary
+                                        : AppTheme.borderLight),
+                              ),
+                              child: Text('$amount',
+                                  style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : AppTheme.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13)),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Custom Amount
+                      TextField(
+                        controller: coinsController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Jumlah Token (Min. 10)',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          prefixIcon: const Icon(Icons.diamond_rounded),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
+                        ),
+                        onChanged: (val) {
+                          final parsed = int.tryParse(val);
+                          if (parsed != null) {
+                            setModalState(() => selectedCoins = parsed);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Total Price
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total Harga:',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 13)),
+                            Text('Rp ${totalPrice.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.primary,
+                                    fontSize: 16)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Top Up Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            elevation: 2,
+                          ),
+                          onPressed: selectedCoins < 10
+                              ? null
+                              : () async {
+                                  Navigator.pop(ctx);
+                                  final auth = context.read<AuthProvider>();
+                                  final phone =
+                                      auth.user?.phone?.isNotEmpty == true
+                                          ? auth.user!.phone!
+                                          : '08123456789';
+
+                                  await PaymentSelectionSheet.processDirectQris(
+                                    this.context,
+                                    amount: totalPrice,
+                                    coins: selectedCoins,
+                                    phone: phone,
+                                  );
+
+                                  await auth.refreshUser();
+                                },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.qr_code_2_rounded, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                  'Bayar via QRIS - Rp ${totalPrice.toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14)),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showHistoryPopup() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: AppTheme.surfaceLight,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxHeight: 600),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('History AI Writer',
+                      style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 17)),
+                  IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(ctx)),
                 ],
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 12),
+              if (_history.isEmpty)
+                const Expanded(
+                    child: Center(
+                        child: Text('Belum ada history.',
+                            style: TextStyle(color: AppTheme.textMuted))))
+              else
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: _history.length,
+                    separatorBuilder: (_, __) => const Divider(),
+                    itemBuilder: (context, index) {
+                      final item = _history[index];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(item['topic'] ?? '',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14)),
+                        subtitle: Text(item['result'] ?? '',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12)),
+                        onTap: () {
+                          setState(() {
+                            _topicController.text = item['topic'] ?? '';
+                            _result = item['result'] ?? '';
+                          });
+                          Navigator.pop(ctx);
+                        },
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -545,22 +855,19 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
         ),
         title: const Text(
           'AI Writer',
-          style: TextStyle(color: AppTheme.textPrimary, fontSize: 19, fontWeight: FontWeight.w700),
+          style: TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 19,
+              fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.history_rounded, color: AppTheme.textSecondary),
+            icon: const Icon(Icons.history_rounded,
+                color: AppTheme.textSecondary),
             tooltip: 'History Prompt',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('History prompt segera hadir.')));
-            },
+            onPressed: _showHistoryPopup,
           ),
-          IconButton(
-            tooltip: 'Prompt Library',
-            onPressed: _showPromptLibrary,
-            icon: const Icon(Icons.library_books_rounded, color: AppTheme.primary, size: 22),
-          ),
-          _TokenChip(balance: auth.tokenBalance, onTap: _showTokenInfo),
+          _TokenChip(balance: auth.tokenBalance, onTap: _showTokenDialog),
           const SizedBox(width: 12),
         ],
       ),
@@ -642,7 +949,8 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.edit_note_rounded, color: Colors.white, size: 24),
+                child: const Icon(Icons.edit_note_rounded,
+                    color: Colors.white, size: 24),
               ),
               const SizedBox(width: 14),
               const Expanded(
@@ -706,7 +1014,8 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                       provider.displayName,
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w600,
                         color: isSelected ? Colors.white : AppTheme.textPrimary,
                       ),
                     ),
@@ -718,7 +1027,9 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                           fontWeight: FontWeight.w600,
                           color: isExhausted
                               ? (isSelected ? Colors.white70 : AppTheme.warning)
-                              : (isSelected ? Colors.white70 : AppTheme.textMuted),
+                              : (isSelected
+                                  ? Colors.white70
+                                  : AppTheme.textMuted),
                         ),
                       ),
                   ],
@@ -730,7 +1041,8 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                           ..hideCurrentSnackBar()
                           ..showSnackBar(
                             SnackBar(
-                              content: Text('Kuota ${provider.displayName} untuk hari ini sudah habis. Sisa: ${quota.remaining}'),
+                              content: Text(
+                                  'Kuota ${provider.displayName} untuk hari ini sudah habis. Sisa: ${quota.remaining}'),
                               backgroundColor: AppTheme.warning,
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -744,12 +1056,15 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                   side: BorderSide(
                     color: isSelected
                         ? AppTheme.primary
-                        : (isExhausted ? AppTheme.warning : AppTheme.borderLight),
+                        : (isExhausted
+                            ? AppTheme.warning
+                            : AppTheme.borderLight),
                     width: isSelected ? 1.5 : 1,
                   ),
                 ),
                 showCheckmark: false,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               );
             },
           ),
@@ -781,29 +1096,36 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
               // Attached file chip
               if (_attachedFileName != null) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppTheme.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                    border: Border.all(
+                        color: AppTheme.primary.withValues(alpha: 0.2)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.description_rounded, size: 16, color: AppTheme.primary),
+                      const Icon(Icons.description_rounded,
+                          size: 16, color: AppTheme.primary),
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
                           _attachedFileName!,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textPrimary,
+                              fontWeight: FontWeight.w600),
                         ),
                       ),
                       const SizedBox(width: 4),
                       GestureDetector(
                         onTap: _removeAttachedFile,
-                        child: const Icon(Icons.close_rounded, size: 16, color: AppTheme.textMuted),
+                        child: const Icon(Icons.close_rounded,
+                            size: 16, color: AppTheme.textMuted),
                       ),
                     ],
                   ),
@@ -818,7 +1140,8 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                 maxLines: 6,
                 minLines: 4,
                 textInputAction: TextInputAction.newline,
-                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, height: 1.5),
+                style: const TextStyle(
+                    color: AppTheme.textPrimary, fontSize: 14, height: 1.5),
                 decoration: const InputDecoration(
                   hintText: 'Tuliskan topik atau judul tulisan...',
                   hintStyle: TextStyle(color: AppTheme.textMuted),
@@ -846,7 +1169,9 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                       child: Icon(
                         Icons.attach_file_rounded,
                         size: 18,
-                        color: _isLoading ? AppTheme.textMuted : AppTheme.textSecondary,
+                        color: _isLoading
+                            ? AppTheme.textMuted
+                            : AppTheme.textSecondary,
                       ),
                     ),
                   ),
@@ -854,7 +1179,9 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                   Text(
                     '/',
                     style: TextStyle(
-                      color: _charCount >= _maxCharacters ? AppTheme.warning : AppTheme.textMuted,
+                      color: _charCount >= _maxCharacters
+                          ? AppTheme.warning
+                          : AppTheme.textMuted,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
@@ -864,9 +1191,9 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
             ],
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Instruksi Tambahan Box
         Container(
           width: double.infinity,
@@ -879,7 +1206,8 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.only(left: 14, right: 14, top: 14, bottom: 4),
+                padding: const EdgeInsets.only(
+                    left: 14, right: 14, top: 14, bottom: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -894,14 +1222,16 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                     GestureDetector(
                       onTap: _showPromptLibrary,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
                           color: AppTheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.library_books_rounded, color: AppTheme.primary, size: 16),
+                            const Icon(Icons.library_books_rounded,
+                                color: AppTheme.primary, size: 16),
                             const SizedBox(width: 6),
                             const Text(
                               'Prompt Library',
@@ -922,15 +1252,19 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                 controller: _instructionsController,
                 maxLines: 4,
                 minLines: 2,
-                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                style:
+                    const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
                 decoration: const InputDecoration(
-                  hintText: 'Contoh: Gunakan bahasa yang santai dan mudah dipahami...',
-                  hintStyle: TextStyle(color: AppTheme.textMuted, fontSize: 12.5),
+                  hintText:
+                      'Contoh: Gunakan bahasa yang santai dan mudah dipahami...',
+                  hintStyle:
+                      TextStyle(color: AppTheme.textMuted, fontSize: 12.5),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
                   filled: false,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
               ),
             ],
@@ -968,18 +1302,25 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                         SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2.2, color: AppTheme.primary),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2.2, color: AppTheme.primary),
                         ),
                         SizedBox(width: 10),
                         Text(
                           'Sedang membuat...',
-                          style: TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.w600, fontSize: 14),
+                          style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14),
                         ),
                       ],
                     )
                   : const Text(
                       'Buat Sekarang',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15),
                     ),
             ),
           ),
@@ -1037,23 +1378,29 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
             const Expanded(
               child: Text(
                 'Hasil Tulisan',
-                style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15),
               ),
             ),
             IconButton(
               tooltip: 'Buat Ulang',
               onPressed: _isLoading ? null : _generate,
-              icon: const Icon(Icons.refresh_rounded, color: AppTheme.primary, size: 19),
+              icon: const Icon(Icons.refresh_rounded,
+                  color: AppTheme.primary, size: 19),
             ),
             IconButton(
               tooltip: 'Salin',
               onPressed: _copyResult,
-              icon: const Icon(Icons.copy_rounded, color: AppTheme.textSecondary, size: 18),
+              icon: const Icon(Icons.copy_rounded,
+                  color: AppTheme.textSecondary, size: 18),
             ),
             IconButton(
               tooltip: 'Bersihkan',
               onPressed: _clearWriter,
-              icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.textSecondary, size: 19),
+              icon: const Icon(Icons.delete_outline_rounded,
+                  color: AppTheme.textSecondary, size: 19),
             ),
           ],
         ),
@@ -1070,15 +1417,38 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
             data: _result,
             selectable: true,
             styleSheet: MarkdownStyleSheet(
-              p: const TextStyle(color: AppTheme.textPrimary, fontSize: 13.5, height: 1.65),
-              strong: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700, fontSize: 13.5),
-              em: const TextStyle(color: AppTheme.textPrimary, fontStyle: FontStyle.italic, fontSize: 13.5),
-              h1: const TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
-              h2: const TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
-              h3: const TextStyle(color: AppTheme.textPrimary, fontSize: 14.5, fontWeight: FontWeight.w700),
-              listBullet: const TextStyle(color: AppTheme.textPrimary, fontSize: 13.5),
-              blockquote: const TextStyle(color: AppTheme.textSecondary, fontSize: 13.5, fontStyle: FontStyle.italic),
-              code: const TextStyle(color: AppTheme.primary, fontSize: 12.5, backgroundColor: Color(0xFFF1F5F9)),
+              p: const TextStyle(
+                  color: AppTheme.textPrimary, fontSize: 13.5, height: 1.65),
+              strong: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13.5),
+              em: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontStyle: FontStyle.italic,
+                  fontSize: 13.5),
+              h1: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700),
+              h2: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700),
+              h3: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700),
+              listBullet:
+                  const TextStyle(color: AppTheme.textPrimary, fontSize: 13.5),
+              blockquote: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 13.5,
+                  fontStyle: FontStyle.italic),
+              code: const TextStyle(
+                  color: AppTheme.primary,
+                  fontSize: 12.5,
+                  backgroundColor: Color(0xFFF1F5F9)),
             ),
           ),
         ),
@@ -1134,7 +1504,10 @@ class _PromptLibraryDialogState extends State<_PromptLibraryDialog> {
       final decoded = jsonDecode(response.body);
       final data = decoded is Map ? decoded['data'] : decoded;
       if (data is List) {
-        _prompts = data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+        _prompts = data
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       }
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
@@ -1161,10 +1534,14 @@ class _PromptLibraryDialogState extends State<_PromptLibraryDialog> {
               children: [
                 const Text(
                   'Prompt Library',
-                  style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700, fontSize: 17),
+                  style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 17),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: AppTheme.textSecondary),
+                  icon: const Icon(Icons.close_rounded,
+                      color: AppTheme.textSecondary),
                   onPressed: () => Navigator.pop(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -1189,11 +1566,17 @@ class _PromptLibraryDialogState extends State<_PromptLibraryDialog> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline, color: AppTheme.error, size: 36),
+                      const Icon(Icons.error_outline,
+                          color: AppTheme.error, size: 36),
                       const SizedBox(height: 10),
-                      Text(_error!, style: const TextStyle(color: AppTheme.error, fontSize: 13), textAlign: TextAlign.center),
+                      Text(_error!,
+                          style: const TextStyle(
+                              color: AppTheme.error, fontSize: 13),
+                          textAlign: TextAlign.center),
                       const SizedBox(height: 12),
-                      TextButton(onPressed: _loadPrompts, child: const Text('Coba Lagi')),
+                      TextButton(
+                          onPressed: _loadPrompts,
+                          child: const Text('Coba Lagi')),
                     ],
                   ),
                 ),
@@ -1201,7 +1584,9 @@ class _PromptLibraryDialogState extends State<_PromptLibraryDialog> {
             else if (_prompts.isEmpty)
               const Expanded(
                 child: Center(
-                  child: Text('Belum ada prompt tersedia.', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                  child: Text('Belum ada prompt tersedia.',
+                      style:
+                          TextStyle(color: AppTheme.textMuted, fontSize: 13)),
                 ),
               )
             else
@@ -1211,8 +1596,8 @@ class _PromptLibraryDialogState extends State<_PromptLibraryDialog> {
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final prompt = _prompts[index];
-                    final title = prompt['title']?.toString() ?? 'Prompt';
-                    final content = prompt['content']?.toString() ?? '';
+                    final title = prompt['name']?.toString() ?? 'Prompt';
+                    final content = prompt['value']?.toString() ?? '';
 
                     return InkWell(
                       onTap: () {
@@ -1244,7 +1629,8 @@ class _PromptLibraryDialogState extends State<_PromptLibraryDialog> {
                                 color: AppTheme.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.lightbulb_rounded, color: AppTheme.primary, size: 18),
+                              child: const Icon(Icons.lightbulb_rounded,
+                                  color: AppTheme.primary, size: 18),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -1262,17 +1648,22 @@ class _PromptLibraryDialogState extends State<_PromptLibraryDialog> {
                                   if (content.isNotEmpty) ...[
                                     const SizedBox(height: 3),
                                     Text(
-                                      content.length > 100 ? '${content.substring(0, 100)}...' : content,
+                                      content.length > 100
+                                          ? '${content.substring(0, 100)}...'
+                                          : content,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11.5),
+                                      style: const TextStyle(
+                                          color: AppTheme.textSecondary,
+                                          fontSize: 11.5),
                                     ),
                                   ],
                                 ],
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textMuted),
+                            const Icon(Icons.arrow_forward_ios_rounded,
+                                size: 14, color: AppTheme.textMuted),
                           ],
                         ),
                       ),
@@ -1312,14 +1703,18 @@ class _TokenChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.diamond_rounded, color: Color(0xFFF59E0B), size: 14),
+            const Icon(Icons.diamond_rounded,
+                color: Color(0xFFF59E0B), size: 14),
             const SizedBox(width: 4),
             Flexible(
               child: Text(
                 '$balance',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 11, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -1342,7 +1737,10 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
+      style: const TextStyle(
+          color: AppTheme.textPrimary,
+          fontWeight: FontWeight.w600,
+          fontSize: 14),
     );
   }
 }
@@ -1369,10 +1767,12 @@ class _ErrorBox extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 16),
+          const Icon(Icons.error_outline_rounded,
+              color: AppTheme.error, size: 16),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(message, style: const TextStyle(color: AppTheme.error, fontSize: 12.5)),
+            child: Text(message,
+                style: const TextStyle(color: AppTheme.error, fontSize: 12.5)),
           ),
         ],
       ),

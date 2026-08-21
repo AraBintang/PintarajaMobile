@@ -25,7 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final servicesList = [
       {
         'title': 'AI Chat',
-        'desc': 'Diskusi interaktif dengan asisten AI tercanggih — didukung OpenAI, Gemini, Claude, DeepSeek & Qwen.',
+        'desc':
+            'Diskusi interaktif dengan asisten AI tercanggih — didukung OpenAI, Gemini, Claude, DeepSeek & Qwen.',
         'badge': 'POPULER',
         'icon': Icons.chat_bubble_rounded,
         'color': const Color(0xFF2563EB),
@@ -33,7 +34,8 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       {
         'title': 'AI Writer',
-        'desc': 'Tulis draf skripsi, esai, artikel ilmiah, dan dokumen akademik secara otomatis dengan template prompt.',
+        'desc':
+            'Tulis draf skripsi, esai, artikel ilmiah, dan dokumen akademik secara otomatis dengan template prompt.',
         'badge': null,
         'icon': Icons.edit_rounded,
         'color': const Color(0xFF7C3AED),
@@ -41,7 +43,8 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       {
         'title': 'Paraphrase AI',
-        'desc': 'Parafrase dan tingkatkan kualitas tulisan Anda dengan struktur kalimat yang lebih baik dan profesional.',
+        'desc':
+            'Parafrase dan tingkatkan kualitas tulisan Anda dengan struktur kalimat yang lebih baik dan profesional.',
         'badge': 'BARU',
         'icon': Icons.swap_horiz_rounded,
         'color': const Color(0xFF0EA5E9),
@@ -49,7 +52,8 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       {
         'title': 'Check Plagiarism',
-        'desc': 'Deteksi plagiarisme dalam dokumen Anda dengan Turnitin & Drillbot AI Check.',
+        'desc':
+            'Deteksi plagiarisme dalam dokumen Anda dengan Turnitin & Drillbot AI Check.',
         'badge': 'BARU',
         'icon': Icons.verified_user_outlined,
         'color': const Color(0xFFF97316),
@@ -57,7 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       {
         'title': 'Transcribe AI',
-        'desc': 'Ubah rekaman wawancara, seminar, atau materi kuliah menjadi teks secara akurat.',
+        'desc':
+            'Ubah rekaman wawancara, seminar, atau materi kuliah menjadi teks secara akurat.',
         'badge': 'BARU',
         'icon': Icons.mic_rounded,
         'color': const Color(0xFF10B981),
@@ -65,7 +70,8 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       {
         'title': 'Humanizer AI',
-        'desc': 'Ubah teks hasil AI menjadi tulisan yang natural dan tidak terdeteksi sebagai mesin.',
+        'desc':
+            'Ubah teks hasil AI menjadi tulisan yang natural dan tidak terdeteksi sebagai mesin.',
         'badge': 'SOON',
         'icon': Icons.psychology_rounded,
         'color': const Color(0xFF6B7280),
@@ -81,17 +87,25 @@ class _HomeScreenState extends State<HomeScreen> {
         automaticallyImplyLeading: false,
         title: Row(
           children: [
-            Image.asset('assets/images/pintaraja.webp', width: 28, height: 28, errorBuilder: (_, __, ___) => const Icon(Icons.auto_awesome, color: AppTheme.primary)),
+            Image.asset('assets/images/pintaraja.webp',
+                width: 28,
+                height: 28,
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.auto_awesome, color: AppTheme.primary)),
             const SizedBox(width: 8),
             const Text(
               'PintarAja',
-              style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
+              style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.person_outline_rounded, color: AppTheme.textPrimary),
+            icon: const Icon(Icons.person_outline_rounded,
+                color: AppTheme.textPrimary),
             onPressed: () => context.push('/profile'),
           ),
         ],
@@ -121,46 +135,62 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
                         '✨ Solusi Mahasiswa, di Pintar Aja',
-                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Halo, ${user?.name.split(' ').first ?? 'Mahasiswa'}!',
-                      style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 6),
                     const Text(
                       'Sempurnakan riset, buat tugas, dan parafrase teks dengan asisten AI tercanggih.',
-                      style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                      style: TextStyle(
+                          color: Colors.white70, fontSize: 13, height: 1.4),
                     ),
                     const SizedBox(height: 16),
                     // Quick Token Info
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.diamond_rounded, color: Color(0xFFFBBF24), size: 20),
+                          const Icon(Icons.diamond_rounded,
+                              color: Color(0xFFFBBF24), size: 20),
                           const SizedBox(width: 8),
                           Text(
                             'Saldo Token: ${user?.quota ?? 0}',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13),
                           ),
                           const Spacer(),
                           Text(
                             user?.plan ?? 'Free Plan',
-                            style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+                            style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
@@ -174,7 +204,10 @@ class _HomeScreenState extends State<HomeScreen> {
               // Didukung AI Terpopuler
               const Text(
                 'Didukung AI Terpopuler',
-                style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               SingleChildScrollView(
@@ -182,7 +215,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   children: [
                     _buildAiModelBadge('OpenAI GPT-4', const Color(0xFF10A37F)),
-                    _buildAiModelBadge('Google Gemini', const Color(0xFF4285F4)),
+                    _buildAiModelBadge(
+                        'Google Gemini', const Color(0xFF4285F4)),
                     _buildAiModelBadge('Claude 3.5', const Color(0xFFD97706)),
                     _buildAiModelBadge('DeepSeek R1', const Color(0xFF4F46E5)),
                     _buildAiModelBadge('Qwen AI', const Color(0xFF0284C7)),
@@ -195,7 +229,10 @@ class _HomeScreenState extends State<HomeScreen> {
               // Pilihan Layanan Utama
               const Text(
                 'Pilihan Layanan AI',
-                style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               const Text(
@@ -240,22 +277,30 @@ class _HomeScreenState extends State<HomeScreen> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: (s['color'] as Color).withValues(alpha: 0.12),
+                                  color: (s['color'] as Color)
+                                      .withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Icon(s['icon'] as IconData, color: s['color'] as Color, size: 20),
+                                child: Icon(s['icon'] as IconData,
+                                    color: s['color'] as Color, size: 20),
                               ),
                               const Spacer(),
                               if (s['badge'] != null)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 7, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: s['badge'] == 'SOON' ? Colors.grey.shade400 : AppTheme.primary,
+                                    color: s['badge'] == 'SOON'
+                                        ? Colors.grey.shade400
+                                        : AppTheme.primary,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
                                     s['badge'] as String,
-                                    style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
                             ],
@@ -263,14 +308,20 @@ class _HomeScreenState extends State<HomeScreen> {
                           const Spacer(),
                           Text(
                             s['title'] as String,
-                            style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                            style: const TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14),
                           ),
                           const SizedBox(height: 3),
                           Text(
                             s['desc'] as String,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 10.5, height: 1.3),
+                            style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 10.5,
+                                height: 1.3),
                           ),
                         ],
                       ),
@@ -284,7 +335,10 @@ class _HomeScreenState extends State<HomeScreen> {
               // Detail Accordion Layanan PintarAja
               const Text(
                 'Layanan Berkualitas dari PintarAja',
-                style: TextStyle(color: AppTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
 
@@ -307,22 +361,33 @@ class _HomeScreenState extends State<HomeScreen> {
                               _openAccordionIndex = isOpen ? -1 : index;
                             });
                           },
-                          leading: Icon(s['icon'] as IconData, color: s['color'] as Color, size: 22),
+                          leading: Icon(s['icon'] as IconData,
+                              color: s['color'] as Color, size: 22),
                           title: Row(
                             children: [
-                              Text(s['title'] as String, style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
+                              Text(s['title'] as String,
+                                  style: const TextStyle(
+                                      color: AppTheme.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14)),
                               if (s['badge'] != null) ...[
                                 const SizedBox(width: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: s['badge'] == 'SOON' ? Colors.grey.shade400 : AppTheme.primary.withValues(alpha: 0.15),
+                                    color: s['badge'] == 'SOON'
+                                        ? Colors.grey.shade400
+                                        : AppTheme.primary
+                                            .withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
                                     s['badge'] as String,
                                     style: TextStyle(
-                                      color: s['badge'] == 'SOON' ? Colors.white : AppTheme.primary,
+                                      color: s['badge'] == 'SOON'
+                                          ? Colors.white
+                                          : AppTheme.primary,
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -332,7 +397,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                           trailing: Icon(
-                            isOpen ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                            isOpen
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded,
                             color: AppTheme.textSecondary,
                           ),
                         ),
@@ -344,17 +411,27 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 Text(
                                   s['desc'] as String,
-                                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12.5, height: 1.5),
+                                  style: const TextStyle(
+                                      color: AppTheme.textSecondary,
+                                      fontSize: 12.5,
+                                      height: 1.5),
                                 ),
                                 const SizedBox(height: 12),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: s['color'] as Color,
                                     visualDensity: VisualDensity.compact,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
                                   ),
-                                  onPressed: () => context.go(s['route'] as String),
-                                  child: const Text('Coba Sekarang', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  onPressed: () =>
+                                      context.go(s['route'] as String),
+                                  child: const Text('Coba Sekarang',
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold)),
                                 ),
                               ],
                             ),
@@ -387,10 +464,15 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: accentColor),
+            decoration:
+                BoxDecoration(shape: BoxShape.circle, color: accentColor),
           ),
           const SizedBox(width: 6),
-          Text(name, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 11.5, fontWeight: FontWeight.w600)),
+          Text(name,
+              style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600)),
         ],
       ),
     );

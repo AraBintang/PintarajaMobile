@@ -21,8 +21,7 @@ class StorageService {
   // ==========================================================
 
   static Future<void> init() async {
-    _prefs =
-        await SharedPreferences.getInstance();
+    _prefs = await SharedPreferences.getInstance();
 
     // Jangan membawa session lama.
     //
@@ -53,8 +52,7 @@ class StorageService {
     );
   }
 
-  static Future<void>
-      deletePersistentToken() async {
+  static Future<void> deletePersistentToken() async {
     await _prefs.remove(
       AppConstants.tokenKey,
     );
@@ -74,8 +72,7 @@ class StorageService {
     _sessionToken = token;
   }
 
-  static Future<void>
-      deleteSessionToken() async {
+  static Future<void> deleteSessionToken() async {
     _sessionToken = null;
   }
 
@@ -85,15 +82,13 @@ class StorageService {
 
   static String? getToken() {
     // Session token diprioritaskan.
-    return _sessionToken ??
-        persistentToken;
+    return _sessionToken ?? persistentToken;
   }
 
   static bool get isLoggedIn {
     final token = getToken();
 
-    return token != null &&
-        token.isNotEmpty;
+    return token != null && token.isNotEmpty;
   }
 
   // ==========================================================
@@ -104,8 +99,7 @@ class StorageService {
     String token, {
     bool remember = false,
   }) async {
-    final cleanToken =
-        token.trim();
+    final cleanToken = token.trim();
 
     if (cleanToken.isEmpty) {
       return;
@@ -170,19 +164,16 @@ class StorageService {
     // PERSISTENT USER
     // --------------------------------------------------------
 
-    final data =
-        _prefs.getString(
+    final data = _prefs.getString(
       AppConstants.userKey,
     );
 
-    if (data == null ||
-        data.isEmpty) {
+    if (data == null || data.isEmpty) {
       return null;
     }
 
     try {
-      final decoded =
-          jsonDecode(data);
+      final decoded = jsonDecode(data);
 
       if (decoded is! Map) {
         return null;
@@ -225,8 +216,7 @@ class StorageService {
         AppConstants.userKey,
       );
 
-      _sessionUser =
-          Map<String, dynamic>.from(
+      _sessionUser = Map<String, dynamic>.from(
         user,
       );
     }
@@ -249,11 +239,9 @@ class StorageService {
   // ==========================================================
 
   static bool get rememberMe {
-    final token =
-        persistentToken;
+    final token = persistentToken;
 
-    return token != null &&
-        token.isNotEmpty;
+    return token != null && token.isNotEmpty;
   }
 
   // ==========================================================

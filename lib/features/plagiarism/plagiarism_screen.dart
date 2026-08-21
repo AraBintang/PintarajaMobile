@@ -15,7 +15,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/services/api_service.dart';
 import '../shared/widgets/payment_sheet.dart';
-import '../shared/widgets/qris_payment_sheet.dart';
+
 import '../shared/widgets/app_sidebar_drawer.dart';
 
 class PlagiarismScreen extends StatefulWidget {
@@ -56,7 +56,8 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
     if (user != null) {
       final nameParts = user.name.trim().split(' ');
       _firstNameController.text = nameParts.isNotEmpty ? nameParts.first : '';
-      _lastNameController.text = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+      _lastNameController.text =
+          nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
       _whatsappController.text = user.phone ?? '';
     }
   }
@@ -92,7 +93,8 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
       if (sizeMB > _maxFileSizeMB) {
         if (!mounted) return;
         setState(() {
-          _error = 'File ${file.name} terlalu besar (${sizeMB.toStringAsFixed(1)}MB). Maksimum 50MB.';
+          _error =
+              'File ${file.name} terlalu besar (${sizeMB.toStringAsFixed(1)}MB). Maksimum 50MB.';
         });
         continue;
       }
@@ -133,7 +135,8 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
       return;
     }
 
-    if (_firstNameController.text.trim().isEmpty || _lastNameController.text.trim().isEmpty) {
+    if (_firstNameController.text.trim().isEmpty ||
+        _lastNameController.text.trim().isEmpty) {
       setState(() {
         _error = 'Nama penulis harus diisi.';
       });
@@ -171,6 +174,7 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
           'exclude_small_matches': _excludeSmallMatches ? '1' : '0',
           'channel': 'topup',
           'method': 'topup',
+          'phone': _whatsappController.text.trim(),
         },
         files: filesMap,
         timeout: const Duration(seconds: 180),
@@ -203,7 +207,8 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
     Navigator.pop(context);
     PaymentSelectionSheet.show(
       context,
-      itemTitle: 'Pengecekan Plagiarisme (${_selectedService.toUpperCase()}) - ${_uploadedFiles.length} file',
+      itemTitle:
+          'Pengecekan Plagiarisme (${_selectedService.toUpperCase()}) - ${_uploadedFiles.length} file',
       amount: _totalPrice,
       onPaymentSuccess: () async {
         await context.read<AuthProvider>().refreshUser();
@@ -229,13 +234,17 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
         elevation: 0,
         leading: Builder(
           builder: (drawerContext) => IconButton(
-            icon: Icon(Icons.menu_rounded, color: AppTheme.getTextColor(context)),
+            icon:
+                Icon(Icons.menu_rounded, color: AppTheme.getTextColor(context)),
             onPressed: () => Scaffold.of(drawerContext).openDrawer(),
           ),
         ),
         title: Text(
           'Cek Plagiarisme',
-          style: TextStyle(color: AppTheme.getTextColor(context), fontWeight: FontWeight.w700, fontSize: 17),
+          style: TextStyle(
+              color: AppTheme.getTextColor(context),
+              fontWeight: FontWeight.w700,
+              fontSize: 17),
         ),
         centerTitle: false,
       ),
@@ -279,7 +288,8 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
           icon: const Icon(Icons.close_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Order Dikirim', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('Order Dikirim',
+            style: TextStyle(fontWeight: FontWeight.w700)),
       ),
       body: Center(
         child: Padding(
@@ -290,16 +300,24 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
               Container(
                 width: 80,
                 height: 80,
-                decoration: BoxDecoration(color: AppTheme.success.withValues(alpha: 0.12), shape: BoxShape.circle),
-                child: const Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 44),
+                decoration: BoxDecoration(
+                    color: AppTheme.success.withValues(alpha: 0.12),
+                    shape: BoxShape.circle),
+                child: const Icon(Icons.check_circle_rounded,
+                    color: AppTheme.success, size: 44),
               ),
               const SizedBox(height: 20),
-              const Text('Order Berhasil Dikirim!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
+              const Text('Order Berhasil Dikirim!',
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textPrimary)),
               const SizedBox(height: 8),
               Text(
                 'Pengecekan plagiarisme ${_selectedService.toUpperCase()} kamu sedang diproses. Hasil akan dikirim ke WhatsApp kamu.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13, height: 1.5),
+                style: const TextStyle(
+                    color: AppTheme.textSecondary, fontSize: 13, height: 1.5),
               ),
               const SizedBox(height: 28),
               SizedBox(
@@ -309,12 +327,14 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('Kembali', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text('Kembali',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -330,7 +350,10 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primary.withValues(alpha: 0.08), AppTheme.primary.withValues(alpha: 0.03)],
+          colors: [
+            AppTheme.primary.withValues(alpha: 0.08),
+            AppTheme.primary.withValues(alpha: 0.03)
+          ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
@@ -339,17 +362,27 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.plagiarism_outlined, color: AppTheme.primary, size: 22),
+            decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.plagiarism_outlined,
+                color: AppTheme.primary, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Deteksi Plagiarisme', style: TextStyle(color: AppTheme.getTextColor(context), fontWeight: FontWeight.w700, fontSize: 14)),
+                Text('Deteksi Plagiarisme',
+                    style: TextStyle(
+                        color: AppTheme.getTextColor(context),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14)),
                 const SizedBox(height: 3),
-                Text('Periksa keaslian dokumen kamu dengan database global.', style: TextStyle(color: AppTheme.getTextSecondary(context), fontSize: 12)),
+                Text('Periksa keaslian dokumen kamu dengan database global.',
+                    style: TextStyle(
+                        color: AppTheme.getTextSecondary(context),
+                        fontSize: 12)),
               ],
             ),
           ),
@@ -362,7 +395,11 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Pilih Layanan', style: TextStyle(color: AppTheme.getTextColor(context), fontWeight: FontWeight.w700, fontSize: 14)),
+        Text('Pilih Layanan',
+            style: TextStyle(
+                color: AppTheme.getTextColor(context),
+                fontWeight: FontWeight.w700,
+                fontSize: 14)),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -399,12 +436,23 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Upload Dokumen', style: TextStyle(color: AppTheme.getTextColor(context), fontWeight: FontWeight.w700, fontSize: 14)),
-            Text('${_uploadedFiles.length} file', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+            Text('Upload Dokumen',
+                style: TextStyle(
+                    color: AppTheme.getTextColor(context),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14)),
+            Text('${_uploadedFiles.length} file',
+                style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600)),
           ],
         ),
         const SizedBox(height: 4),
-        Text('Minimal $_minFiles file, maksimal 3 file. Maks $maxSizeMB MB per file. Format: PDF, DOC, DOCX, TXT', style: TextStyle(color: AppTheme.getTextSecondary(context), fontSize: 11)),
+        Text(
+            'Minimal $_minFiles file, maksimal 3 file. Maks $maxSizeMB MB per file. Format: PDF, DOC, DOCX, TXT',
+            style: TextStyle(
+                color: AppTheme.getTextSecondary(context), fontSize: 11)),
         const SizedBox(height: 10),
 
         // File List
@@ -415,20 +463,33 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(color: AppTheme.getSurface(context), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.borderLight)),
+              decoration: BoxDecoration(
+                  color: AppTheme.getSurface(context),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.borderLight)),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(Icons.description_rounded, color: AppTheme.primary, size: 18),
+                    decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.description_rounded,
+                        color: AppTheme.primary, size: 18),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(fileName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 12, fontWeight: FontWeight.w600)),
+                    child: Text(fileName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600)),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 18, color: AppTheme.textMuted),
+                    icon: const Icon(Icons.close_rounded,
+                        size: 18, color: AppTheme.textMuted),
                     onPressed: () => _removeFile(index),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -445,11 +506,18 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: _isUploading ? null : _pickFiles,
-            icon: const Icon(Icons.cloud_upload_rounded, size: 18, color: AppTheme.primary),
-            label: Text(_uploadedFiles.isEmpty ? 'Pilih File Dokumen' : 'Tambah File Lagi', style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.primary)),
+            icon: const Icon(Icons.cloud_upload_rounded,
+                size: 18, color: AppTheme.primary),
+            label: Text(
+                _uploadedFiles.isEmpty
+                    ? 'Pilih File Dokumen'
+                    : 'Tambah File Lagi',
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600, color: AppTheme.primary)),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: AppTheme.primary),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
@@ -462,14 +530,21 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppTheme.error.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.error.withValues(alpha: 0.25))),
+      decoration: BoxDecoration(
+          color: AppTheme.error.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.error.withValues(alpha: 0.25))),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 18),
+          const Icon(Icons.error_outline_rounded,
+              color: AppTheme.error, size: 18),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(_error!, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.error, fontSize: 12)),
+            child: Text(_error!,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: AppTheme.error, fontSize: 12)),
           ),
         ],
       ),
@@ -480,7 +555,11 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Data Penulis', style: TextStyle(color: AppTheme.getTextColor(context), fontWeight: FontWeight.w700, fontSize: 14)),
+        Text('Data Penulis',
+            style: TextStyle(
+                color: AppTheme.getTextColor(context),
+                fontWeight: FontWeight.w700,
+                fontSize: 14)),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -491,8 +570,10 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
                 decoration: InputDecoration(
                   hintText: 'Nama Depan',
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ),
@@ -504,8 +585,10 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
                 decoration: InputDecoration(
                   hintText: 'Nama Belakang',
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ),
@@ -519,7 +602,8 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
             hintText: 'No. WhatsApp (08xxxxxxxxxx)',
             prefixIcon: const Icon(Icons.chat_rounded, size: 20),
             isDense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
@@ -531,9 +615,15 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Pengaturan Pengecualian', style: TextStyle(color: AppTheme.getTextColor(context), fontWeight: FontWeight.w700, fontSize: 14)),
+        Text('Pengaturan Pengecualian',
+            style: TextStyle(
+                color: AppTheme.getTextColor(context),
+                fontWeight: FontWeight.w700,
+                fontSize: 14)),
         const SizedBox(height: 4),
-        Text('Pilih bagian yang ingin dikecualikan dari pengecekan', style: TextStyle(color: AppTheme.getTextSecondary(context), fontSize: 11)),
+        Text('Pilih bagian yang ingin dikecualikan dari pengecekan',
+            style: TextStyle(
+                color: AppTheme.getTextSecondary(context), fontSize: 11)),
         const SizedBox(height: 10),
         _ExclusionCheckbox(
           value: _excludeBiography,
@@ -569,19 +659,36 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Ringkasan Pembayaran', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textPrimary)),
+          const Text('Ringkasan Pembayaran',
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: AppTheme.textPrimary)),
           const SizedBox(height: 12),
-          _SummaryRow(label: 'Layanan', value: _selectedService == 'turnitin' ? 'Turnitin Check' : 'Drillbot Check'),
+          _SummaryRow(
+              label: 'Layanan',
+              value: _selectedService == 'turnitin'
+                  ? 'Turnitin Check'
+                  : 'Drillbot Check'),
           const SizedBox(height: 8),
-          _SummaryRow(label: 'Jumlah File', value: '${_uploadedFiles.length} file'),
+          _SummaryRow(
+              label: 'Jumlah File', value: '${_uploadedFiles.length} file'),
           const SizedBox(height: 8),
           _SummaryRow(label: 'Harga / File', value: 'Rp $_pricePerFile'),
           const Divider(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Total', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.textPrimary)),
-              Text('Rp ${_totalPrice.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.primary)),
+              const Text('Total',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      color: AppTheme.textPrimary)),
+              Text('Rp ${_totalPrice.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      color: AppTheme.primary)),
             ],
           ),
         ],
@@ -601,7 +708,8 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
           disabledBackgroundColor: AppTheme.surfaceMuted,
           disabledForegroundColor: AppTheme.textMuted,
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: canSubmit ? 2 : 0,
         ),
         onPressed: canSubmit ? _showPaymentConfirmation : null,
@@ -609,11 +717,13 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
             ? const SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                child: CircularProgressIndicator(
+                    strokeWidth: 2.5, color: Colors.white),
               )
             : Text(
                 'Lanjut ke Pembayaran - Rp ${_totalPrice.toStringAsFixed(0)}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
       ),
     );
@@ -637,11 +747,19 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
             children: [
               Center(
                 child: Container(
-                  width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(color: AppTheme.getBorder(context), borderRadius: BorderRadius.circular(10)),
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                      color: AppTheme.getBorder(context),
+                      borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-              const Text('Konfirmasi Order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+              const Text('Konfirmasi Order',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary)),
               const SizedBox(height: 16),
 
               // Mini Order Summary
@@ -651,24 +769,43 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.primary.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
+                  border: Border.all(
+                      color: AppTheme.primary.withValues(alpha: 0.15)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _SummaryRow(label: 'Layanan', value: _selectedService == 'turnitin' ? 'Turnitin Check' : 'Drillbot Check'),
+                    _SummaryRow(
+                        label: 'Layanan',
+                        value: _selectedService == 'turnitin'
+                            ? 'Turnitin Check'
+                            : 'Drillbot Check'),
                     const SizedBox(height: 6),
-                    _SummaryRow(label: 'File', value: '${_uploadedFiles.length} dokumen'),
+                    _SummaryRow(
+                        label: 'File',
+                        value: '${_uploadedFiles.length} dokumen'),
                     const SizedBox(height: 6),
-                    _SummaryRow(label: 'Penulis', value: '${_firstNameController.text} ${_lastNameController.text}'),
+                    _SummaryRow(
+                        label: 'Penulis',
+                        value:
+                            '${_firstNameController.text} ${_lastNameController.text}'),
                     const SizedBox(height: 6),
-                    _SummaryRow(label: 'WhatsApp', value: _whatsappController.text),
+                    _SummaryRow(
+                        label: 'WhatsApp', value: _whatsappController.text),
                     const Divider(height: 14),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Total Pembayaran', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.textPrimary)),
-                        Text('Rp ${_totalPrice.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.primary)),
+                        const Text('Total Pembayaran',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                                color: AppTheme.textPrimary)),
+                        Text('Rp ${_totalPrice.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                color: AppTheme.primary)),
                       ],
                     ),
                   ],
@@ -681,12 +818,15 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.qr_code_2_rounded, size: 20),
-                  label: const Text('Bayar via QRIS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  label: const Text('Bayar via QRIS',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                     elevation: 3,
                   ),
                   onPressed: () {
@@ -734,17 +874,31 @@ class _ServiceCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primary.withValues(alpha: 0.06) : AppTheme.getSurface(context),
+          color: isSelected
+              ? AppTheme.primary.withValues(alpha: 0.06)
+              : AppTheme.getSurface(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isSelected ? AppTheme.primary : AppTheme.borderLight, width: isSelected ? 2 : 1),
+          border: Border.all(
+              color: isSelected ? AppTheme.primary : AppTheme.borderLight,
+              width: isSelected ? 2 : 1),
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? AppTheme.primary : AppTheme.textSecondary, size: 28),
+            Icon(icon,
+                color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                size: 28),
             const SizedBox(height: 8),
-            Text(title, style: TextStyle(color: isSelected ? AppTheme.primary : AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 13), textAlign: TextAlign.center),
+            Text(title,
+                style: TextStyle(
+                    color: isSelected ? AppTheme.primary : AppTheme.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13),
+                textAlign: TextAlign.center),
             const SizedBox(height: 2),
-            Text(subtitle, style: TextStyle(color: AppTheme.getTextSecondary(context), fontSize: 10), textAlign: TextAlign.center),
+            Text(subtitle,
+                style: TextStyle(
+                    color: AppTheme.getTextSecondary(context), fontSize: 10),
+                textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -791,8 +945,14 @@ class _ExclusionCheckbox extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-                Text(subtitle, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                Text(title,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary)),
+                Text(subtitle,
+                    style: const TextStyle(
+                        fontSize: 11, color: AppTheme.textSecondary)),
               ],
             ),
           ),
@@ -817,8 +977,14 @@ class _SummaryRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
-        Text(value, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+        Text(label,
+            style:
+                const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+        Text(value,
+            style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600)),
       ],
     );
   }

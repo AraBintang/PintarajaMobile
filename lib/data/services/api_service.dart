@@ -34,8 +34,7 @@ class ApiException implements Exception {
 class ApiService {
   ApiService._();
 
-  static final ApiService instance =
-      ApiService._();
+  static final ApiService instance = ApiService._();
 
   // ==========================================================
   // HEADERS
@@ -49,13 +48,10 @@ class ApiService {
     };
 
     if (authenticated) {
-      final token =
-          StorageService.getToken();
+      final token = StorageService.getToken();
 
-      if (token != null &&
-          token.isNotEmpty) {
-        headers['Authorization'] =
-            'Bearer $token';
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
       }
     }
 
@@ -69,8 +65,7 @@ class ApiService {
       ..._headers(
         authenticated: authenticated,
       ),
-      'Content-Type':
-          'application/json',
+      'Content-Type': 'application/json',
     };
   }
 
@@ -84,30 +79,26 @@ class ApiService {
     bool useAuth = true,
   }) async {
     try {
-      Uri uri =
-          Uri.parse(url);
+      Uri uri = Uri.parse(url);
 
-      if (params != null &&
-          params.isNotEmpty) {
+      if (params != null && params.isNotEmpty) {
         uri = uri.replace(
           queryParameters: params,
         );
       }
 
-      final response =
-          await http
-              .get(
-                uri,
-                headers: _headers(
-                  authenticated:
-                      useAuth,
-                ),
-              )
-              .timeout(
-                const Duration(
-                  seconds: 30,
-                ),
-              );
+      final response = await http
+          .get(
+            uri,
+            headers: _headers(
+              authenticated: useAuth,
+            ),
+          )
+          .timeout(
+            const Duration(
+              seconds: 30,
+            ),
+          );
 
       return _handleResponse(
         response,
@@ -135,25 +126,22 @@ class ApiService {
     String url,
     Map<String, dynamic> body, {
     bool useAuth = true,
-    Duration timeout =
-        const Duration(
+    Duration timeout = const Duration(
       seconds: 60,
     ),
   }) async {
     try {
-      final response =
-          await http
-              .post(
-                Uri.parse(url),
-                headers: _jsonHeaders(
-                  authenticated:
-                      useAuth,
-                ),
-                body: jsonEncode(body),
-              )
-              .timeout(
-                timeout,
-              );
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: _jsonHeaders(
+              authenticated: useAuth,
+            ),
+            body: jsonEncode(body),
+          )
+          .timeout(
+            timeout,
+          );
 
       return _handleResponse(
         response,
@@ -180,22 +168,20 @@ class ApiService {
   Future<dynamic> put(
     String url,
     Map<String, dynamic> body, {
-    Duration timeout =
-        const Duration(
+    Duration timeout = const Duration(
       seconds: 60,
     ),
   }) async {
     try {
-      final response =
-          await http
-              .put(
-                Uri.parse(url),
-                headers: _jsonHeaders(),
-                body: jsonEncode(body),
-              )
-              .timeout(
-                timeout,
-              );
+      final response = await http
+          .put(
+            Uri.parse(url),
+            headers: _jsonHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(
+            timeout,
+          );
 
       return _handleResponse(
         response,
@@ -223,18 +209,16 @@ class ApiService {
     String url,
   ) async {
     try {
-      final response =
-          await http
-              .delete(
-                Uri.parse(url),
-                headers:
-                    _headers(),
-              )
-              .timeout(
-                const Duration(
-                  seconds: 30,
-                ),
-              );
+      final response = await http
+          .delete(
+            Uri.parse(url),
+            headers: _headers(),
+          )
+          .timeout(
+            const Duration(
+              seconds: 30,
+            ),
+          );
 
       return _handleResponse(
         response,
@@ -272,18 +256,15 @@ class ApiService {
         _jsonHeaders(),
       );
 
-      request.body =
-          jsonEncode(body);
+      request.body = jsonEncode(body);
 
-      final streamedResponse =
-          await request.send().timeout(
-        const Duration(
-          seconds: 30,
-        ),
-      );
+      final streamedResponse = await request.send().timeout(
+            const Duration(
+              seconds: 30,
+            ),
+          );
 
-      final response =
-          await http.Response.fromStream(
+      final response = await http.Response.fromStream(
         streamedResponse,
       );
 
@@ -313,14 +294,12 @@ class ApiService {
     String url, {
     Map<String, String>? fields,
     Map<String, File>? files,
-    Duration timeout =
-        const Duration(
+    Duration timeout = const Duration(
       seconds: 120,
     ),
   }) async {
     try {
-      final request =
-          http.MultipartRequest(
+      final request = http.MultipartRequest(
         'POST',
         Uri.parse(url),
       );
@@ -337,19 +316,15 @@ class ApiService {
         _headers(),
       );
 
-      if (fields != null &&
-          fields.isNotEmpty) {
+      if (fields != null && fields.isNotEmpty) {
         request.fields.addAll(
           fields,
         );
       }
 
-      if (files != null &&
-          files.isNotEmpty) {
-        for (final entry
-            in files.entries) {
-          final file =
-              entry.value;
+      if (files != null && files.isNotEmpty) {
+        for (final entry in files.entries) {
+          final file = entry.value;
 
           if (!await file.exists()) {
             throw ApiException(
@@ -358,8 +333,7 @@ class ApiService {
           }
 
           request.files.add(
-            await http.MultipartFile
-                .fromPath(
+            await http.MultipartFile.fromPath(
               entry.key,
               file.path,
             ),
@@ -367,15 +341,11 @@ class ApiService {
         }
       }
 
-      final streamedResponse =
-          await request
-              .send()
-              .timeout(
-                timeout,
-              );
+      final streamedResponse = await request.send().timeout(
+            timeout,
+          );
 
-      final response =
-          await http.Response.fromStream(
+      final response = await http.Response.fromStream(
         streamedResponse,
       );
 
@@ -404,8 +374,7 @@ class ApiService {
   dynamic _handleResponse(
     http.Response response,
   ) {
-    final body =
-        utf8.decode(
+    final body = utf8.decode(
       response.bodyBytes,
     );
 
@@ -415,8 +384,7 @@ class ApiService {
       data = null;
     } else {
       try {
-        data =
-            jsonDecode(body);
+        data = jsonDecode(body);
       } catch (_) {
         data = body;
       }
@@ -426,8 +394,7 @@ class ApiService {
     // SUCCESS
     // ========================================================
 
-    if (response.statusCode >= 200 &&
-        response.statusCode < 300) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
       return data;
     }
 
@@ -435,8 +402,7 @@ class ApiService {
     // ERROR MESSAGE
     // ========================================================
 
-    final message =
-        _extractErrorMessage(
+    final message = _extractErrorMessage(
       data,
       response.statusCode,
     );
@@ -445,8 +411,7 @@ class ApiService {
     // AUTH EXPIRED
     // ========================================================
 
-    if (response.statusCode ==
-        401) {
+    if (response.statusCode == 401) {
       // Hanya hapus data authentication.
       //
       // Jangan menggunakan clearAll()
@@ -459,8 +424,7 @@ class ApiService {
 
       throw ApiException(
         message,
-        statusCode:
-            response.statusCode,
+        statusCode: response.statusCode,
       );
     }
 
@@ -468,12 +432,10 @@ class ApiService {
     // FORBIDDEN
     // ========================================================
 
-    if (response.statusCode ==
-        403) {
+    if (response.statusCode == 403) {
       throw ApiException(
         message,
-        statusCode:
-            response.statusCode,
+        statusCode: response.statusCode,
       );
     }
 
@@ -481,12 +443,10 @@ class ApiService {
     // NOT FOUND
     // ========================================================
 
-    if (response.statusCode ==
-        404) {
+    if (response.statusCode == 404) {
       throw ApiException(
         message,
-        statusCode:
-            response.statusCode,
+        statusCode: response.statusCode,
       );
     }
 
@@ -494,12 +454,10 @@ class ApiService {
     // VALIDATION
     // ========================================================
 
-    if (response.statusCode ==
-        422) {
+    if (response.statusCode == 422) {
       throw ApiException(
         message,
-        statusCode:
-            response.statusCode,
+        statusCode: response.statusCode,
       );
     }
 
@@ -507,12 +465,10 @@ class ApiService {
     // RATE LIMIT
     // ========================================================
 
-    if (response.statusCode ==
-        429) {
+    if (response.statusCode == 429) {
       throw ApiException(
         message,
-        statusCode:
-            response.statusCode,
+        statusCode: response.statusCode,
       );
     }
 
@@ -522,8 +478,7 @@ class ApiService {
 
     throw ApiException(
       message,
-      statusCode:
-          response.statusCode,
+      statusCode: response.statusCode,
     );
   }
 
@@ -535,8 +490,7 @@ class ApiService {
     dynamic data,
     int statusCode,
   ) {
-    if (data is String &&
-        data.trim().isNotEmpty) {
+    if (data is String && data.trim().isNotEmpty) {
       return data.trim();
     }
 
@@ -544,50 +498,31 @@ class ApiService {
       // Laravel:
       // {"message":"..."}
 
-      final message =
-          data['message'];
+      final message = data['message'];
 
-      if (message != null &&
-          message
-              .toString()
-              .trim()
-              .isNotEmpty) {
-        return message
-            .toString()
-            .trim();
+      if (message != null && message.toString().trim().isNotEmpty) {
+        return message.toString().trim();
       }
 
       // Custom:
       // {"error":"..."}
 
-      final error =
-          data['error'];
+      final error = data['error'];
 
-      if (error != null &&
-          error
-              .toString()
-              .trim()
-              .isNotEmpty) {
-        return error
-            .toString()
-            .trim();
+      if (error != null && error.toString().trim().isNotEmpty) {
+        return error.toString().trim();
       }
 
       // Validation:
       // {"errors":{"email":["..."]}}
 
-      final errors =
-          data['errors'];
+      final errors = data['errors'];
 
-      if (errors is Map &&
-          errors.isNotEmpty) {
-        final first =
-            errors.values.first;
+      if (errors is Map && errors.isNotEmpty) {
+        final first = errors.values.first;
 
-        if (first is List &&
-            first.isNotEmpty) {
-          return first.first
-              .toString();
+        if (first is List && first.isNotEmpty) {
+          return first.first.toString();
         }
 
         return first.toString();
@@ -596,17 +531,10 @@ class ApiService {
       // Some endpoints may return:
       // {"detail":"..."}
 
-      final detail =
-          data['detail'];
+      final detail = data['detail'];
 
-      if (detail != null &&
-          detail
-              .toString()
-              .trim()
-              .isNotEmpty) {
-        return detail
-            .toString()
-            .trim();
+      if (detail != null && detail.toString().trim().isNotEmpty) {
+        return detail.toString().trim();
       }
     }
 

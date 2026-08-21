@@ -53,7 +53,10 @@ class AppSidebarDrawer extends StatelessWidget {
                     child: Image.asset(
                       'assets/images/pintaraja.webp',
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.auto_awesome_rounded, color: AppTheme.primary, size: 20),
+                      errorBuilder: (_, __, ___) => const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: AppTheme.primary,
+                          size: 20),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -183,10 +186,12 @@ class AppSidebarDrawer extends StatelessWidget {
             // ── Chat History ────────────────────────────────────────
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                     child: Text(
                       'Riwayat Percakapan',
                       style: TextStyle(
@@ -211,7 +216,9 @@ class AppSidebarDrawer extends StatelessWidget {
                     )
                   else
                     ...chat.conversations.map((convo) {
-                      final isSelected = chat.currentConversationId == convo.id && currentRoute == '/chat';
+                      final isSelected =
+                          chat.currentConversationId == convo.id &&
+                              currentRoute == '/chat';
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 4),
                         child: ListTile(
@@ -223,27 +230,37 @@ class AppSidebarDrawer extends StatelessWidget {
                             }
                           },
                           dense: true,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                           selected: isSelected,
-                          selectedTileColor: AppTheme.primary.withValues(alpha: 0.08),
+                          selectedTileColor:
+                              AppTheme.primary.withValues(alpha: 0.08),
                           leading: Icon(
                             Icons.chat_bubble_outline_rounded,
                             size: 16,
-                            color: isSelected ? AppTheme.primary : AppTheme.getTextSecondary(context),
+                            color: isSelected
+                                ? AppTheme.primary
+                                : AppTheme.getTextSecondary(context),
                           ),
                           title: Text(
                             convo.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: isSelected ? AppTheme.primary : AppTheme.getTextColor(context),
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isSelected
+                                  ? AppTheme.primary
+                                  : AppTheme.getTextColor(context),
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
                             ),
                           ),
                           trailing: isSelected
                               ? IconButton(
-                                  icon: const Icon(Icons.delete_outline_rounded, size: 16, color: AppTheme.error),
-                                  onPressed: () => _confirmDelete(context, chat, convo.id),
+                                  icon: const Icon(Icons.delete_outline_rounded,
+                                      size: 16, color: AppTheme.error),
+                                  onPressed: () =>
+                                      _confirmDelete(context, chat, convo.id),
                                 )
                               : null,
                         ),
@@ -262,7 +279,8 @@ class AppSidebarDrawer extends StatelessWidget {
                   Navigator.pop(context);
                   context.push('/settings');
                 },
-                leading: const Icon(Icons.settings_outlined, color: AppTheme.primary),
+                leading: const Icon(Icons.settings_outlined,
+                    color: AppTheme.primary),
                 title: Text(
                   'Pengaturan',
                   style: TextStyle(
@@ -359,7 +377,9 @@ class AppSidebarDrawer extends StatelessWidget {
         title: const Text('Hapus obrolan?'),
         content: const Text('Obrolan ini akan dihapus permanen.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Batal')),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('Batal')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
             onPressed: () {

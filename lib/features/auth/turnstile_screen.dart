@@ -12,12 +12,10 @@ class TurnstileScreen extends StatefulWidget {
   });
 
   @override
-  State<TurnstileScreen> createState() =>
-      _TurnstileScreenState();
+  State<TurnstileScreen> createState() => _TurnstileScreenState();
 }
 
-class _TurnstileScreenState
-    extends State<TurnstileScreen> {
+class _TurnstileScreenState extends State<TurnstileScreen> {
   late final WebViewController _controller;
 
   bool _loading = true;
@@ -62,8 +60,7 @@ class _TurnstileScreenState
 
             setState(() {
               _loading = false;
-              _error =
-                  'Turnstile gagal dimuat. '
+              _error = 'Turnstile gagal dimuat. '
                   'Periksa koneksi internet.';
             });
           },
@@ -74,8 +71,7 @@ class _TurnstileScreenState
         onMessageReceived: (
           JavaScriptMessage message,
         ) {
-          final value =
-              message.message.trim();
+          final value = message.message.trim();
 
           if (value.isEmpty) {
             return;
@@ -88,9 +84,7 @@ class _TurnstileScreenState
 
             setState(() {
               _loading = false;
-              _error = value
-                  .substring(6)
-                  .trim();
+              _error = value.substring(6).trim();
             });
 
             return;
@@ -102,16 +96,14 @@ class _TurnstileScreenState
             }
 
             setState(() {
-              _error =
-                  'Verifikasi kedaluwarsa. Silakan ulangi.';
+              _error = 'Verifikasi kedaluwarsa. Silakan ulangi.';
             });
 
             return;
           }
 
           // Token Turnstile berhasil.
-          if (!value.contains(':') &&
-              value.length > 20) {
+          if (!value.contains(':') && value.length > 20) {
             Navigator.of(
               context,
             ).pop(value);
@@ -127,8 +119,7 @@ class _TurnstileScreenState
   // ==========================================================
 
   Future<void> _loadTurnstile() async {
-    final siteKey =
-        jsonEncode(widget.siteKey);
+    final siteKey = jsonEncode(widget.siteKey);
 
     final html = '''
 <!DOCTYPE html>
@@ -247,8 +238,7 @@ class _TurnstileScreenState
     BuildContext context,
   ) {
     return Scaffold(
-      backgroundColor:
-          const Color(0xFFF4F6F8),
+      backgroundColor: const Color(0xFFF4F6F8),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
@@ -265,83 +255,62 @@ class _TurnstileScreenState
         children: [
           Center(
             child: Container(
-              margin:
-                  const EdgeInsets.all(24),
-              padding:
-                  const EdgeInsets.all(24),
-              decoration:
-                  BoxDecoration(
+              margin: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius:
-                    BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black
-                        .withValues(
+                    color: Colors.black.withValues(
                       alpha: 0.06,
                     ),
                     blurRadius: 24,
-                    offset:
-                        const Offset(0, 10),
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
               child: Column(
-                mainAxisSize:
-                    MainAxisSize.min,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
                     'Verifikasi keamanan',
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight:
-                          FontWeight.w700,
-                      color:
-                          Color(0xFF1F2937),
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1F2937),
                     ),
                   ),
-
                   const SizedBox(
                     height: 8,
                   ),
-
                   const Text(
                     'Selesaikan verifikasi untuk membuat akun PintarAja.',
-                    textAlign:
-                        TextAlign.center,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      color:
-                          Color(0xFF6B7280),
+                      color: Color(0xFF6B7280),
                       fontSize: 13,
                       height: 1.45,
                     ),
                   ),
-
                   const SizedBox(
                     height: 20,
                   ),
-
                   SizedBox(
                     height: 90,
-                    child:
-                        WebViewWidget(
-                      controller:
-                          _controller,
+                    child: WebViewWidget(
+                      controller: _controller,
                     ),
                   ),
-
                   if (_error != null) ...[
                     const SizedBox(
                       height: 10,
                     ),
                     Text(
                       _error!,
-                      textAlign:
-                          TextAlign.center,
-                      style:
-                          const TextStyle(
-                        color:
-                            Colors.red,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.red,
                         fontSize: 12,
                       ),
                     ),
@@ -350,11 +319,9 @@ class _TurnstileScreenState
               ),
             ),
           ),
-
           if (_loading)
             const Center(
-              child:
-                  CircularProgressIndicator(),
+              child: CircularProgressIndicator(),
             ),
         ],
       ),

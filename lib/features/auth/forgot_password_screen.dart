@@ -13,12 +13,10 @@ class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() =>
-      _ForgotPasswordScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState
-    extends State<ForgotPasswordScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
 
@@ -86,7 +84,6 @@ class _ForgotPasswordScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
-
       body: Stack(
         children: [
           Positioned(
@@ -103,7 +100,6 @@ class _ForgotPasswordScreenState
               ),
             ),
           ),
-
           Positioned(
             bottom: -140,
             right: -130,
@@ -118,7 +114,6 @@ class _ForgotPasswordScreenState
               ),
             ),
           ),
-
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -157,8 +152,7 @@ class _ForgotPasswordScreenState
                             style: TextStyle(
                               color: AppTheme.textPrimary,
                               fontSize: 21,
-                              fontWeight:
-                                  FontWeight.w700,
+                              fontWeight: FontWeight.w700,
                               letterSpacing: -0.6,
                             ),
                           ),
@@ -175,8 +169,7 @@ class _ForgotPasswordScreenState
                         color: Colors.white.withValues(
                           alpha: 0.88,
                         ),
-                        borderRadius:
-                            BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(24),
                         border: Border.all(
                           color: Colors.white,
                         ),
@@ -186,67 +179,49 @@ class _ForgotPasswordScreenState
                               alpha: 0.05,
                             ),
                             blurRadius: 30,
-                            offset:
-                                const Offset(0, 12),
+                            offset: const Offset(0, 12),
                           ),
                         ],
                       ),
                       child: Form(
                         key: _formKey,
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
                               'Reset your password',
                               style: TextStyle(
-                                color:
-                                    AppTheme.textPrimary,
+                                color: AppTheme.textPrimary,
                                 fontSize: 25,
-                                fontWeight:
-                                    FontWeight.w700,
+                                fontWeight: FontWeight.w700,
                                 letterSpacing: -0.4,
                               ),
                             ),
-
                             const SizedBox(height: 6),
-
                             const Text(
                               'Enter your email and we will send you instructions to reset your password.',
                               style: TextStyle(
-                                color:
-                                    AppTheme.textSecondary,
+                                color: AppTheme.textSecondary,
                                 fontSize: 13,
                                 height: 1.5,
                               ),
                             ),
-
                             const SizedBox(height: 26),
-
                             const Text(
                               'Email',
                               style: TextStyle(
-                                color:
-                                    AppTheme.textSecondary,
+                                color: AppTheme.textSecondary,
                                 fontSize: 12.5,
-                                fontWeight:
-                                    FontWeight.w500,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-
                             const SizedBox(height: 8),
-
                             TextFormField(
-                              controller:
-                                  _emailController,
-                              keyboardType:
-                                  TextInputType
-                                      .emailAddress,
-                              textInputAction:
-                                  TextInputAction.done,
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.done,
                               validator: (value) {
-                                final email =
-                                    value?.trim() ?? '';
+                                final email = value?.trim() ?? '';
 
                                 if (email.isEmpty) {
                                   return 'Email wajib diisi';
@@ -263,37 +238,27 @@ class _ForgotPasswordScreenState
                                   _handleForgotPassword();
                                 }
                               },
-                              decoration:
-                                  const InputDecoration(
-                                hintText:
-                                    'you@example.com',
+                              decoration: const InputDecoration(
+                                hintText: 'you@example.com',
                                 prefixIcon: Icon(
                                   Icons.mail_outline_rounded,
                                   size: 20,
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 22),
-
                             SizedBox(
                               width: double.infinity,
                               height: 50,
                               child: ElevatedButton(
-                                onPressed: _loading
-                                    ? null
-                                    : _handleForgotPassword,
-                                style:
-                                    ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      AppTheme.primary,
-                                  foregroundColor:
-                                      Colors.white,
+                                onPressed:
+                                    _loading ? null : _handleForgotPassword,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primary,
+                                  foregroundColor: Colors.white,
                                   elevation: 0,
-                                  shape:
-                                      RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
                                       12,
                                     ),
                                   ),
@@ -302,12 +267,10 @@ class _ForgotPasswordScreenState
                                     ? const SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child:
-                                            CircularProgressIndicator(
+                                        child: CircularProgressIndicator(
                                           strokeWidth: 2.2,
                                           valueColor:
-                                              AlwaysStoppedAnimation<
-                                                  Color>(
+                                              AlwaysStoppedAnimation<Color>(
                                             Colors.white,
                                           ),
                                         ),
@@ -316,15 +279,12 @@ class _ForgotPasswordScreenState
                                         'Send reset instructions',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          fontWeight:
-                                              FontWeight.w600,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                               ),
                             ),
-
                             const SizedBox(height: 20),
-
                             Center(
                               child: GestureDetector(
                                 onTap: () {
@@ -335,11 +295,9 @@ class _ForgotPasswordScreenState
                                 child: const Text(
                                   'Back to sign in',
                                   style: TextStyle(
-                                    color:
-                                        AppTheme.primary,
+                                    color: AppTheme.primary,
                                     fontSize: 13,
-                                    fontWeight:
-                                        FontWeight.w700,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),

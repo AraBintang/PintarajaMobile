@@ -24,13 +24,15 @@ class PlanModel {
   });
 
   factory PlanModel.fromJson(Map<String, dynamic> json) => PlanModel(
-    id: json['id'] ?? 0,
-    name: json['name'] ?? '',
-    price: double.tryParse(json['price']?.toString() ?? '0') ?? 0,
-    credits: json['credits'] ?? 0,
-    features: (json['features'] as List?)?.map((e) => e.toString()).toList() ?? [],
-    isPopular: json['is_popular'] == true || json['is_popular'] == 1,
-  );
+        id: json['id'] ?? 0,
+        name: json['name'] ?? '',
+        price: double.tryParse(json['price']?.toString() ?? '0') ?? 0,
+        credits: json['credits'] ?? 0,
+        features:
+            (json['features'] as List?)?.map((e) => e.toString()).toList() ??
+                [],
+        isPopular: json['is_popular'] == true || json['is_popular'] == 1,
+      );
 
   bool get isFree => price == 0;
 }

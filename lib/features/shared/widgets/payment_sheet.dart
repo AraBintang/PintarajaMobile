@@ -60,6 +60,74 @@ class PaymentSelectionSheet extends StatefulWidget {
     );
   }
 
+  static Future<void> processDirectQris(
+    BuildContext context, {
+    required int amount,
+    int? coins,
+    String type = 'topup',
+    String phone = '08123456789',
+  }) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(child: CircularProgressIndicator()),
+    );
+
+    bool dialogPopped = false;
+
+    try {
+      final token = StorageService.getToken();
+      final body = <String, dynamic>{
+        'method': 'QRIS2',
+        'channel': 'QRIS2',
+        'type': type,
+        'phone': phone,
+      };
+      if (coins != null) {
+        body['coins'] = coins;
+      }
+
+      final response = await http.post(
+        Uri.parse(ApiConstants.topUp),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(body),
+      );
+
+      Navigator.pop(context); // Close loading dialog
+      dialogPopped = true;
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = jsonDecode(response.body);
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => QrisPaymentSheet(
+            qrUrl: data['qr_url'] ?? data['checkout_url'] ?? '',
+            referenceId: data['reference'] ?? data['reference_id'] ?? '',
+            checkoutUrl: data['checkout_url'] ?? data['pay_url'] ?? '',
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Gagal memproses pembayaran. Code: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      if (!dialogPopped) {
+        Navigator.pop(context); // Close loading dialog
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Terjadi kesalahan jaringan atau data tidak valid.')),
+      );
+    }
+  }
+
   @override
   State<PaymentSelectionSheet> createState() => _PaymentSelectionSheetState();
 }
@@ -68,7 +136,7 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
   bool _isLoading = false;
   String? _error;
   String _selectedMethod = 'QRIS2';
-  
+
   late TextEditingController _phoneController;
   late TextEditingController _promoController;
 
@@ -122,27 +190,32 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
 
     try {
       final token = StorageService.getToken();
-      
+
       final Map<String, dynamic> body = {
         'method': _selectedMethod,
         'channel': _selectedMethod,
         'type': widget.type,
-        'whatsapp_phone': phone,
+        'phone': phone,
       };
 
       if (widget.type == 'subscription' && widget.planId != null) {
-        body['plan_id'] = widget.planId;
+        body['planId'] = widget.planId;
+        body['amount'] = widget.price.toInt();
       } else if (widget.type == 'topup' && widget.coins != null) {
         body['coins'] = widget.coins;
       }
-      
+
       final promo = _promoController.text.trim();
       if (promo.isNotEmpty) {
         body['discount_code'] = promo;
       }
 
+      final endpoint = widget.type == 'subscription'
+          ? ApiConstants.payments
+          : ApiConstants.topUp;
+
       final response = await http.post(
-        Uri.parse(ApiConstants.topUp),
+        Uri.parse(endpoint),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -154,28 +227,45 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final data = jsonDecode(response.body);
-        
+
         Navigator.pop(context); // Close checkout
-        
+
+        // data keys differ: topup returns qr_url, subscription returns paymentCode
+        final qrUrl = data['qr_url'] ??
+            data['paymentCode'] ??
+            data['checkout_url'] ??
+            '';
+        final referenceId = data['reference'] ??
+            data['reference_id'] ??
+            data['referenceId'] ??
+            '';
+        final checkoutUrl = data['checkout_url'] ??
+            data['checkoutUrl'] ??
+            data['pay_url'] ??
+            data['payUrl'] ??
+            '';
+
         if (_selectedMethod.startsWith('QRIS')) {
+          if (!mounted) return;
           showModalBottomSheet(
             context: context,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
             builder: (_) => QrisPaymentSheet(
-              qrUrl: data['qr_url'] ?? data['checkout_url'] ?? '',
-              referenceId: data['reference'] ?? data['reference_id'] ?? '',
-              checkoutUrl: data['checkout_url'] ?? data['pay_url'] ?? '',
+              qrUrl: qrUrl,
+              referenceId: referenceId,
+              checkoutUrl: checkoutUrl,
             ),
           );
+          widget.onPaymentSuccess();
         } else {
-          final checkoutUrl = data['checkout_url'] ?? data['pay_url'];
-          if (checkoutUrl != null) {
+          if (checkoutUrl.isNotEmpty) {
             final uri = Uri.parse(checkoutUrl);
             if (await canLaunchUrl(uri)) {
               await launchUrl(uri, mode: LaunchMode.externalApplication);
             }
           }
+          widget.onPaymentSuccess();
         }
       } else {
         setState(() {
@@ -199,7 +289,8 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
           padding: const EdgeInsets.only(bottom: 8.0, top: 16.0),
           child: Row(
             children: [
-              const Icon(Icons.account_balance_wallet_rounded, size: 16, color: AppTheme.textSecondary),
+              const Icon(Icons.account_balance_wallet_rounded,
+                  size: 16, color: AppTheme.textSecondary),
               const SizedBox(width: 6),
               Text(
                 title,
@@ -221,10 +312,14 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
             return GestureDetector(
               onTap: () => setState(() => _selectedMethod = m['id']!),
               child: Container(
-                width: (MediaQuery.of(context).size.width - 40 - 20) / 2, // 2 columns
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                width: (MediaQuery.of(context).size.width - 40 - 20) /
+                    2, // 2 columns
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.primary.withValues(alpha: 0.05) : AppTheme.surfaceLight,
+                  color: isSelected
+                      ? AppTheme.primary.withValues(alpha: 0.05)
+                      : AppTheme.surfaceLight,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isSelected ? AppTheme.primary : AppTheme.borderLight,
@@ -237,8 +332,11 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
                     Text(
                       m['name']!,
                       style: TextStyle(
-                        color: isSelected ? AppTheme.primary : AppTheme.textPrimary,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        color: isSelected
+                            ? AppTheme.primary
+                            : AppTheme.textPrimary,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w600,
                         fontSize: 13,
                       ),
                     ),
@@ -281,12 +379,19 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [
-                    Text('Checkout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
-                    Text('Select payment method', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                    Text('Checkout',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary)),
+                    Text('Select payment method',
+                        style: TextStyle(
+                            fontSize: 12, color: AppTheme.textSecondary)),
                   ],
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: AppTheme.textSecondary),
+                  icon: const Icon(Icons.close_rounded,
+                      color: AppTheme.textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -298,10 +403,12 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth > 600;
-                  
+
                   final methodsColumn = Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: _paymentGroups.entries.map((e) => _buildMethodGroup(e.key, e.value)).toList(),
+                    children: _paymentGroups.entries
+                        .map((e) => _buildMethodGroup(e.key, e.value))
+                        .toList(),
                   );
 
                   final infoColumn = Container(
@@ -316,14 +423,22 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
                         // Payment Info
                         const Padding(
                           padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                          child: Text('Payment Info', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textPrimary)),
+                          child: Text('Payment Info',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: AppTheme.textPrimary)),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('E-mail', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                              const Text('E-mail',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.textSecondary)),
                               const SizedBox(height: 4),
                               TextField(
                                 enabled: false,
@@ -332,18 +447,24 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
                                   isDense: true,
                                   filled: true,
                                   fillColor: const Color(0xFFF3F4F6),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide.none),
                                 ),
                               ),
                             ],
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Name', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                              const Text('Name',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.textSecondary)),
                               const SizedBox(height: 4),
                               TextField(
                                 enabled: false,
@@ -352,18 +473,24 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
                                   isDense: true,
                                   filled: true,
                                   fillColor: const Color(0xFFF3F4F6),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide.none),
                                 ),
                               ),
                             ],
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('No phone *', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                              const Text('No phone *',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.textSecondary)),
                               const SizedBox(height: 4),
                               TextField(
                                 controller: _phoneController,
@@ -371,15 +498,18 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
                                 decoration: InputDecoration(
                                   hintText: '08xxxxxxxxxx',
                                   isDense: true,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.borderLight)),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: const BorderSide(
+                                          color: AppTheme.borderLight)),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        
+
                         const Divider(height: 32),
-                        
+
                         // Solution
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -389,28 +519,42 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Solution for professionals', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                                  Text(widget.itemName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary)),
+                                  const Text('Solution for professionals',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppTheme.textSecondary)),
+                                  Text(widget.itemName,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: AppTheme.textPrimary)),
                                 ],
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
+
                         // Promo & Total
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Total Pembayaran', style: TextStyle(color: AppTheme.textSecondary)),
-                              Text('Rp. ${widget.price.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textPrimary)),
+                              const Text('Total Pembayaran',
+                                  style:
+                                      TextStyle(color: AppTheme.textSecondary)),
+                              Text('Rp. ${widget.price.toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: AppTheme.textPrimary)),
                             ],
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                           child: Row(
                             children: [
                               Expanded(
@@ -419,7 +563,10 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
                                   decoration: InputDecoration(
                                     hintText: 'ENTER PROMO CODE',
                                     isDense: true,
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.borderLight)),
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: const BorderSide(
+                                            color: AppTheme.borderLight)),
                                   ),
                                 ),
                               ),
@@ -428,20 +575,28 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
                                 onPressed: () {},
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFD97706),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 14, horizontal: 16),
                                 ),
-                                child: const Text('Use', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                child: const Text('Use',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
                         ),
-                        
+
                         // Error
                         if (_error != null)
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            child: Text(_error!, style: const TextStyle(color: AppTheme.error, fontSize: 13)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            child: Text(_error!,
+                                style: const TextStyle(
+                                    color: AppTheme.error, fontSize: 13)),
                           ),
 
                         // Pay Button
@@ -453,17 +608,29 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
                               onPressed: _isLoading ? null : _processPayment,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF10B981),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8)),
                               ),
                               child: _isLoading
-                                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                          color: Colors.white, strokeWidth: 2))
                                   : Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: const [
-                                        Icon(Icons.bolt_rounded, color: Colors.white, size: 20),
+                                        Icon(Icons.bolt_rounded,
+                                            color: Colors.white, size: 20),
                                         SizedBox(width: 4),
-                                        Text('Pay Now', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                        Text('Pay Now',
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16)),
                                       ],
                                     ),
                             ),

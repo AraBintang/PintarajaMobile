@@ -31,7 +31,6 @@ class _PlanScreenState extends State<PlanScreen> {
   Widget build(BuildContext context) {
     final themeBg = AppTheme.getBg(context);
 
-
     return Scaffold(
       backgroundColor: themeBg,
       appBar: AppBar(
@@ -39,18 +38,23 @@ class _PlanScreenState extends State<PlanScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.getTextColor(context)),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppTheme.getTextColor(context)),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Paket & Langganan',
-          style: TextStyle(color: AppTheme.getTextColor(context), fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+              color: AppTheme.getTextColor(context),
+              fontWeight: FontWeight.bold,
+              fontSize: 18),
         ),
       ),
       body: Consumer<PlanProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+            return const Center(
+                child: CircularProgressIndicator(color: AppTheme.primary));
           }
 
           if (provider.error != null) {
@@ -60,9 +64,12 @@ class _PlanScreenState extends State<PlanScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 48),
+                    const Icon(Icons.error_outline_rounded,
+                        color: AppTheme.error, size: 48),
                     const SizedBox(height: 12),
-                    Text(provider.error!, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.error)),
+                    Text(provider.error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: AppTheme.error)),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () => provider.loadPlans(),
@@ -105,7 +112,8 @@ class _PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = AppTheme.isDarkMode(context);
     final cardColor = AppTheme.getSurface(context);
-    final borderColor = plan.isPopular ? AppTheme.primary : AppTheme.getBorder(context);
+    final borderColor =
+        plan.isPopular ? AppTheme.primary : AppTheme.getBorder(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -144,14 +152,18 @@ class _PlanCard extends StatelessWidget {
                     ),
                     if (plan.isPopular)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           gradient: AppTheme.primaryGradient,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
                           'Populer',
-                          style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                   ],
@@ -162,7 +174,9 @@ class _PlanCard extends StatelessWidget {
                   textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text(
-                      plan.isFree ? 'Gratis' : 'Rp ${plan.price.toStringAsFixed(0)}',
+                      plan.isFree
+                          ? 'Gratis'
+                          : 'Rp ${plan.price.toStringAsFixed(0)}',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
@@ -172,13 +186,16 @@ class _PlanCard extends StatelessWidget {
                     if (!plan.isFree)
                       Text(
                         ' / bulan',
-                        style: TextStyle(color: AppTheme.getTextSecondary(context), fontSize: 13),
+                        style: TextStyle(
+                            color: AppTheme.getTextSecondary(context),
+                            fontSize: 13),
                       ),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppTheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -200,7 +217,8 @@ class _PlanCard extends StatelessWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 16),
+                          const Icon(Icons.check_circle_rounded,
+                              color: AppTheme.success, size: 16),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -221,8 +239,12 @@ class _PlanCard extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => _openPaymentSheet(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: plan.isPopular ? AppTheme.primary : AppTheme.getBorder(context),
-                      foregroundColor: plan.isPopular ? Colors.white : AppTheme.getTextColor(context),
+                      backgroundColor: plan.isPopular
+                          ? AppTheme.primary
+                          : AppTheme.getBorder(context),
+                      foregroundColor: plan.isPopular
+                          ? Colors.white
+                          : AppTheme.getTextColor(context),
                       minimumSize: const Size(double.infinity, 44),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -230,7 +252,8 @@ class _PlanCard extends StatelessWidget {
                     ),
                     child: Text(
                       plan.isFree ? 'Gunakan Gratis' : 'Langganan Sekarang',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13.5),
                     ),
                   ),
                 ),
@@ -251,15 +274,17 @@ class _PlanCard extends StatelessWidget {
         return PaymentSelectionSheet(
           itemName: 'Langganan ${plan.name}',
           price: plan.price,
-                      phone: '',
-            type: 'subscription',
-            planId: plan.id,
-            onPaymentSuccess: () async {
+          phone: '',
+          type: 'subscription',
+          planId: plan.id,
+          onPaymentSuccess: () async {
             Navigator.pop(bottomSheetCtx);
             await context.read<AuthProvider>().refreshUser();
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Pembayaran berhasil! Paket langganan kamu telah aktif.')),
+                const SnackBar(
+                    content: Text(
+                        'Pembayaran berhasil! Paket langganan kamu telah aktif.')),
               );
             }
           },

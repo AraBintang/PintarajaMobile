@@ -37,26 +37,19 @@ class ChatMessage {
     this.annotations = const [],
   });
 
-  bool get isUser =>
-      role.toLowerCase() == 'user';
+  bool get isUser => role.toLowerCase() == 'user';
 
-  bool get isAssistant =>
-      role.toLowerCase() == 'assistant';
+  bool get isAssistant => role.toLowerCase() == 'assistant';
 
   factory ChatMessage.fromJson(
     Map<String, dynamic> json,
   ) {
-    final rawTime =
-        json['time'] ??
-        json['created_at'] ??
-        json['createdAt'];
+    final rawTime = json['time'] ?? json['created_at'] ?? json['createdAt'];
 
-    DateTime parsedTimestamp =
-        DateTime.now();
+    DateTime parsedTimestamp = DateTime.now();
 
     if (rawTime != null) {
-      final parsed =
-          DateTime.tryParse(
+      final parsed = DateTime.tryParse(
         rawTime.toString(),
       );
 
@@ -65,32 +58,22 @@ class ChatMessage {
       }
     }
 
-    final rawAnnotations =
-        json['annotations'];
+    final rawAnnotations = json['annotations'];
 
     return ChatMessage(
       id: _toInt(json['id']),
-      conversationId:
-          _toInt(
-        json['conversationId'] ??
-            json['conversation_id'],
+      conversationId: _toInt(
+        json['conversationId'] ?? json['conversation_id'],
       ),
-      role:
-          json['role']?.toString() ??
-              'user',
-      content:
-          json['content']?.toString() ??
-              '',
-      timestamp:
-          parsedTimestamp,
-      time:
-          rawTime?.toString(),
-      annotations:
-          rawAnnotations is List
-              ? List<dynamic>.from(
-                  rawAnnotations,
-                )
-              : const [],
+      role: json['role']?.toString() ?? 'user',
+      content: json['content']?.toString() ?? '',
+      timestamp: parsedTimestamp,
+      time: rawTime?.toString(),
+      annotations: rawAnnotations is List
+          ? List<dynamic>.from(
+              rawAnnotations,
+            )
+          : const [],
     );
   }
 
@@ -134,27 +117,18 @@ class Conversation {
     Map<String, dynamic> json,
   ) {
     return Conversation(
-      id:
-          int.tryParse(
-            json['id']?.toString() ??
-                '',
+      id: int.tryParse(
+            json['id']?.toString() ?? '',
           ) ??
           0,
-      title:
-          json['title']?.toString() ??
-              'Obrolan Baru',
-      lastUpdated:
-          json['lastUpdated']?.toString() ??
-              json['updated_at']
-                  ?.toString() ??
-              'baru saja',
-      nextCursor:
-          int.tryParse(
-        json['nextCursor']?.toString() ??
-            '',
+      title: json['title']?.toString() ?? 'Obrolan Baru',
+      lastUpdated: json['lastUpdated']?.toString() ??
+          json['updated_at']?.toString() ??
+          'baru saja',
+      nextCursor: int.tryParse(
+        json['nextCursor']?.toString() ?? '',
       ),
-      hasMoreChats:
-          json['hasMoreChats'] == true,
+      hasMoreChats: json['hasMoreChats'] == true,
     );
   }
 }
@@ -186,38 +160,30 @@ class AiQuota {
     }
 
     return AiQuota(
-      used:
-          _toInt(
+      used: _toInt(
         json['used'],
       ),
-      limit:
-          _toInt(
+      limit: _toInt(
         json['limit'],
       ),
-      remaining:
-          _toInt(
+      remaining: _toInt(
         json['remaining'],
       ),
     );
   }
 
-  bool get hasLimit =>
-      limit > 0;
+  bool get hasLimit => limit > 0;
 
-  bool get isUnlimited =>
-      limit <= 0;
+  bool get isUnlimited => limit <= 0;
 
-  bool get isExhausted =>
-      hasLimit && remaining <= 0;
+  bool get isExhausted => hasLimit && remaining <= 0;
 
   double get progress {
-    if (!hasLimit ||
-        limit <= 0) {
+    if (!hasLimit || limit <= 0) {
       return 0;
     }
 
-    return (used / limit)
-        .clamp(
+    return (used / limit).clamp(
       0.0,
       1.0,
     );
@@ -268,88 +234,61 @@ class AiProvider {
     Map<String, dynamic> json, {
     AiQuota? quota,
   }) {
-    final providerQuota =
-        quota ??
-            const AiQuota(
-              used: 0,
-              limit: 0,
-              remaining: 0,
-            );
+    final providerQuota = quota ??
+        const AiQuota(
+          used: 0,
+          limit: 0,
+          remaining: 0,
+        );
 
-    final code =
-        json['code']?.toString() ??
-            '';
+    final code = json['code']?.toString() ?? '';
 
-    final model =
-        json['model']?.toString() ??
-            '';
+    final model = json['model']?.toString() ?? '';
 
     return AiProvider(
-      id:
-          int.tryParse(
-            json['id']?.toString() ??
-                '',
+      id: int.tryParse(
+            json['id']?.toString() ?? '',
           ) ??
           0,
       code: code,
       model: model,
-      isLimited:
-          json['isLimited'] == true ||
-          providerQuota.isExhausted,
-      quota:
-          providerQuota,
+      isLimited: json['isLimited'] == true || providerQuota.isExhausted,
+      quota: providerQuota,
     );
   }
 
   String get displayName {
-    final value =
-        model.toLowerCase();
+    final value = model.toLowerCase();
 
     if (value.contains('gpt')) {
-      return model.isNotEmpty
-          ? model
-          : 'GPT';
+      return model.isNotEmpty ? model : 'GPT';
     }
 
     if (value.contains('gemini')) {
-      return model.isNotEmpty
-          ? model
-          : 'Gemini';
+      return model.isNotEmpty ? model : 'Gemini';
     }
 
     if (value.contains('claude')) {
-      return model.isNotEmpty
-          ? model
-          : 'Claude';
+      return model.isNotEmpty ? model : 'Claude';
     }
 
     if (value.contains('grok')) {
-      return model.isNotEmpty
-          ? model
-          : 'Grok';
+      return model.isNotEmpty ? model : 'Grok';
     }
 
     if (value.contains('deepseek')) {
-      return model.isNotEmpty
-          ? model
-          : 'DeepSeek';
+      return model.isNotEmpty ? model : 'DeepSeek';
     }
 
     if (value.contains('qwen')) {
-      return model.isNotEmpty
-          ? model
-          : 'Qwen';
+      return model.isNotEmpty ? model : 'Qwen';
     }
 
     if (value.contains('dreamina')) {
-      return model.isNotEmpty
-          ? model
-          : 'Dreamina';
+      return model.isNotEmpty ? model : 'Dreamina';
     }
 
-    return model.isNotEmpty
-        ? model
-        : code;
+    return model.isNotEmpty ? model : code;
   }
 }
 
@@ -357,8 +296,7 @@ class AiProvider {
 // CHAT PROVIDER
 // ============================================================
 
-class ChatProvider
-    extends ChangeNotifier {
+class ChatProvider extends ChangeNotifier {
   // ==========================================================
   // STATE
   // ==========================================================
@@ -396,59 +334,43 @@ class ChatProvider
   // GETTERS
   // ==========================================================
 
-  List<ChatMessage> get messages =>
-      List.unmodifiable(
+  List<ChatMessage> get messages => List.unmodifiable(
         _messages,
       );
 
-  List<Conversation>
-      get conversations =>
-          List.unmodifiable(
+  List<Conversation> get conversations => List.unmodifiable(
         _conversations,
       );
 
-  List<AiProvider>
-      get aiProviders =>
-          List.unmodifiable(
+  List<AiProvider> get aiProviders => List.unmodifiable(
         _aiProviders,
       );
 
-  Map<String, AiQuota>
-      get quotas =>
-          Map.unmodifiable(
+  Map<String, AiQuota> get quotas => Map.unmodifiable(
         _quotas,
       );
 
-  int? get currentConversationId =>
-      _currentConversationId;
+  int? get currentConversationId => _currentConversationId;
 
-  int? get selectedProviderId =>
-      _selectedProviderId;
+  int? get selectedProviderId => _selectedProviderId;
 
-  bool get isLoading =>
-      _isLoading;
+  bool get isLoading => _isLoading;
 
-  bool get isStreaming =>
-      _isStreaming;
+  bool get isStreaming => _isStreaming;
 
-  bool get isCreatingConversation =>
-      _isCreatingConversation;
+  bool get isCreatingConversation => _isCreatingConversation;
 
-  String? get error =>
-      _error;
+  String? get error => _error;
 
   AiProvider? get selectedProvider {
-    final selectedId =
-        _selectedProviderId;
+    final selectedId = _selectedProviderId;
 
     if (selectedId == null) {
       return null;
     }
 
-    for (final provider
-        in _aiProviders) {
-      if (provider.id ==
-          selectedId) {
+    for (final provider in _aiProviders) {
+      if (provider.id == selectedId) {
         return provider;
       }
     }
@@ -457,8 +379,7 @@ class ChatProvider
   }
 
   String get selectedModelName {
-    final provider =
-        selectedProvider;
+    final provider = selectedProvider;
 
     if (provider == null) {
       return 'Pilih AI';
@@ -489,8 +410,7 @@ class ChatProvider
 
   Future<void> loadAiProviders() async {
     try {
-      final data =
-          await ApiService.instance.get(
+      final data = await ApiService.instance.get(
         ApiConstants.chats,
       );
 
@@ -504,11 +424,9 @@ class ChatProvider
         data['quota'],
       );
 
-      final rawProviders =
-          data['ai'];
+      final rawProviders = data['ai'];
 
-      if (rawProviders
-          is! List) {
+      if (rawProviders is! List) {
         _aiProviders = [];
 
         notifyListeners();
@@ -516,33 +434,25 @@ class ChatProvider
         return;
       }
 
-      final providers =
-          <AiProvider>[];
+      final providers = <AiProvider>[];
 
-      for (final raw
-          in rawProviders) {
+      for (final raw in rawProviders) {
         if (raw is! Map) {
           continue;
         }
 
-        final providerMap =
-            Map<String, dynamic>.from(
+        final providerMap = Map<String, dynamic>.from(
           raw,
         );
 
-        final code =
-            providerMap['code']
-                ?.toString() ??
-            '';
+        final code = providerMap['code']?.toString() ?? '';
 
-        final quota =
-            _quotas[code] ??
-                const AiQuota(
-                  used: 0,
-                  limit: 0,
-                  remaining:
-                      0,
-                );
+        final quota = _quotas[code] ??
+            const AiQuota(
+              used: 0,
+              limit: 0,
+              remaining: 0,
+            );
 
         providers.add(
           AiProvider.fromJson(
@@ -552,34 +462,25 @@ class ChatProvider
         );
       }
 
-      _aiProviders =
-          providers
-              .where(
-                (provider) =>
-                    provider.id >
-                    0,
-              )
-              .toList();
+      _aiProviders = providers
+          .where(
+            (provider) => provider.id > 0,
+          )
+          .toList();
 
       // ======================================================
       // SELECT DEFAULT
       // ======================================================
 
-      if (_selectedProviderId ==
-          null) {
-        _selectedProviderId =
-            _findPreferredProvider();
+      if (_selectedProviderId == null) {
+        _selectedProviderId = _findPreferredProvider();
       } else {
-        final exists =
-            _aiProviders.any(
-          (provider) =>
-              provider.id ==
-              _selectedProviderId,
+        final exists = _aiProviders.any(
+          (provider) => provider.id == _selectedProviderId,
         );
 
         if (!exists) {
-          _selectedProviderId =
-              _findPreferredProvider();
+          _selectedProviderId = _findPreferredProvider();
         }
       }
 
@@ -589,8 +490,7 @@ class ChatProvider
 
       notifyListeners();
     } catch (e) {
-      _error =
-          'Gagal memuat AI provider.';
+      _error = 'Gagal memuat AI provider.';
 
       notifyListeners();
     }
@@ -614,9 +514,7 @@ class ChatProvider
         key,
         value,
       ) {
-        _quotas[
-                key.toString()] =
-            AiQuota.fromJson(
+        _quotas[key.toString()] = AiQuota.fromJson(
           value,
         );
       },
@@ -635,12 +533,9 @@ class ChatProvider
 
     // GPT lebih diprioritaskan, namun backend bisa
     // mengembalikan value dengan casing berbeda atau label lain.
-    for (final provider
-        in _aiProviders) {
-      final code = provider.code
-          .toLowerCase();
-      final model = provider.model
-          .toLowerCase();
+    for (final provider in _aiProviders) {
+      final code = provider.code.toLowerCase();
+      final model = provider.model.toLowerCase();
 
       if ((!provider.isLimited) &&
           (code == 'setting-gpt' ||
@@ -652,8 +547,7 @@ class ChatProvider
 
     // Kalau GPT habis,
     // cari provider aktif berikutnya.
-    for (final provider
-        in _aiProviders) {
+    for (final provider in _aiProviders) {
       if (!provider.isLimited) {
         return provider.id;
       }
@@ -670,8 +564,7 @@ class ChatProvider
   void selectProvider(
     int providerId,
   ) {
-    final provider =
-        _findProvider(
+    final provider = _findProvider(
       providerId,
     );
 
@@ -679,8 +572,7 @@ class ChatProvider
       return;
     }
 
-    _selectedProviderId =
-        provider.id;
+    _selectedProviderId = provider.id;
 
     notifyListeners();
   }
@@ -692,10 +584,7 @@ class ChatProvider
   void selectProviderByModel(
     String model,
   ) {
-    final query =
-        model
-            .trim()
-            .toLowerCase();
+    final query = model.trim().toLowerCase();
 
     if (query.isEmpty) {
       return;
@@ -703,70 +592,48 @@ class ChatProvider
 
     AiProvider? exact;
 
-    for (final provider
-        in _aiProviders) {
-      final providerModel =
-          provider.model
-              .toLowerCase();
+    for (final provider in _aiProviders) {
+      final providerModel = provider.model.toLowerCase();
 
-      final providerName =
-          provider
-              .displayName
-              .toLowerCase();
+      final providerName = provider.displayName.toLowerCase();
 
-      final providerCode =
-          provider.code
-              .toLowerCase();
+      final providerCode = provider.code.toLowerCase();
 
-      if (providerModel ==
-              query ||
-          providerName ==
-              query ||
-          providerCode ==
-              query) {
+      if (providerModel == query ||
+          providerName == query ||
+          providerCode == query) {
         exact = provider;
         break;
       }
     }
 
-    exact ??=
-        _aiProviders.cast<AiProvider?>().firstWhere(
-              (provider) {
-                if (provider == null) {
-                  return false;
-                }
+    exact ??= _aiProviders.cast<AiProvider?>().firstWhere(
+      (provider) {
+        if (provider == null) {
+          return false;
+        }
 
-                final name =
-                    provider
-                        .displayName
-                        .toLowerCase();
+        final name = provider.displayName.toLowerCase();
 
-                final modelName =
-                    provider.model
-                        .toLowerCase();
+        final modelName = provider.model.toLowerCase();
 
-                final code =
-                    provider.code
-                        .toLowerCase();
+        final code = provider.code.toLowerCase();
 
-                return name.contains(
-                          query,
-                        ) ||
-                        modelName
-                            .contains(
-                          query,
-                        ) ||
-                        code.contains(
-                          query,
-                        );
-              },
-              orElse:
-                  () => null,
+        return name.contains(
+              query,
+            ) ||
+            modelName.contains(
+              query,
+            ) ||
+            code.contains(
+              query,
             );
+      },
+      orElse: () => null,
+    );
 
     if (exact != null) {
-      _selectedProviderId =
-          exact.id;
+      _selectedProviderId = exact.id;
 
       notifyListeners();
     }
@@ -779,10 +646,8 @@ class ChatProvider
   AiProvider? _findProvider(
     int providerId,
   ) {
-    for (final provider
-        in _aiProviders) {
-      if (provider.id ==
-          providerId) {
+    for (final provider in _aiProviders) {
+      if (provider.id == providerId) {
         return provider;
       }
     }
@@ -794,8 +659,7 @@ class ChatProvider
   // REFRESH QUOTA
   // ==========================================================
 
-  Future<void>
-      refreshProviders() async {
+  Future<void> refreshProviders() async {
     await loadAiProviders();
   }
 
@@ -810,22 +674,16 @@ class ChatProvider
     int perPage = 15,
   }) async {
     try {
-      final params =
-          <String, String>{
-        'page':
-            page.toString(),
-        'per_page':
-            perPage.toString(),
+      final params = <String, String>{
+        'page': page.toString(),
+        'per_page': perPage.toString(),
       };
 
-      if (search != null &&
-          search.trim().isNotEmpty) {
-        params['search'] =
-            search.trim();
+      if (search != null && search.trim().isNotEmpty) {
+        params['search'] = search.trim();
       }
 
-      final data =
-          await ApiService.instance.get(
+      final data = await ApiService.instance.get(
         ApiConstants.conversations,
         params: params,
       );
@@ -836,11 +694,9 @@ class ChatProvider
         );
       }
 
-      final rawList =
-          data['data'];
+      final rawList = data['data'];
 
-      if (rawList
-          is! List) {
+      if (rawList is! List) {
         _conversations = [];
 
         notifyListeners();
@@ -848,25 +704,22 @@ class ChatProvider
         return;
       }
 
-      _conversations =
-          rawList
-              .whereType<Map>()
-              .map(
-                (
-                  item,
-                ) =>
-                    Conversation.fromJson(
-                  Map<String, dynamic>.from(
-                    item,
-                  ),
-                ),
-              )
-              .where(
-                (conversation) =>
-                    conversation.id >
-                    0,
-              )
-              .toList();
+      _conversations = rawList
+          .whereType<Map>()
+          .map(
+            (
+              item,
+            ) =>
+                Conversation.fromJson(
+              Map<String, dynamic>.from(
+                item,
+              ),
+            ),
+          )
+          .where(
+            (conversation) => conversation.id > 0,
+          )
+          .toList();
 
       notifyListeners();
     } on ApiException catch (e) {
@@ -874,8 +727,7 @@ class ChatProvider
 
       notifyListeners();
     } catch (e) {
-      _error =
-          'Gagal memuat percakapan.';
+      _error = 'Gagal memuat percakapan.';
 
       notifyListeners();
     }
@@ -889,25 +741,20 @@ class ChatProvider
   Future<int?> createConversation({
     String? title,
   }) async {
-    _isCreatingConversation =
-        true;
+    _isCreatingConversation = true;
 
     _error = null;
 
     notifyListeners();
 
     try {
-      final body =
-          <String, dynamic>{};
+      final body = <String, dynamic>{};
 
-      if (title != null &&
-          title.trim().isNotEmpty) {
-        body['title'] =
-            title.trim();
+      if (title != null && title.trim().isNotEmpty) {
+        body['title'] = title.trim();
       }
 
-      final data =
-          await ApiService.instance.post(
+      final data = await ApiService.instance.post(
         ApiConstants.conversations,
         body,
       );
@@ -918,18 +765,15 @@ class ChatProvider
         );
       }
 
-      final rawConversation =
-          data['conversation'];
+      final rawConversation = data['conversation'];
 
-      if (rawConversation
-          is! Map) {
+      if (rawConversation is! Map) {
         throw const ApiException(
           'Conversation tidak ditemukan.',
         );
       }
 
-      final conversation =
-          Conversation.fromJson(
+      final conversation = Conversation.fromJson(
         Map<String, dynamic>.from(
           rawConversation,
         ),
@@ -941,8 +785,7 @@ class ChatProvider
         );
       }
 
-      _currentConversationId =
-          conversation.id;
+      _currentConversationId = conversation.id;
 
       _messages = [];
 
@@ -956,15 +799,13 @@ class ChatProvider
 
       return null;
     } catch (_) {
-      _error =
-          'Gagal membuat obrolan baru.';
+      _error = 'Gagal membuat obrolan baru.';
 
       notifyListeners();
 
       return null;
     } finally {
-      _isCreatingConversation =
-          false;
+      _isCreatingConversation = false;
 
       notifyListeners();
     }
@@ -978,8 +819,7 @@ class ChatProvider
   Future<void> loadMessages(
     int conversationId,
   ) async {
-    _currentConversationId =
-        conversationId;
+    _currentConversationId = conversationId;
 
     _isLoading = true;
 
@@ -990,8 +830,7 @@ class ChatProvider
     notifyListeners();
 
     try {
-      final data =
-          await ApiService.instance.get(
+      final data = await ApiService.instance.get(
         ApiConstants.conversationChats(
           conversationId,
         ),
@@ -1003,11 +842,9 @@ class ChatProvider
         );
       }
 
-      final rawMessages =
-          data['chats'];
+      final rawMessages = data['chats'];
 
-      if (rawMessages
-          is! List) {
+      if (rawMessages is! List) {
         _messages = [];
 
         _isLoading = false;
@@ -1017,25 +854,23 @@ class ChatProvider
         return;
       }
 
-      _messages =
-          rawMessages
-              .whereType<Map>()
-              .map(
-                (
-                  item,
-                ) =>
-                    ChatMessage.fromJson(
-                  Map<String, dynamic>.from(
-                    item,
-                  ),
-                ),
-              )
-              .toList();
+      _messages = rawMessages
+          .whereType<Map>()
+          .map(
+            (
+              item,
+            ) =>
+                ChatMessage.fromJson(
+              Map<String, dynamic>.from(
+                item,
+              ),
+            ),
+          )
+          .toList();
     } on ApiException catch (e) {
       _error = e.message;
     } catch (_) {
-      _error =
-          'Gagal memuat pesan.';
+      _error = 'Gagal memuat pesan.';
     } finally {
       _isLoading = false;
 
@@ -1052,8 +887,7 @@ class ChatProvider
   }) async {
     _messages = [];
 
-    _currentConversationId =
-        null;
+    _currentConversationId = null;
 
     _error = null;
 
@@ -1077,8 +911,7 @@ class ChatProvider
     File? attachedFile,
     String? attachedFileName,
   }) async {
-    final cleanMessage =
-        message.trim();
+    final cleanMessage = message.trim();
 
     if (cleanMessage.isEmpty && attachedFile == null) {
       return;
@@ -1094,29 +927,24 @@ class ChatProvider
       await loadAiProviders();
     }
 
-    if (model != null &&
-        model.trim().isNotEmpty) {
+    if (model != null && model.trim().isNotEmpty) {
       selectProviderByModel(
         model,
       );
     }
 
-    if (_selectedProviderId ==
-        null) {
-      _error =
-          'AI provider belum tersedia.';
+    if (_selectedProviderId == null) {
+      _error = 'AI provider belum tersedia.';
 
       notifyListeners();
 
       return;
     }
 
-    final provider =
-        selectedProvider;
+    final provider = selectedProvider;
 
     if (provider == null) {
-      _error =
-          'AI provider tidak ditemukan.';
+      _error = 'AI provider tidak ditemukan.';
 
       notifyListeners();
 
@@ -1124,8 +952,7 @@ class ChatProvider
     }
 
     if (provider.isLimited) {
-      _error =
-          'Kuota ${provider.displayName} untuk hari ini sudah habis.';
+      _error = 'Kuota ${provider.displayName} untuk hari ini sudah habis.';
 
       notifyListeners();
 
@@ -1136,18 +963,15 @@ class ChatProvider
     // CONVERSATION
     // ========================================================
 
-    if (_currentConversationId ==
-        null) {
-      final id =
-          await createConversation();
+    if (_currentConversationId == null) {
+      final id = await createConversation();
 
       if (id == null) {
         return;
       }
     }
 
-    final conversationId =
-        _currentConversationId!;
+    final conversationId = _currentConversationId!;
 
     // ========================================================
     // LOCAL USER MESSAGE
@@ -1159,14 +983,20 @@ class ChatProvider
         final bytes = await attachedFile.readAsBytes();
         base64Str = base64Encode(bytes);
         final name = attachedFileName ?? 'file';
-        final isImage = name.toLowerCase().endsWith('.jpg') || name.toLowerCase().endsWith('.jpeg') || name.toLowerCase().endsWith('.png');
-        
+        final isImage = name.toLowerCase().endsWith('.jpg') ||
+            name.toLowerCase().endsWith('.jpeg') ||
+            name.toLowerCase().endsWith('.png');
+
         final arr = [];
         if (cleanMessage.isNotEmpty) {
           arr.add({"type": "text", "text": cleanMessage});
         }
         if (isImage) {
-          arr.add({"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,$base64Str"}, "name": name});
+          arr.add({
+            "type": "image_url",
+            "image_url": {"url": "data:image/jpeg;base64,$base64Str"},
+            "name": name
+          });
         } else {
           arr.add({"type": "file", "name": name});
         }
@@ -1181,25 +1011,20 @@ class ChatProvider
       ChatMessage(
         role: 'user',
         content: finalContent,
-        timestamp:
-            DateTime.now(),
-        conversationId:
-            conversationId,
+        timestamp: DateTime.now(),
+        conversationId: conversationId,
       ),
     );
 
     // Temporary assistant bubble.
-    final placeholderIndex =
-        _messages.length;
+    final placeholderIndex = _messages.length;
 
     _messages.add(
       ChatMessage(
         role: 'assistant',
         content: '',
-        timestamp:
-            DateTime.now(),
-        conversationId:
-            conversationId,
+        timestamp: DateTime.now(),
+        conversationId: conversationId,
       ),
     );
 
@@ -1212,18 +1037,15 @@ class ChatProvider
       // HISTORY
       // ======================================================
 
-      final messageToAi =
-          _buildMessageHistory();
+      final messageToAi = _buildMessageHistory();
 
       // ======================================================
       // TOKEN
       // ======================================================
 
-      final token =
-          StorageService.getToken();
+      final token = StorageService.getToken();
 
-      if (token == null ||
-          token.isEmpty) {
+      if (token == null || token.isEmpty) {
         throw const ApiException(
           'Sesi login tidak ditemukan.',
         );
@@ -1235,17 +1057,20 @@ class ChatProvider
 
       String responseString = '';
       int statusCode = 200;
-      
+
       if (attachedFile != null) {
-        final request = http.MultipartRequest('POST', Uri.parse(ApiConstants.chatGenerateFromFile));
-        request.headers['Authorization'] = 'Bearer ';
+        final request = http.MultipartRequest(
+            'POST', Uri.parse(ApiConstants.chatGenerateFromFile));
+        final token = StorageService.getToken() ?? '';
+        request.headers['Authorization'] = 'Bearer $token';
         request.fields['providerId'] = provider.id.toString();
         request.fields['conversationId'] = conversationId.toString();
         if (cleanMessage.isNotEmpty) {
           request.fields['message'] = cleanMessage;
         }
-        request.files.add(await http.MultipartFile.fromPath('files[]', attachedFile.path));
-        
+        request.files.add(
+            await http.MultipartFile.fromPath('files[]', attachedFile.path));
+
         final streamedResponse = await request.send();
         statusCode = streamedResponse.statusCode;
         responseString = await streamedResponse.stream.bytesToString();
@@ -1257,16 +1082,18 @@ class ChatProvider
           'messageToAi': messageToAi,
         };
 
-        final response = await http.post(
-          Uri.parse(ApiConstants.chats),
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json, text/event-stream',
-            'Authorization': 'Bearer ',
-          },
-          body: jsonEncode(body),
-        ).timeout(const Duration(seconds: 120));
-        
+        final response = await http
+            .post(
+              Uri.parse(ApiConstants.chats),
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json, text/event-stream',
+                'Authorization': 'Bearer $token',
+              },
+              body: jsonEncode(body),
+            )
+            .timeout(const Duration(seconds: 120));
+
         statusCode = response.statusCode;
         responseString = utf8.decode(response.bodyBytes);
       }
@@ -1284,25 +1111,17 @@ class ChatProvider
       }
 
       final content = _parseAiResponse(responseString);
-      
-      final aiResponse =
-          content.trim().isEmpty
-              ? 'AI tidak memberikan respons.'
-              : content.trim();
 
-      if (placeholderIndex <
-          _messages.length) {
-        _messages[
-            placeholderIndex] =
-            ChatMessage(
-          role:
-              'assistant',
-          content:
-              aiResponse,
-          timestamp:
-              DateTime.now(),
-          conversationId:
-              conversationId,
+      final aiResponse = content.trim().isEmpty
+          ? 'AI tidak memberikan respons.'
+          : content.trim();
+
+      if (placeholderIndex < _messages.length) {
+        _messages[placeholderIndex] = ChatMessage(
+          role: 'assistant',
+          content: aiResponse,
+          timestamp: DateTime.now(),
+          conversationId: conversationId,
         );
       }
 
@@ -1327,8 +1146,7 @@ class ChatProvider
         placeholderIndex,
       );
 
-      _error =
-          'Gagal mengirim pesan. Coba lagi.';
+      _error = 'Gagal mengirim pesan. Coba lagi.';
 
       if (kDebugMode) {
         debugPrint(
@@ -1348,10 +1166,8 @@ class ChatProvider
   // MESSAGE HISTORY
   // ==========================================================
 
-  List<Map<String, dynamic>>
-      _buildMessageHistory() {
-    final result =
-        <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> _buildMessageHistory() {
+    final result = <Map<String, dynamic>>[];
 
     if (_systemPrompt != null && _systemPrompt!.isNotEmpty) {
       result.add({
@@ -1360,38 +1176,23 @@ class ChatProvider
       });
     }
 
-    final recent =
-        _messages
-            .where(
-              (
-                message,
-              ) =>
-                  message.content
-                      .trim()
-                      .isNotEmpty,
-            )
-            .toList();
+    final recent = _messages
+        .where(
+          (
+            message,
+          ) =>
+              message.content.trim().isNotEmpty,
+        )
+        .toList();
 
-    final start =
-        recent.length > 10
-            ? recent.length - 10
-            : 0;
+    final start = recent.length > 10 ? recent.length - 10 : 0;
 
-    for (
-      int i = start;
-      i < recent.length;
-      i++
-    ) {
-      final message =
-          recent[i];
+    for (int i = start; i < recent.length; i++) {
+      final message = recent[i];
 
       result.add({
-        'role':
-            message.isUser
-                ? 'user'
-                : 'assistant',
-        'content':
-            message.content,
+        'role': message.isUser ? 'user' : 'assistant',
+        'content': message.content,
       });
     }
 
@@ -1405,9 +1206,7 @@ class ChatProvider
   void _removeAssistantPlaceholder(
     int index,
   ) {
-    if (index >= 0 &&
-        index < _messages.length &&
-        !_messages[index].isUser) {
+    if (index >= 0 && index < _messages.length && !_messages[index].isUser) {
       _messages.removeAt(
         index,
       );
@@ -1421,45 +1220,33 @@ class ChatProvider
   String _extractResponseError(
     http.Response response,
   ) {
-    final text =
-        utf8.decode(
+    final text = utf8.decode(
       response.bodyBytes,
     );
 
     try {
-      final decoded =
-          jsonDecode(text);
+      final decoded = jsonDecode(text);
 
       if (decoded is Map) {
-        final message =
-            decoded['message'] ??
-            decoded['error'];
+        final message = decoded['message'] ?? decoded['error'];
 
         if (message != null) {
           return message.toString();
         }
 
-        final quotaRemaining =
-            decoded[
-                'quota_remaining'];
+        final quotaRemaining = decoded['quota_remaining'];
 
-        if (quotaRemaining !=
-            null) {
+        if (quotaRemaining != null) {
           return 'Kuota harian tersisa: $quotaRemaining.';
         }
 
-        final errors =
-            decoded['errors'];
+        final errors = decoded['errors'];
 
-        if (errors is Map &&
-            errors.isNotEmpty) {
-          final first =
-              errors.values.first;
+        if (errors is Map && errors.isNotEmpty) {
+          final first = errors.values.first;
 
-          if (first is List &&
-              first.isNotEmpty) {
-            return first.first
-                .toString();
+          if (first is List && first.isNotEmpty) {
+            return first.first.toString();
           }
 
           return first.toString();
@@ -1469,18 +1256,15 @@ class ChatProvider
       // Not JSON.
     }
 
-    if (response.statusCode ==
-        402) {
+    if (response.statusCode == 402) {
       return 'Token kamu tidak cukup untuk menggunakan layanan ini.';
     }
 
-    if (response.statusCode ==
-        403) {
+    if (response.statusCode == 403) {
       return 'AI provider ini tidak tersedia untuk paket akun kamu.';
     }
 
-    if (response.statusCode ==
-        429) {
+    if (response.statusCode == 429) {
       return 'Batas penggunaan AI hari ini sudah tercapai.';
     }
 
@@ -1499,8 +1283,7 @@ class ChatProvider
   String _parseAiResponse(
     String rawResponse,
   ) {
-    final response =
-        rawResponse.trim();
+    final response = rawResponse.trim();
 
     if (response.isEmpty) {
       return '';
@@ -1511,11 +1294,9 @@ class ChatProvider
     // ========================================================
 
     try {
-      final data =
-          jsonDecode(response);
+      final data = jsonDecode(response);
 
-      final parsed =
-          _extractTextFromJson(
+      final parsed = _extractTextFromJson(
         data,
       );
 
@@ -1528,20 +1309,16 @@ class ChatProvider
     // SSE
     // ========================================================
 
-    final buffer =
-        StringBuffer();
+    final buffer = StringBuffer();
 
-    final lines =
-        response.split(
+    final lines = response.split(
       RegExp(
         r'\r?\n',
       ),
     );
 
-    for (final rawLine
-        in lines) {
-      final line =
-          rawLine.trim();
+    for (final rawLine in lines) {
+      final line = rawLine.trim();
 
       if (!line.startsWith(
         'data:',
@@ -1549,20 +1326,16 @@ class ChatProvider
         continue;
       }
 
-      final payload =
-          line.substring(5).trim();
+      final payload = line.substring(5).trim();
 
-      if (payload.isEmpty ||
-          payload == '[DONE]') {
+      if (payload.isEmpty || payload == '[DONE]') {
         continue;
       }
 
       try {
-        final data =
-            jsonDecode(payload);
+        final data = jsonDecode(payload);
 
-        final text =
-            _extractTextFromJson(
+        final text = _extractTextFromJson(
           data,
         );
 
@@ -1576,12 +1349,9 @@ class ChatProvider
       }
     }
 
-    final parsedSse =
-        buffer.toString();
+    final parsedSse = buffer.toString();
 
-    if (parsedSse
-        .trim()
-        .isNotEmpty) {
+    if (parsedSse.trim().isNotEmpty) {
       return parsedSse;
     }
 
@@ -1617,55 +1387,42 @@ class ChatProvider
       'delta',
     ];
 
-    for (final key
-        in directKeys) {
-      final value =
-          data[key];
+    for (final key in directKeys) {
+      final value = data[key];
 
-      if (value is String &&
-          value.trim().isNotEmpty) {
+      if (value is String && value.trim().isNotEmpty) {
         return value;
       }
     }
 
     // OpenAI-like structure.
-    final choices =
-        data['choices'];
+    final choices = data['choices'];
 
-    if (choices is List &&
-        choices.isNotEmpty) {
-      final first =
-          choices.first;
+    if (choices is List && choices.isNotEmpty) {
+      final first = choices.first;
 
       if (first is Map) {
-        final message =
-            first['message'];
+        final message = first['message'];
 
         if (message is Map) {
-          final content =
-              message['content'];
+          final content = message['content'];
 
-          if (content
-              is String) {
+          if (content is String) {
             return content;
           }
         }
 
-        final delta =
-            first['delta'];
+        final delta = first['delta'];
 
         if (delta is Map) {
-          final content =
-              delta['content'];
+          final content = delta['content'];
 
-          if (content
-              is String) {
+          if (content is String) {
             return content;
           }
         }
 
-        final text =
-            first['text'];
+        final text = first['text'];
 
         if (text is String) {
           return text;
@@ -1689,21 +1446,17 @@ class ChatProvider
         '${ApiConstants.conversations}/$id',
       );
 
-      _conversations
-          .removeWhere(
+      _conversations.removeWhere(
         (
           conversation,
         ) =>
-            conversation.id ==
-            id,
+            conversation.id == id,
       );
 
-      if (_currentConversationId ==
-          id) {
+      if (_currentConversationId == id) {
         _messages = [];
 
-        _currentConversationId =
-            null;
+        _currentConversationId = null;
       }
 
       notifyListeners();
@@ -1716,8 +1469,7 @@ class ChatProvider
 
       return false;
     } catch (_) {
-      _error =
-          'Gagal menghapus percakapan.';
+      _error = 'Gagal menghapus percakapan.';
 
       notifyListeners();
 
@@ -1734,8 +1486,7 @@ class ChatProvider
     int id,
     String title,
   ) async {
-    final cleanTitle =
-        title.trim();
+    final cleanTitle = title.trim();
 
     if (cleanTitle.isEmpty) {
       return false;
@@ -1745,13 +1496,12 @@ class ChatProvider
       await ApiService.instance.put(
         '${ApiConstants.conversations}/$id',
         {
-          'title':
-              cleanTitle.length > 50
-                  ? cleanTitle.substring(
-                      0,
-                      50,
-                    )
-                  : cleanTitle,
+          'title': cleanTitle.length > 50
+              ? cleanTitle.substring(
+                  0,
+                  50,
+                )
+              : cleanTitle,
         },
       );
 
@@ -1765,8 +1515,7 @@ class ChatProvider
 
       return false;
     } catch (_) {
-      _error =
-          'Gagal mengubah nama percakapan.';
+      _error = 'Gagal mengubah nama percakapan.';
 
       notifyListeners();
 

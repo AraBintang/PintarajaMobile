@@ -48,9 +48,12 @@ class UserModel {
 
     return UserModel(
       id: _toInt(json['id'] ?? json['M_UserID']),
-      name: json['name']?.toString() ?? json['M_UserFullName']?.toString() ?? '',
+      name:
+          json['name']?.toString() ?? json['M_UserFullName']?.toString() ?? '',
       email: json['email']?.toString() ?? json['M_UserEmail']?.toString() ?? '',
-      avatar: json['image']?.toString() ?? json['avatar']?.toString() ?? json['M_UserImage']?.toString(),
+      avatar: json['image']?.toString() ??
+          json['avatar']?.toString() ??
+          json['M_UserImage']?.toString(),
       phone: json['phone']?.toString() ?? json['M_UserPhone']?.toString(),
       role: json['role']?.toString() ?? json['M_UserRole']?.toString(),
       plan: planName,
@@ -59,19 +62,17 @@ class UserModel {
         json['quota'] ?? json['M_UserQuota'] ?? json['credits'],
       ),
       havePassword: json['havePassword'] != false,
-      referralCode:
-          json['referral_code']?.toString(),
+      referralCode: json['referral_code']?.toString(),
       subscriptionExpiredAt: json['subscription_expired_at'] != null
           ? DateTime.tryParse(json['subscription_expired_at'].toString())
           : (json['M_UserSubsExp'] != null
               ? DateTime.tryParse(json['M_UserSubsExp'].toString())
               : null),
-      createdAt:
-          json['created_at'] != null
-              ? DateTime.tryParse(
-                  json['created_at'].toString(),
-                )
-              : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(
+              json['created_at'].toString(),
+            )
+          : null,
     );
   }
 
@@ -89,8 +90,7 @@ class UserModel {
       'havePassword': havePassword,
       'referral_code': referralCode,
       'subscription_expired_at': subscriptionExpiredAt?.toIso8601String(),
-      'created_at':
-          createdAt?.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
     };
   }
 
@@ -107,20 +107,16 @@ class UserModel {
         .toList();
 
     if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'
-          .toUpperCase();
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
 
     return parts.first[0].toUpperCase();
   }
 
   bool get isPro {
-    final value =
-        plan?.toLowerCase().trim();
+    final value = plan?.toLowerCase().trim();
 
-    return value != null &&
-        value.isNotEmpty &&
-        value != 'free';
+    return value != null && value.isNotEmpty && value != 'free';
   }
 
   static int _toInt(dynamic value) {

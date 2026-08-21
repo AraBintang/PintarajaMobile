@@ -14,10 +14,8 @@ import 'package:provider/provider.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
-import '../../data/services/api_service.dart';
 import '../../data/services/storage_service.dart';
 import '../shared/widgets/payment_sheet.dart';
-import '../shared/widgets/qris_payment_sheet.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -52,7 +50,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     // App Bar Row
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       child: Row(
                         children: [
                           IconButton(
@@ -63,12 +62,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 context.go('/chat');
                               }
                             },
-                            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                            icon: const Icon(Icons.arrow_back_rounded,
+                                color: Colors.white),
                           ),
                           const Expanded(
                             child: Text(
                               'Pengaturan',
-                              style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w700),
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w700),
                             ),
                           ),
                         ],
@@ -84,16 +87,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                          border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.2)),
                         ),
                         child: Row(
                           children: [
                             CircleAvatar(
                               radius: 28,
-                              backgroundColor: Colors.white.withValues(alpha: 0.2),
+                              backgroundColor:
+                                  Colors.white.withValues(alpha: 0.2),
                               child: Text(
                                 user?.initials ?? 'PA',
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18),
                               ),
                             ),
                             const SizedBox(width: 14),
@@ -103,14 +111,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 children: [
                                   Text(
                                     user?.name ?? 'Pengguna PintarAja',
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     user?.email ?? 'email@pintaraja.com',
-                                    style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 12),
+                                    style: TextStyle(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.75),
+                                        fontSize: 12),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -118,14 +132,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 user?.plan ?? 'Free',
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11),
                               ),
                             ),
                           ],
@@ -146,7 +164,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 1. AKUN
-                  _buildSectionHeader('Akun Saya', Icons.person_outline_rounded),
+                  _buildSectionHeader(
+                      'Akun Saya', Icons.person_outline_rounded),
                   _SettingsTile(
                     icon: Icons.account_circle_outlined,
                     title: 'Profil & Informasi Akun',
@@ -163,11 +182,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 20),
 
                   // 2. PLAN
-                  _buildSectionHeader('Plan & Membership', Icons.workspace_premium_rounded),
+                  _buildSectionHeader(
+                      'Plan & Membership', Icons.workspace_premium_rounded),
                   _SettingsTile(
                     icon: Icons.card_membership_rounded,
                     title: 'Upgrade Plan',
-                    subtitle: 'Weekly Rp17rb • Monthly Rp49rb • Annual Rp29rb/bln',
+                    subtitle:
+                        'Weekly Rp17rb • Monthly Rp49rb • Annual Rp29rb/bln',
                     badge: user?.plan ?? 'Free',
                     onTap: () => _showPlanModal(context),
                   ),
@@ -181,7 +202,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 20),
 
                   // 3. PENYIMPANAN
-                  _buildSectionHeader('Penyimpanan & File', Icons.folder_open_rounded),
+                  _buildSectionHeader(
+                      'Penyimpanan & File', Icons.folder_open_rounded),
                   _SettingsTile(
                     icon: Icons.cloud_queue_rounded,
                     title: 'File Manager AI Writer',
@@ -192,7 +214,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 20),
 
                   // 4. REFERRAL
-                  _buildSectionHeader('Program Referral', Icons.group_add_rounded),
+                  _buildSectionHeader(
+                      'Program Referral', Icons.group_add_rounded),
                   _SettingsTile(
                     icon: Icons.share_rounded,
                     title: 'Undang Teman & Dapatkan Bonus',
@@ -274,7 +297,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surfaceLight,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Edit Profil', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('Edit Profil',
+            style: TextStyle(fontWeight: FontWeight.w700)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -284,7 +308,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               decoration: InputDecoration(
                 labelText: 'Nama Lengkap',
                 prefixIcon: const Icon(Icons.person_outline_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             const SizedBox(height: 12),
@@ -294,17 +319,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               decoration: InputDecoration(
                 labelText: 'No. Telepon / WhatsApp',
                 prefixIcon: const Icon(Icons.phone_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             const SizedBox(height: 10),
-            Text('Email: ${user?.email ?? "-"}', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+            Text('Email: ${user?.email ?? "-"}',
+                style: const TextStyle(
+                    color: AppTheme.textSecondary, fontSize: 12)),
           ],
         ),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10))),
             onPressed: () async {
               Navigator.pop(ctx);
               final success = await auth.updateProfile(
@@ -313,7 +345,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(success ? 'Profil berhasil diperbarui!' : 'Gagal memperbarui profil.')),
+                  SnackBar(
+                      content: Text(success
+                          ? 'Profil berhasil diperbarui!'
+                          : 'Gagal memperbarui profil.')),
                 );
               }
             },
@@ -337,7 +372,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surfaceLight,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Ubah Password', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('Ubah Password',
+            style: TextStyle(fontWeight: FontWeight.w700)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -347,7 +383,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               decoration: InputDecoration(
                 labelText: 'Password Saat Ini',
                 prefixIcon: const Icon(Icons.lock_outline_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             const SizedBox(height: 12),
@@ -357,15 +394,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               decoration: InputDecoration(
                 labelText: 'Password Baru',
                 prefixIcon: const Icon(Icons.lock_reset_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ],
         ),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10))),
             onPressed: () async {
               Navigator.pop(ctx);
               final success = await auth.changePassword(
@@ -374,7 +416,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(success ? 'Password berhasil diubah!' : 'Gagal mengubah password.')),
+                  SnackBar(
+                      content: Text(success
+                          ? 'Password berhasil diubah!'
+                          : 'Gagal mengubah password.')),
                 );
               }
             },
@@ -394,132 +439,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
-        decoration: const BoxDecoration(
-          color: AppTheme.surfaceLight,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: FutureBuilder<http.Response>(
-          future: http.get(
-            Uri.parse(ApiConstants.plans),
-            headers: {
-              'Accept': 'application/json',
+      builder: (ctx) => _UpgradePlanModal(
+        onPlanSelected: (planId, planName, amount) {
+          final auth = context.read<AuthProvider>();
+          final phone = auth.user?.phone?.isNotEmpty == true
+              ? auth.user!.phone!
+              : '08123456789';
+          PaymentSelectionSheet.show(
+            context,
+            itemTitle: planName,
+            amount: amount,
+            type: 'subscription',
+            planId: planId,
+            phone: phone,
+            onPaymentSuccess: () async {
+              await auth.refreshUser();
             },
-          ),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: AppTheme.borderLight, borderRadius: BorderRadius.circular(10))),
-                  const SizedBox(height: 32),
-                  const Center(child: CircularProgressIndicator()),
-                  const SizedBox(height: 16),
-                ],
-              );
-            }
-
-            if (snapshot.hasError) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: AppTheme.borderLight, borderRadius: BorderRadius.circular(10))),
-                  const SizedBox(height: 32),
-                  const Center(child: Text('Gagal memuat plan')),
-                  const SizedBox(height: 16),
-                ],
-              );
-            }
-
-            final response = snapshot.data!;
-            if (response.statusCode != 200) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: AppTheme.borderLight, borderRadius: BorderRadius.circular(10))),
-                  const SizedBox(height: 32),
-                  const Center(child: Text('Gagal memuat plan')),
-                  const SizedBox(height: 16),
-                ],
-              );
-            }
-
-            final List<dynamic> plans = jsonDecode(response.body);
-
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: AppTheme.borderLight, borderRadius: BorderRadius.circular(10))),
-                const Text('Upgrade Plan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
-                const SizedBox(height: 4),
-                const Text('Akses AI tanpa batas & kuota token lebih besar', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                const SizedBox(height: 18),
-                ...plans.map((plan) {
-                  final name = plan['name'] ?? '';
-                  final price = plan['price'] ?? 0;
-                  final description = plan['description'] ?? '';
-                  final badge = plan['badge'] as String?;
-                  final formattedPrice = 'Rp ${price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _PlanOptionTile(
-                      title: name,
-                      price: formattedPrice,
-                      desc: description,
-                      badge: badge,
-                      onTap: () => _triggerPayment(ctx, name, price),
-                    ),
-                  );
-                }),
-              ],
-            );
-          },
-        ),
+          );
+        },
       ),
     );
   }
 
+  // _triggerPayment kept for backward compatibility but no longer referenced
+  // ignore: unused_element
   void _triggerPayment(BuildContext ctx, String planName, int amount) {
-      Navigator.pop(ctx);
-      _createPlanPayment(context, planName, amount);
+    Navigator.pop(ctx);
   }
-  
-  Future<void> _createPlanPayment(BuildContext currentContext, String planName, int amount) async {
-      showDialog(
-        context: currentContext,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator()),
-      );
-      
-      try {
-        final response = await ApiService.instance.post(ApiConstants.topUp, {
-          'coins': (amount / 1000).ceil(),
-          'channel': 'QRIS2',
-          'method': 'QRIS',
-          'phone': '081234567890',
-        });
-        
-        if (!mounted) return;
-        Navigator.pop(currentContext);
-        
-        if (response['status'] == 'success' || response['paymentCode'] != null || response['checkoutUrl'] != null) {
-          QrisPaymentSheet.show(
-            currentContext,
-            qrUrl: response['paymentCode'] ?? response['payUrl'] ?? '',
-            referenceId: response['referenceId'] ?? '',
-            checkoutUrl: response['checkoutUrl'] ?? '',
-          );
-        } else {
-          ScaffoldMessenger.of(currentContext).showSnackBar(
-            SnackBar(content: Text(response['message'] ?? 'Gagal membuat pembayaran QRIS.')),
-          );
-        }
-      } catch (e) {
-        if (!mounted) return;
-        Navigator.pop(currentContext);
-        ScaffoldMessenger.of(currentContext).showSnackBar(SnackBar(content: Text('Terjadi kesalahan: $e')));
-      }
+
+  // _createPlanPayment kept for backward compatibility but no longer referenced
+  // ignore: unused_element
+  Future<void> _createPlanPayment(
+      BuildContext currentContext, String planName, int amount) async {
+    // Delegated to _showPlanModal via PaymentSelectionSheet
   }
 
   // ==========================================================
@@ -533,7 +485,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surfaceLight,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Redeem Kupon', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('Redeem Kupon',
+            style: TextStyle(fontWeight: FontWeight.w700)),
         content: TextField(
           controller: codeController,
           textCapitalization: TextCapitalization.characters,
@@ -543,16 +496,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10))),
             onPressed: () async {
               Navigator.pop(ctx);
-              final success = await auth.redeemCoupon(codeController.text.trim());
+              final success =
+                  await auth.redeemCoupon(codeController.text.trim());
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(success ? 'Kupon berhasil ditukarkan!' : 'Kode kupon tidak valid.')),
+                  SnackBar(
+                      content: Text(success
+                          ? 'Kupon berhasil ditukarkan!'
+                          : 'Kode kupon tidak valid.')),
                 );
               }
             },
@@ -572,52 +533,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => Container(
-        height: MediaQuery.sizeOf(context).height * 0.5,
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceLight,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: AppTheme.borderLight, borderRadius: BorderRadius.circular(10)))),
-            const Text('File Manager', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(14)),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Penyimpanan AI Writer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textPrimary)),
-                  SizedBox(height: 8),
-                  LinearProgressIndicator(value: 0.09, minHeight: 8, backgroundColor: AppTheme.surfaceMuted, color: AppTheme.primary),
-                  SizedBox(height: 6),
-                  Text('45.2 MB / 500 MB digunakan', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.folder_open_rounded, color: AppTheme.textMuted, size: 48),
-                    SizedBox(height: 8),
-                    Text('Belum ada file', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      builder: (ctx) {
+        return _FileManagerDialog();
+      },
     );
   }
+
+}
+
 
   // ==========================================================
   // REFERRAL
@@ -630,7 +553,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => Container(
-        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.8),
+        constraints:
+            BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.8),
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 30),
         decoration: const BoxDecoration(
           color: AppTheme.surfaceLight,
@@ -649,7 +573,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: AppTheme.borderLight, borderRadius: BorderRadius.circular(10))),
+                  Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                          color: AppTheme.borderLight,
+                          borderRadius: BorderRadius.circular(10))),
                   const SizedBox(height: 32),
                   const Center(child: CircularProgressIndicator()),
                   const SizedBox(height: 16),
@@ -661,7 +591,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: AppTheme.borderLight, borderRadius: BorderRadius.circular(10))),
+                  Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                          color: AppTheme.borderLight,
+                          borderRadius: BorderRadius.circular(10))),
                   const SizedBox(height: 32),
                   const Center(child: Text('Gagal memuat data referral')),
                   const SizedBox(height: 16),
@@ -684,19 +620,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: AppTheme.borderLight, borderRadius: BorderRadius.circular(10))),
+                  Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                          color: AppTheme.borderLight,
+                          borderRadius: BorderRadius.circular(10))),
                   Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.08), shape: BoxShape.circle),
-                    child: const Icon(Icons.card_giftcard_rounded, size: 36, color: AppTheme.primary),
+                    decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        shape: BoxShape.circle),
+                    child: const Icon(Icons.card_giftcard_rounded,
+                        size: 36, color: AppTheme.primary),
                   ),
                   const SizedBox(height: 14),
-                  const Text('Program Referral', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                  const Text('Program Referral',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary)),
                   const SizedBox(height: 4),
                   Text(
                     '$totalReferrals teman sudah bergabung • Diskon pending: $pendingDiscount%',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                    style: const TextStyle(
+                        fontSize: 12, color: AppTheme.textSecondary),
                   ),
                   const SizedBox(height: 16),
 
@@ -716,13 +666,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           children: [
                             Text(
                               'Progress ke Free 1 Bulan: $currentInCycle/7',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textPrimary),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: AppTheme.textPrimary),
                             ),
                             if (hasFreeMonth)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(color: AppTheme.success, borderRadius: BorderRadius.circular(6)),
-                                child: const Text('FREE', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                    color: AppTheme.success,
+                                    borderRadius: BorderRadius.circular(6)),
+                                child: const Text('FREE',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold)),
                               ),
                           ],
                         ),
@@ -731,12 +691,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           value: currentInCycle / 7,
                           minHeight: 8,
                           backgroundColor: AppTheme.surfaceMuted,
-                          color: hasFreeMonth ? AppTheme.success : AppTheme.primary,
+                          color: hasFreeMonth
+                              ? AppTheme.success
+                              : AppTheme.primary,
                         ),
                         const SizedBox(height: 6),
                         Text(
                           '$toNextFree lagi untuk FREE 1 bulan',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                          style: const TextStyle(
+                              fontSize: 11, color: AppTheme.textSecondary),
                         ),
                       ],
                     ),
@@ -754,11 +717,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('#1-6: Setiap teman yang mendaftar & melakukan pembelian berapapun +10% diskon untukmu (max 60%)', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                        Text(
+                            '#1-6: Setiap teman yang mendaftar & melakukan pembelian berapapun +10% diskon untukmu (max 60%)',
+                            style: TextStyle(
+                                fontSize: 11, color: AppTheme.textSecondary)),
                         SizedBox(height: 4),
-                        Text('#7: Orang ke-7 = kamu dapat FREE 1 bulan plan berbayar!', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.w600)),
+                        Text(
+                            '#7: Orang ke-7 = kamu dapat FREE 1 bulan plan berbayar!',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w600)),
                         SizedBox(height: 4),
-                        Text('#8+: Siklus berulang — orang ke-8 mulai siklus diskon baru lagi', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                        Text(
+                            '#8+: Siklus berulang — orang ke-8 mulai siklus diskon baru lagi',
+                            style: TextStyle(
+                                fontSize: 11, color: AppTheme.textSecondary)),
                       ],
                     ),
                   ),
@@ -767,13 +741,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // Referral code
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 14),
                     decoration: BoxDecoration(
                       color: AppTheme.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                      border: Border.all(
+                          color: AppTheme.primary.withValues(alpha: 0.3)),
                     ),
-                    child: Text(refCode, textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primary, letterSpacing: 2)),
+                    child: Text(refCode,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primary,
+                            letterSpacing: 2)),
                   ),
                   const SizedBox(height: 14),
                   Row(
@@ -782,7 +764,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: OutlinedButton.icon(
                           onPressed: () {
                             Clipboard.setData(ClipboardData(text: refCode));
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kode referral disalin!')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Kode referral disalin!')));
                           },
                           icon: const Icon(Icons.copy_rounded, size: 16),
                           label: const Text('Salin'),
@@ -792,7 +776,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Link: $refLink')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Link: $refLink')));
                           },
                           icon: const Icon(Icons.share_rounded, size: 16),
                           label: const Text('Bagikan'),
@@ -808,7 +793,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         'Teman yang sudah bergabung (${usages.length})',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textPrimary),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: AppTheme.textPrimary),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -828,26 +816,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           children: [
                             CircleAvatar(
                               radius: 14,
-                              backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
-                              child: Text(userName.isNotEmpty ? userName[0].toUpperCase() : '?', style: const TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                              backgroundColor:
+                                  AppTheme.primary.withValues(alpha: 0.1),
+                              child: Text(
+                                  userName.isNotEmpty
+                                      ? userName[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.primary,
+                                      fontWeight: FontWeight.bold)),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(userName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppTheme.textPrimary)),
-                                  Text(joinedAt, style: const TextStyle(fontSize: 10, color: AppTheme.textMuted)),
+                                  Text(userName,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                          color: AppTheme.textPrimary)),
+                                  Text(joinedAt,
+                                      style: const TextStyle(
+                                          fontSize: 10,
+                                          color: AppTheme.textMuted)),
                                 ],
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: isUsed ? AppTheme.success.withValues(alpha: 0.1) : AppTheme.warning.withValues(alpha: 0.1),
+                                color: isUsed
+                                    ? AppTheme.success.withValues(alpha: 0.1)
+                                    : AppTheme.warning.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Text(rewardLabel, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: isUsed ? AppTheme.success : AppTheme.warning)),
+                              child: Text(rewardLabel,
+                                  style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: isUsed
+                                          ? AppTheme.success
+                                          : AppTheme.warning)),
                             ),
                           ],
                         ),
@@ -871,7 +883,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     int currentPage = 1;
     String selectedStatus = '';
 
-    void fetchData(StateSetter setModalState, {int page = 1, String? status}) async {
+    void fetchData(StateSetter setModalState,
+        {int page = 1, String? status}) async {
       final token = StorageService.getToken();
       final queryParams = {
         'page': page.toString(),
@@ -880,7 +893,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (status != null && status.isNotEmpty) {
         queryParams['status'] = status;
       }
-      final uri = Uri.parse(ApiConstants.payments).replace(queryParameters: queryParams);
+      final uri = Uri.parse(ApiConstants.payments)
+          .replace(queryParameters: queryParams);
       try {
         final response = await http.get(uri, headers: {
           'Authorization': 'Bearer $token',
@@ -917,8 +931,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: AppTheme.borderLight, borderRadius: BorderRadius.circular(10)))),
-                const Text('Riwayat Order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                Center(
+                    child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                            color: AppTheme.borderLight,
+                            borderRadius: BorderRadius.circular(10)))),
+                const Text('Riwayat Order',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary)),
                 const SizedBox(height: 12),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -928,14 +953,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 6),
                         child: ChoiceChip(
-                          label: Text(f['label']!, style: TextStyle(fontSize: 11, color: selected ? Colors.white : AppTheme.textPrimary, fontWeight: FontWeight.w600)),
+                          label: Text(f['label']!,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: selected
+                                      ? Colors.white
+                                      : AppTheme.textPrimary,
+                                  fontWeight: FontWeight.w600)),
                           selected: selected,
                           selectedColor: AppTheme.primary,
                           onSelected: (val) {
                             if (val) {
                               selectedStatus = f['value']!;
                               currentPage = 1;
-                              fetchData(setModalState, page: currentPage, status: selectedStatus);
+                              fetchData(setModalState,
+                                  page: currentPage, status: selectedStatus);
                             }
                           },
                         ),
@@ -954,7 +986,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       if (selectedStatus.isNotEmpty) {
                         queryParams['status'] = selectedStatus;
                       }
-                      final uri = Uri.parse(ApiConstants.payments).replace(queryParameters: queryParams);
+                      final uri = Uri.parse(ApiConstants.payments)
+                          .replace(queryParameters: queryParams);
                       return http.get(uri, headers: {
                         'Authorization': 'Bearer $token',
                         'Accept': 'application/json',
@@ -964,11 +997,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
-                      if (snapshot.hasError || snapshot.data?.statusCode != 200) {
-                        return const Center(child: Text('Gagal memuat riwayat'));
+                      if (snapshot.hasError ||
+                          snapshot.data?.statusCode != 200) {
+                        return const Center(
+                            child: Text('Gagal memuat riwayat'));
                       }
 
-                      final Map<String, dynamic> body = jsonDecode(snapshot.data!.body);
+                      final Map<String, dynamic> body =
+                          jsonDecode(snapshot.data!.body);
                       final List<dynamic> items = body['data'] ?? [];
 
                       if (items.isEmpty) {
@@ -976,9 +1012,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.receipt_long_rounded, color: AppTheme.textMuted, size: 48),
+                              Icon(Icons.receipt_long_rounded,
+                                  color: AppTheme.textMuted, size: 48),
                               SizedBox(height: 8),
-                              Text('Belum ada riwayat', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                              Text('Belum ada riwayat',
+                                  style: TextStyle(
+                                      color: AppTheme.textMuted, fontSize: 13)),
                             ],
                           ),
                         );
@@ -986,20 +1025,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                       Color statusColor(int code) {
                         switch (code) {
-                          case 0: return AppTheme.warning;
-                          case 1: return AppTheme.success;
-                          case 2: return AppTheme.primary;
-                          case 3: return AppTheme.error;
-                          default: return AppTheme.textMuted;
+                          case 0:
+                            return AppTheme.warning;
+                          case 1:
+                            return AppTheme.success;
+                          case 2:
+                            return AppTheme.primary;
+                          case 3:
+                            return AppTheme.error;
+                          default:
+                            return AppTheme.textMuted;
                         }
                       }
 
                       IconData typeIcon(String type) {
                         switch (type) {
-                          case 'subscription': return Icons.credit_card_rounded;
-                          case 'topup': return Icons.diamond_rounded;
-                          case 'plagiarism': return Icons.plagiarism_rounded;
-                          default: return Icons.receipt_rounded;
+                          case 'subscription':
+                            return Icons.credit_card_rounded;
+                          case 'topup':
+                            return Icons.diamond_rounded;
+                          case 'plagiarism':
+                            return Icons.plagiarism_rounded;
+                          default:
+                            return Icons.receipt_rounded;
                         }
                       }
 
@@ -1014,8 +1062,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           final String createdAt = item['createdAt'] ?? '';
                           final String txType = item['transactionType'] ?? '';
                           final DateTime? date = DateTime.tryParse(createdAt);
-                          final String formattedDate = date != null ? '${date.day.toString().padLeft(2, '0')} ${_monthName(date.month)} ${date.year}' : createdAt;
-                          final String formattedAmount = 'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+                          final String formattedDate = date != null
+                              ? '${date.day.toString().padLeft(2, '0')} ${_monthName(date.month)} ${date.year}'
+                              : createdAt;
+                          final String formattedAmount =
+                              'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
 
                           return _buildHistoryTile(
                             planName,
@@ -1039,11 +1090,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   String _monthName(int month) {
-    const names = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const names = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des'
+    ];
     return names[month];
   }
 
-  Widget _buildHistoryTile(String title, String price, String date, String status, Color statusColor, {IconData? icon}) {
+  Widget _buildHistoryTile(
+      String title, String price, String date, String status, Color statusColor,
+      {IconData? icon}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -1056,9 +1123,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8)),
             child: Icon(
-              icon ?? (status == 'Berhasil' ? Icons.check_circle_rounded : Icons.schedule_rounded),
+              icon ??
+                  (status == 'Berhasil'
+                      ? Icons.check_circle_rounded
+                      : Icons.schedule_rounded),
               color: statusColor,
               size: 18,
             ),
@@ -1068,16 +1140,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: AppTheme.textPrimary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
-                Text('$date • $price', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                Text('$date • $price',
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 11)),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-            child: Text(status, style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold)),
+            decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6)),
+            child: Text(status,
+                style: TextStyle(
+                    color: statusColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -1094,7 +1180,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surfaceLight,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Keluar dari Akun', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('Keluar dari Akun',
+            style: TextStyle(fontWeight: FontWeight.w700)),
         content: const Text('Apakah kamu yakin ingin keluar?'),
         actions: [
           Column(
@@ -1103,13 +1190,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.error,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10))),
                   onPressed: () async {
                     Navigator.pop(ctx);
                     await auth.logout();
                     if (context.mounted) context.go('/auth/login');
                   },
-                  child: const Text('Keluar', style: TextStyle(color: Colors.white)),
+                  child: const Text('Keluar',
+                      style: TextStyle(color: Colors.white)),
                 ),
               ),
               const SizedBox(height: 8),
@@ -1126,7 +1217,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-}
+
 
 // ============================================================
 // SETTINGS TILE
@@ -1161,18 +1252,35 @@ class _SettingsTile extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
         leading: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10)),
           child: Icon(icon, color: AppTheme.primary, size: 20),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: AppTheme.textPrimary)),
-        subtitle: Text(subtitle, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(title,
+            style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13.5,
+                color: AppTheme.textPrimary)),
+        subtitle: Text(subtitle,
+            style:
+                const TextStyle(color: AppTheme.textSecondary, fontSize: 11.5),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis),
         trailing: badge != null
             ? Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: Text(badge!, style: const TextStyle(color: AppTheme.primary, fontSize: 10, fontWeight: FontWeight.bold)),
+                decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8)),
+                child: Text(badge!,
+                    style: const TextStyle(
+                        color: AppTheme.primary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold)),
               )
-            : const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted, size: 18),
+            : const Icon(Icons.chevron_right_rounded,
+                color: AppTheme.textMuted, size: 18),
       ),
     );
   }
@@ -1207,11 +1315,179 @@ class _DangerTile extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
         leading: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: AppTheme.error.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(
+              color: AppTheme.error.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10)),
           child: Icon(icon, color: AppTheme.error, size: 20),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: AppTheme.error)),
-        trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted, size: 18),
+        title: Text(title,
+            style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13.5,
+                color: AppTheme.error)),
+        trailing: const Icon(Icons.chevron_right_rounded,
+            color: AppTheme.textMuted, size: 18),
+      ),
+    );
+  }
+}
+
+class _UpgradePlanModal extends StatefulWidget {
+  final void Function(int planId, String planName, int amount)? onPlanSelected;
+
+  const _UpgradePlanModal({this.onPlanSelected});
+
+  @override
+  State<_UpgradePlanModal> createState() => _UpgradePlanModalState();
+}
+
+class _UpgradePlanModalState extends State<_UpgradePlanModal> {
+  String _period = 'monthly';
+  List<dynamic> _plans = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPlans();
+  }
+
+  Future<void> _fetchPlans() async {
+    try {
+      final res = await http.get(Uri.parse(ApiConstants.plans), headers: {'Accept': 'application/json'});
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        setState(() {
+          _plans = decoded is Map ? (decoded['data'] ?? decoded['plans'] ?? []) : decoded;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = 'Gagal memuat plan';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Terjadi kesalahan jaringan';
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+      decoration: const BoxDecoration(
+        color: AppTheme.surfaceLight,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                  color: AppTheme.borderLight,
+                  borderRadius: BorderRadius.circular(10))),
+          const Text('Upgrade Plan',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+          const SizedBox(height: 4),
+          const Text('Akses AI tanpa batas & kuota token lebih besar',
+              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+          const SizedBox(height: 16),
+
+          // Period Selector
+          Container(
+            decoration: BoxDecoration(
+              color: AppTheme.borderLight.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.all(4),
+            child: Row(
+              children: [
+                _buildPeriodTab('weekly', 'Weekly'),
+                _buildPeriodTab('monthly', 'Monthly'),
+                _buildPeriodTab('yearly', 'Annual'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          if (_isLoading)
+            const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()))
+          else if (_error != null)
+            Padding(padding: const EdgeInsets.all(32), child: Center(child: Text(_error!)))
+          else
+            ..._plans.map((plan) {
+              final planId = plan['id'] as int? ?? 0;
+              final name = plan['name'] ?? '';
+              final description = plan['description'] ?? '';
+              final badge = plan['badge'] as String?;
+              
+              int amount = 0;
+              final priceData = plan['price'];
+              if (priceData is Map) {
+                amount = int.tryParse(priceData['${_period}_final']?.toString() ?? '0') ?? 0;
+                // Fallback: if no _final, compute from base
+                if (amount == 0) {
+                  amount = int.tryParse(priceData[_period]?.toString() ?? '0') ?? 0;
+                }
+              } else if (priceData != null) {
+                amount = int.tryParse(priceData.toString()) ?? 0;
+              }
+
+              final formattedPrice = amount > 0
+                  ? 'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}'
+                  : 'Gratis';
+              
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _PlanOptionTile(
+                  title: name,
+                  price: formattedPrice,
+                  desc: description,
+                  badge: badge,
+                  onTap: () {
+                    Navigator.pop(context);
+                    widget.onPlanSelected?.call(planId, name, amount);
+                  },
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodTab(String key, String label) {
+    final isSelected = _period == key;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _period = key),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: isSelected
+                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))]
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1242,20 +1518,32 @@ class _PlanOptionTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: badge != null ? AppTheme.primary : AppTheme.borderLight, width: badge != null ? 1.5 : 1),
+        border: Border.all(
+            color: badge != null ? AppTheme.primary : AppTheme.borderLight,
+            width: badge != null ? 1.5 : 1),
       ),
       child: ListTile(
         onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         title: Row(
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.textPrimary)),
+            Text(title,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: AppTheme.textPrimary)),
             if (badge != null) ...[
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(6)),
-                child: Text(badge!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                decoration: BoxDecoration(
+                    color: AppTheme.primary,
+                    borderRadius: BorderRadius.circular(6)),
+                child: Text(badge!,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold)),
               ),
             ],
           ],
@@ -1264,12 +1552,200 @@ class _PlanOptionTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 2),
-            Text(price, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+            Text(price,
+                style: const TextStyle(
+                    color: AppTheme.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13)),
             const SizedBox(height: 2),
-            Text(desc, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+            Text(desc,
+                style: const TextStyle(
+                    color: AppTheme.textSecondary, fontSize: 11)),
           ],
         ),
-        trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.primary),
+        trailing:
+            const Icon(Icons.chevron_right_rounded, color: AppTheme.primary),
+      ),
+    );
+  }
+}
+class _FileManagerDialog extends StatefulWidget {
+  @override
+  State<_FileManagerDialog> createState() => _FileManagerDialogState();
+}
+
+class _FileManagerDialogState extends State<_FileManagerDialog> {
+  bool _isLoading = true;
+  String? _error;
+  List<dynamic> _files = [];
+  int _used = 0;
+  int _limit = 524288000; // 500 MB default
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final token = StorageService.getToken();
+      final res = await http.get(
+        Uri.parse(ApiConstants.writerFiles),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        setState(() {
+          _files = data['files'] ?? [];
+          if (data['quota'] != null) {
+            _used = data['quota']['used'] ?? 0;
+            _limit = data['quota']['limit'] ?? 524288000;
+          }
+        });
+      } else {
+        setState(() => _error = 'Gagal memuat file.');
+      }
+    } catch (e) {
+      setState(() => _error = 'Terjadi kesalahan jaringan.');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  String _formatSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = _limit > 0 ? (_used / _limit).clamp(0.0, 1.0) : 0.0;
+
+    return Container(
+      height: MediaQuery.sizeOf(context).height * 0.7,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      decoration: const BoxDecoration(
+        color: AppTheme.surfaceLight,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+              child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                      color: AppTheme.borderLight,
+                      borderRadius: BorderRadius.circular(10)))),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('File Manager',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary)),
+              IconButton(
+                  icon: const Icon(Icons.refresh_rounded),
+                  onPressed: _fetchData),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(14)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Penyimpanan AI Writer',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: AppTheme.textPrimary)),
+                const SizedBox(height: 8),
+                LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 8,
+                    backgroundColor: AppTheme.surfaceMuted,
+                    color: AppTheme.primary),
+                const SizedBox(height: 6),
+                Text('${_formatSize(_used)} / ${_formatSize(_limit)} digunakan',
+                    style: const TextStyle(
+                        fontSize: 11, color: AppTheme.textSecondary)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(
+                        child: Text(_error!,
+                            style: const TextStyle(color: AppTheme.error)))
+                    : _files.isEmpty
+                        ? const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.folder_open_rounded,
+                                    color: AppTheme.textMuted, size: 48),
+                                SizedBox(height: 8),
+                                Text('Belum ada file',
+                                    style: TextStyle(
+                                        color: AppTheme.textMuted,
+                                        fontSize: 13)),
+                              ],
+                            ),
+                          )
+                        : ListView.separated(
+                            itemCount: _files.length,
+                            separatorBuilder: (_, __) => const Divider(),
+                            itemBuilder: (context, index) {
+                              final f = _files[index];
+                              return ListTile(
+                                leading: const Icon(
+                                    Icons.insert_drive_file_rounded,
+                                    color: AppTheme.primary),
+                                title: Text(f['name'] ?? 'Unknown',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600)),
+                                subtitle: Text(_formatSize(f['size'] ?? 0),
+                                    style: const TextStyle(fontSize: 12)),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete_outline_rounded,
+                                      color: AppTheme.error),
+                                  onPressed: () {
+                                    // TODO: Implement delete
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Hapus file segera hadir')));
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+          ),
+        ],
       ),
     );
   }

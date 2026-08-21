@@ -13,6 +13,7 @@ import '../../data/providers/auth_provider.dart';
 import '../../data/providers/chat_provider.dart';
 import '../../data/services/storage_service.dart';
 import '../shared/widgets/app_sidebar_drawer.dart';
+import '../shared/widgets/payment_sheet.dart';
 
 class ParaphraseScreen extends StatefulWidget {
   const ParaphraseScreen({super.key});
@@ -147,17 +148,14 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
 
       // --- Fallback on 402 / 429 ---
       if (response.statusCode == 402 || response.statusCode == 429) {
-        final providers =
-            context.read<ChatProvider>().aiProviders.toList();
+        final providers = context.read<ChatProvider>().aiProviders.toList();
 
         // Build ordered list of fallback candidates (exclude failed provider).
-        final candidates = providers
-            .where((p) => p.id != providerId && !p.isLimited)
-            .toList();
+        final candidates =
+            providers.where((p) => p.id != providerId && !p.isLimited).toList();
 
         for (final candidate in candidates) {
-          response =
-              await _doParaphraseRequest(text, candidate.id);
+          response = await _doParaphraseRequest(text, candidate.id);
 
           if (!mounted) return;
 
@@ -286,7 +284,8 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
         elevation: 0,
         leading: Builder(
           builder: (ctx) => IconButton(
-            icon: Icon(Icons.menu_rounded, color: AppTheme.getTextColor(context)),
+            icon:
+                Icon(Icons.menu_rounded, color: AppTheme.getTextColor(context)),
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
@@ -302,7 +301,7 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
         actions: [
           _TokenChip(
             balance: auth.tokenBalance,
-            onTap: () => _showTokenInfo(auth),
+            onTap: _showTokenDialog,
           ),
           const SizedBox(width: 8),
         ],
@@ -406,7 +405,9 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
                   selected: selected,
                   selectedColor: AppTheme.primary,
                   labelStyle: TextStyle(
-                    color: selected ? Colors.white : AppTheme.getTextColor(context),
+                    color: selected
+                        ? Colors.white
+                        : AppTheme.getTextColor(context),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -489,7 +490,8 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
         label: const Text('Upload Dokumen'),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
     );
@@ -511,14 +513,16 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 18),
+          const Icon(Icons.error_outline_rounded,
+              color: AppTheme.error, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               _error!,
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppTheme.error, fontSize: 12, height: 1.35),
+              style: const TextStyle(
+                  color: AppTheme.error, fontSize: 12, height: 1.35),
             ),
           ),
         ],
@@ -539,7 +543,8 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
             ? const SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                child: CircularProgressIndicator(
+                    strokeWidth: 2.5, color: Colors.white),
               )
             : const Icon(Icons.swap_horiz_rounded, size: 20),
         label: Text(
@@ -552,7 +557,8 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
           disabledBackgroundColor: AppTheme.surfaceMuted,
           disabledForegroundColor: AppTheme.textMuted,
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: _isLoading ? 0 : 2,
         ),
       ),
@@ -582,7 +588,8 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
             IconButton(
               tooltip: 'Salin',
               onPressed: _copyResult,
-              icon: Icon(Icons.copy_rounded, color: AppTheme.getTextSecondary(context), size: 19),
+              icon: Icon(Icons.copy_rounded,
+                  color: AppTheme.getTextSecondary(context), size: 19),
             ),
             IconButton(
               tooltip: 'Hapus hasil',
@@ -591,7 +598,8 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
                   _result = '';
                 });
               },
-              icon: Icon(Icons.delete_outline_rounded, color: AppTheme.getTextSecondary(context), size: 20),
+              icon: Icon(Icons.delete_outline_rounded,
+                  color: AppTheme.getTextSecondary(context), size: 20),
             ),
           ],
         ),
@@ -629,7 +637,8 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
             label: const Text('Paraphrase Lagi'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
             ),
           ),
         ),
@@ -641,87 +650,268 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
   // TOKEN INFO
   // ==========================================================
 
-  void _showTokenInfo(AuthProvider auth) {
+  void _showTokenDialog() {
+    final authProvider = context.read<AuthProvider>();
+    final tokenBalance = authProvider.tokenBalance;
+
+    int selectedCoins = 50;
+    final TextEditingController coinsController =
+        TextEditingController(text: '50');
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          decoration: BoxDecoration(
-            color: AppTheme.getSurface(context),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.getBorder(context),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Token & Top Up',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.textPrimary),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+            final pricePerCoin = 1000;
+            final totalPrice = selectedCoins * pricePerCoin;
+
+            return Padding(
+              padding: EdgeInsets.only(bottom: bottomPadding),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(18),
+                  color: AppTheme.getSurface(context),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24)),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Sisa Token Anda',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Icon(Icons.diamond_rounded, color: Color(0xFFFCD34D), size: 24),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${auth.tokenBalance}',
-                          style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                              color: AppTheme.getBorder(context),
+                              borderRadius: BorderRadius.circular(10)),
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'token',
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Token & Top Up',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: AppTheme.getTextColor(context))),
+                          IconButton(
+                              icon: const Icon(Icons.close_rounded),
+                              onPressed: () => Navigator.pop(ctx)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Sisa Token Card
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.primary,
+                              AppTheme.primary.withValues(alpha: 0.8)
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primary.withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ],
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Sisa Token Anda',
+                                style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.85),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.diamond_rounded,
+                                    color: Color(0xFFFCD34D), size: 24),
+                                const SizedBox(width: 8),
+                                Text('$tokenBalance',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w800)),
+                                const SizedBox(width: 4),
+                                Text('token',
+                                    style: TextStyle(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.7),
+                                        fontSize: 14)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Top Up Section
+                      Text('Top Up Token',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: AppTheme.getTextColor(context))),
+                      const SizedBox(height: 4),
+                      Text('Harga: Rp $pricePerCoin / token',
+                          style: const TextStyle(
+                              color: AppTheme.textSecondary, fontSize: 12)),
+                      const SizedBox(height: 10),
+
+                      // Preset Amount Buttons
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [10, 50, 100, 500, 1000].map((amount) {
+                          final isSelected = selectedCoins == amount;
+                          return GestureDetector(
+                            onTap: () {
+                              setModalState(() {
+                                selectedCoins = amount;
+                                coinsController.text = '$amount';
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppTheme.primary
+                                    : AppTheme.surfaceMuted,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: isSelected
+                                        ? AppTheme.primary
+                                        : AppTheme.borderLight),
+                              ),
+                              child: Text('$amount',
+                                  style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : AppTheme.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13)),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Custom Amount
+                      TextField(
+                        controller: coinsController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Jumlah Token (Min. 10)',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          prefixIcon: const Icon(Icons.diamond_rounded),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
+                        ),
+                        onChanged: (val) {
+                          final parsed = int.tryParse(val);
+                          if (parsed != null) {
+                            setModalState(() => selectedCoins = parsed);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Total Price
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total Harga:',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 13)),
+                            Text('Rp ${totalPrice.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.primary,
+                                    fontSize: 16)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Top Up Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            elevation: 2,
+                          ),
+                          onPressed: selectedCoins < 10
+                              ? null
+                              : () async {
+                                  Navigator.pop(ctx);
+                                  final auth = context.read<AuthProvider>();
+                                  final phone =
+                                      auth.user?.phone?.isNotEmpty == true
+                                          ? auth.user!.phone!
+                                          : '08123456789';
+
+                                  await PaymentSelectionSheet.processDirectQris(
+                                    this.context,
+                                    amount: totalPrice,
+                                    coins: selectedCoins,
+                                    phone: phone,
+                                  );
+
+                                  await auth.refreshUser();
+                                },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.qr_code_2_rounded, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                  'Bayar via QRIS - Rp ${totalPrice.toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -835,8 +1025,7 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
         child: Icon(
           isSelected ? Icons.check_rounded : Icons.smart_toy_outlined,
           size: 18,
-          color:
-              isSelected ? AppTheme.primary : AppTheme.getTextSecondary(ctx),
+          color: isSelected ? AppTheme.primary : AppTheme.getTextSecondary(ctx),
         ),
       ),
       title: Row(
@@ -845,7 +1034,8 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
             child: Text(
               label,
               style: TextStyle(
-                color: isSelected ? AppTheme.primary : AppTheme.getTextColor(ctx),
+                color:
+                    isSelected ? AppTheme.primary : AppTheme.getTextColor(ctx),
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 fontSize: 14,
               ),
@@ -883,7 +1073,6 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
   }
 }
 
-
 // ============================================================
 // TOKEN CHIP
 // ============================================================
@@ -913,7 +1102,8 @@ class _TokenChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.diamond_rounded, color: Color(0xFFF59E0B), size: 15),
+              const Icon(Icons.diamond_rounded,
+                  color: Color(0xFFF59E0B), size: 15),
               const SizedBox(width: 5),
               Flexible(
                 child: Text(

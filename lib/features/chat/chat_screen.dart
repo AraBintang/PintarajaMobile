@@ -33,11 +33,9 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _messageController =
-      TextEditingController();
+  final TextEditingController _messageController = TextEditingController();
 
-  final ScrollController _scrollController =
-      ScrollController();
+  final ScrollController _scrollController = ScrollController();
 
   bool _shouldOpenDrawerAfterSearch = false;
   File? _pendingAttachedFile;
@@ -49,8 +47,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
-        final chat =
-            context.read<ChatProvider>();
+        final chat = context.read<ChatProvider>();
 
         await chat.initializeChat();
 
@@ -87,8 +84,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _messageController.clear();
 
-    final chat =
-        context.read<ChatProvider>();
+    final chat = context.read<ChatProvider>();
 
     await chat.startNewChat();
 
@@ -96,7 +92,6 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    Navigator.pop(context);
     _scrollToBottom();
   }
 
@@ -105,15 +100,13 @@ class _ChatScreenState extends State<ChatScreen> {
   // ==========================================================
 
   Future<void> _sendMessage() async {
-    final message =
-        _messageController.text.trim();
+    final message = _messageController.text.trim();
 
     if (message.isEmpty && _pendingAttachedFile == null) {
       return;
     }
 
-    final chat =
-        context.read<ChatProvider>();
+    final chat = context.read<ChatProvider>();
 
     if (chat.isStreaming) {
       return;
@@ -152,9 +145,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _scrollToBottom();
 
-    await context
-        .read<AuthProvider>()
-        .refreshUser();
+    await context.read<AuthProvider>().refreshUser();
 
     if (!mounted) {
       return;
@@ -175,11 +166,8 @@ class _ChatScreenState extends State<ChatScreen> {
         }
 
         _scrollController.animateTo(
-          _scrollController
-              .position
-              .maxScrollExtent,
-          duration:
-              const Duration(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(
             milliseconds: 280,
           ),
           curve: Curves.easeOut,
@@ -193,27 +181,22 @@ class _ChatScreenState extends State<ChatScreen> {
   // ==========================================================
 
   void _showConversationSearch() {
-    final controller =
-        TextEditingController();
+    final controller = TextEditingController();
 
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor:
-          AppTheme.surfaceLight,
+      backgroundColor: AppTheme.surfaceLight,
       showDragHandle: true,
-      shape:
-          const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
           top: Radius.circular(24),
         ),
       ),
       builder: (sheetContext) {
         return SafeArea(
           child: Padding(
-            padding:
-                EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               16,
               8,
               16,
@@ -223,35 +206,24 @@ class _ChatScreenState extends State<ChatScreen> {
                   ).bottom,
             ),
             child: Column(
-              mainAxisSize:
-                  MainAxisSize.min,
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Cari percakapan',
-                  style:
-                      TextStyle(
-                    color:
-                        AppTheme
-                            .textPrimary,
-                    fontSize:
-                        18,
-                    fontWeight:
-                        FontWeight.w700,
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-
                 const SizedBox(
                   height: 12,
                 ),
-
                 TextField(
-                  controller:
-                      controller,
+                  controller: controller,
                   autofocus: true,
-                  textInputAction:
-                      TextInputAction.search,
+                  textInputAction: TextInputAction.search,
                   onSubmitted: (
                     value,
                   ) {
@@ -260,29 +232,20 @@ class _ChatScreenState extends State<ChatScreen> {
                       sheetContext,
                     );
                   },
-                  decoration:
-                      InputDecoration(
-                    hintText:
-                        'Cari judul percakapan...',
-                    prefixIcon:
-                        const Icon(
-                      Icons
-                          .search_rounded,
+                  decoration: InputDecoration(
+                    hintText: 'Cari judul percakapan...',
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
                     ),
-                    suffixIcon:
-                        IconButton(
-                      onPressed:
-                          () {
+                    suffixIcon: IconButton(
+                      onPressed: () {
                         _searchConversation(
-                          controller
-                              .text,
+                          controller.text,
                           sheetContext,
                         );
                       },
-                      icon:
-                          const Icon(
-                        Icons
-                            .arrow_forward_rounded,
+                      icon: const Icon(
+                        Icons.arrow_forward_rounded,
                       ),
                     ),
                   ),
@@ -311,9 +274,7 @@ class _ChatScreenState extends State<ChatScreen> {
       sheetContext,
     ).pop();
 
-    context
-        .read<ChatProvider>()
-        .loadConversations(
+    context.read<ChatProvider>().loadConversations(
           search: query,
         );
 
@@ -393,12 +354,14 @@ class _ChatScreenState extends State<ChatScreen> {
                             children: chat.aiProviders.map((provider) {
                               return _ProviderOption(
                                 provider: provider,
-                                selected: chat.selectedProviderId == provider.id,
+                                selected:
+                                    chat.selectedProviderId == provider.id,
                                 onTap: () {
                                   if (provider.isLimited) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Model ini telah mencapai limit harian. Silakan upgrade plan atau gunakan model lain.'),
+                                        content: Text(
+                                            'Model ini telah mencapai limit harian. Silakan upgrade plan atau gunakan model lain.'),
                                         behavior: SnackBarBehavior.floating,
                                       ),
                                     );
@@ -430,9 +393,10 @@ class _ChatScreenState extends State<ChatScreen> {
   void _showTokenDialog() {
     final authProvider = context.read<AuthProvider>();
     final tokenBalance = authProvider.tokenBalance;
-    
+
     int selectedCoins = 50;
-    final TextEditingController coinsController = TextEditingController(text: '50');
+    final TextEditingController coinsController =
+        TextEditingController(text: '50');
 
     showModalBottomSheet<void>(
       context: context,
@@ -451,7 +415,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 decoration: BoxDecoration(
                   color: AppTheme.getSurface(context),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24)),
                 ),
                 child: SingleChildScrollView(
                   child: Column(
@@ -460,15 +425,25 @@ class _ChatScreenState extends State<ChatScreen> {
                     children: [
                       Center(
                         child: Container(
-                          width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(color: AppTheme.getBorder(context), borderRadius: BorderRadius.circular(10)),
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                              color: AppTheme.getBorder(context),
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Token & Top Up', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.getTextColor(context))),
-                          IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
+                          Text('Token & Top Up',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: AppTheme.getTextColor(context))),
+                          IconButton(
+                              icon: const Icon(Icons.close_rounded),
+                              onPressed: () => Navigator.pop(ctx)),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -479,7 +454,10 @@ class _ChatScreenState extends State<ChatScreen> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.8)],
+                            colors: [
+                              AppTheme.primary,
+                              AppTheme.primary.withValues(alpha: 0.8)
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -495,15 +473,28 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Sisa Token Anda', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, fontWeight: FontWeight.w600)),
+                            Text('Sisa Token Anda',
+                                style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.85),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600)),
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(Icons.diamond_rounded, color: Color(0xFFFCD34D), size: 24),
+                                const Icon(Icons.diamond_rounded,
+                                    color: Color(0xFFFCD34D), size: 24),
                                 const SizedBox(width: 8),
-                                Text('$tokenBalance', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
+                                Text('$tokenBalance',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w800)),
                                 const SizedBox(width: 4),
-                                Text('token', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14)),
+                                Text('token',
+                                    style: TextStyle(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.7),
+                                        fontSize: 14)),
                               ],
                             ),
                           ],
@@ -512,9 +503,15 @@ class _ChatScreenState extends State<ChatScreen> {
                       const SizedBox(height: 16),
 
                       // Top Up Section
-                      Text('Top Up Token', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.getTextColor(context))),
+                      Text('Top Up Token',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: AppTheme.getTextColor(context))),
                       const SizedBox(height: 4),
-                      Text('Harga: Rp $pricePerCoin / token', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                      Text('Harga: Rp $pricePerCoin / token',
+                          style: const TextStyle(
+                              color: AppTheme.textSecondary, fontSize: 12)),
                       const SizedBox(height: 10),
 
                       // Preset Amount Buttons
@@ -531,13 +528,25 @@ class _ChatScreenState extends State<ChatScreen> {
                               });
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
                               decoration: BoxDecoration(
-                                color: isSelected ? AppTheme.primary : AppTheme.surfaceMuted,
+                                color: isSelected
+                                    ? AppTheme.primary
+                                    : AppTheme.surfaceMuted,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: isSelected ? AppTheme.primary : AppTheme.borderLight),
+                                border: Border.all(
+                                    color: isSelected
+                                        ? AppTheme.primary
+                                        : AppTheme.borderLight),
                               ),
-                              child: Text('$amount', style: TextStyle(color: isSelected ? Colors.white : AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
+                              child: Text('$amount',
+                                  style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : AppTheme.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13)),
                             ),
                           );
                         }).toList(),
@@ -550,10 +559,12 @@ class _ChatScreenState extends State<ChatScreen> {
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           labelText: 'Jumlah Token (Min. 10)',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
                           prefixIcon: const Icon(Icons.diamond_rounded),
                           isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
                         ),
                         onChanged: (val) {
                           final parsed = int.tryParse(val);
@@ -575,8 +586,16 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Total Harga:', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textSecondary, fontSize: 13)),
-                            Text('Rp ${totalPrice.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.primary, fontSize: 16)),
+                            const Text('Total Harga:',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 13)),
+                            Text('Rp ${totalPrice.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.primary,
+                                    fontSize: 16)),
                           ],
                         ),
                       ),
@@ -590,31 +609,39 @@ class _ChatScreenState extends State<ChatScreen> {
                             backgroundColor: AppTheme.primary,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             elevation: 2,
                           ),
-                          onPressed: selectedCoins < 10 ? null : () {
-                            Navigator.pop(ctx);
-                            PaymentSelectionSheet.show(
-                              this.context,
-                              itemTitle: 'Top Up $selectedCoins Token',
-                              amount: totalPrice,
-                              onPaymentSuccess: () async {
-                                await context.read<AuthProvider>().refreshUser();
-                                if (this.context.mounted) {
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    const SnackBar(content: Text('Top up berhasil! Token sudah ditambahkan.')),
+                          onPressed: selectedCoins < 10
+                              ? null
+                              : () async {
+                                  Navigator.pop(ctx);
+                                  final auth = context.read<AuthProvider>();
+                                  final phone =
+                                      auth.user?.phone?.isNotEmpty == true
+                                          ? auth.user!.phone!
+                                          : '08123456789';
+
+                                  await PaymentSelectionSheet.processDirectQris(
+                                    this.context,
+                                    amount: totalPrice,
+                                    coins: selectedCoins,
+                                    phone: phone,
                                   );
-                                }
-                              },
-                            );
-                          },
+
+                                  await auth.refreshUser();
+                                },
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const Icon(Icons.qr_code_2_rounded, size: 20),
                               const SizedBox(width: 8),
-                              Text('Bayar via QRIS - Rp ${totalPrice.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              Text(
+                                  'Bayar via QRIS - Rp ${totalPrice.toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14)),
                             ],
                           ),
                         ),
@@ -652,22 +679,17 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Column(
         children: [
           _buildAppBar(),
-
           Expanded(
-            child:
-                Consumer<ChatProvider>(
+            child: Consumer<ChatProvider>(
               builder: (
                 context,
                 chat,
                 _,
               ) {
-                if (chat.isLoading &&
-                    chat.messages.isEmpty) {
+                if (chat.isLoading && chat.messages.isEmpty) {
                   return const Center(
-                    child:
-                        CircularProgressIndicator(
-                      color:
-                          AppTheme.primary,
+                    child: CircularProgressIndicator(
+                      color: AppTheme.primary,
                     ),
                   );
                 }
@@ -677,45 +699,36 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
 
                 return ListView.builder(
-                  controller:
-                      _scrollController,
-                  padding:
-                      const EdgeInsets
-                          .fromLTRB(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.fromLTRB(
                     16,
                     14,
                     16,
                     20,
                   ),
-                  itemCount:
-                      chat.messages.length,
+                  itemCount: chat.messages.length,
                   itemBuilder: (
                     context,
                     index,
                   ) {
                     return _MessageBubble(
-                      message:
-                          chat.messages[index],
+                      message: chat.messages[index],
                     );
                   },
                 );
               },
             ),
           ),
-
           Consumer<ChatProvider>(
             builder: (
               context,
               chat,
               _,
             ) {
-              final error =
-                  chat.error;
+              final error = chat.error;
 
-              if (error == null ||
-                  error.trim().isEmpty) {
-                return const SizedBox
-                    .shrink();
+              if (error == null || error.trim().isEmpty) {
+                return const SizedBox.shrink();
               }
 
               return _buildError(
@@ -723,12 +736,9 @@ class _ChatScreenState extends State<ChatScreen> {
               );
             },
           ),
-
           _ChatInput(
-            controller:
-                _messageController,
-            onSend:
-                _sendMessage,
+            controller: _messageController,
+            onSend: _sendMessage,
             attachedFile: _pendingAttachedFile,
             attachedFileName: _pendingAttachedFileName,
             onFileChanged: (file) {
@@ -753,231 +763,160 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildAppBar() {
     return Builder(builder: (context) {
-    final tokenBalance =
-        context
-            .watch<AuthProvider>()
-            .tokenBalance;
+      final tokenBalance = context.watch<AuthProvider>().tokenBalance;
 
-    return Container(
-      height: 62,
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 8,
-      ),
-      decoration:
-          const BoxDecoration(
-        color:
-            AppTheme.backgroundApp,
-        border:
-            Border(
-          bottom:
-              BorderSide(
-            color:
-                AppTheme.borderLight,
-            width:
-                0.7,
+      return Container(
+        height: 62,
+        padding: const EdgeInsets.only(
+          left: 8,
+          right: 0,
+        ),
+        decoration: const BoxDecoration(
+          color: AppTheme.backgroundApp,
+          border: Border(
+            bottom: BorderSide(
+              color: AppTheme.borderLight,
+              width: 0.7,
+            ),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          // MENU
-          Material(
-            color:
-                Colors.transparent,
-            borderRadius:
-                BorderRadius.circular(
-              12,
-            ),
-            child:
-                InkWell(
-              onTap: () {
-                FocusScope.of(context).unfocus();
-                Scaffold.of(context).openDrawer();
-              },
-              borderRadius:
-                  BorderRadius.circular(
+        child: Row(
+          children: [
+            // MENU
+            Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(
                 12,
               ),
-              child:
-                  const Padding(
-                padding:
-                    EdgeInsets.all(
-                  10,
+              child: InkWell(
+                onTap: () {
+                  FocusScope.of(context).unfocus();
+                  Scaffold.of(context).openDrawer();
+                },
+                borderRadius: BorderRadius.circular(
+                  12,
                 ),
-                child:
-                    Icon(
-                  Icons.menu_rounded,
-                  color:
-                      AppTheme
-                          .textPrimary,
-                  size:
-                      25,
+                child: const Padding(
+                  padding: EdgeInsets.all(
+                    10,
+                  ),
+                  child: Icon(
+                    Icons.menu_rounded,
+                    color: AppTheme.textPrimary,
+                    size: 25,
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // LOGO
-          Image.asset(
-            'assets/images/pintaraja.webp',
-            width: 30,
-            height: 30,
-            fit:
-                BoxFit.contain,
-          ),
+            // LOGO
+            Image.asset(
+              'assets/images/pintaraja.webp',
+              width: 30,
+              height: 30,
+              fit: BoxFit.contain,
+            ),
 
-          const SizedBox(
-            width: 2,
-          ),
+            const SizedBox(
+              width: 2,
+            ),
 
-          const Flexible(
-            child:
-                Text(
-              'intaraja',
-              maxLines: 1,
-              overflow:
-                  TextOverflow.ellipsis,
-              style:
-                  TextStyle(
-                color:
-                    AppTheme
-                        .textPrimary,
-                fontSize:
-                    18,
-                fontWeight:
-                    FontWeight.w700,
-                letterSpacing:
-                    -0.6,
+            const Flexible(
+              child: Text(
+                'intaraja',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.6,
+                ),
               ),
             ),
-          ),
 
-          const Spacer(),
+            const Spacer(),
 
-          // TOKEN
-          GestureDetector(
-            onTap:
-                _showTokenDialog,
-            child:
-                Container(
-              constraints:
-                  const BoxConstraints(
-                maxWidth:
-                    72,
-              ),
-              padding:
-                  const EdgeInsets
-                      .symmetric(
-                horizontal:
-                    8,
-                vertical:
-                    6,
-              ),
-              decoration:
-                  BoxDecoration(
-                color:
-                    AppTheme
-                        .surfaceMuted,
-                borderRadius:
-                    BorderRadius
-                        .circular(
-                  20,
+            // TOKEN
+            GestureDetector(
+              onTap: _showTokenDialog,
+              child: Container(
+                constraints: const BoxConstraints(
+                  maxWidth: 72,
                 ),
-                border:
-                    Border.all(
-                  color:
-                      AppTheme
-                          .borderLight,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 6,
                 ),
-              ),
-              child:
-                  Row(
-                mainAxisSize:
-                    MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons
-                        .diamond_rounded,
-                    color:
-                        Color(
-                      0xFFF59E0B,
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceMuted,
+                  borderRadius: BorderRadius.circular(
+                    20,
+                  ),
+                  border: Border.all(
+                    color: AppTheme.borderLight,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.diamond_rounded,
+                      color: Color(
+                        0xFFF59E0B,
+                      ),
+                      size: 15,
                     ),
-                    size:
-                        15,
-                  ),
-                  const SizedBox(
-                    width: 4,
-                  ),
-                  Flexible(
-                    child:
-                        Text(
-                      '$tokenBalance',
-                      maxLines:
-                          1,
-                      overflow:
-                          TextOverflow
-                              .ellipsis,
-                      style:
-                          const TextStyle(
-                        color:
-                            AppTheme
-                                .textPrimary,
-                        fontSize:
-                            11,
-                        fontWeight:
-                            FontWeight
-                                .w700,
+                    const SizedBox(
+                      width: 4,
+                    ),
+                    Flexible(
+                      child: Text(
+                        '$tokenBalance',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          const SizedBox(
-            width: 3,
-          ),
-
-          // NEW CHAT
-          Material(
-            color:
-                Colors.transparent,
-            borderRadius:
-                BorderRadius.circular(
-              12,
+            const SizedBox(
+              width: 3,
             ),
-            child:
-                InkWell(
-              onTap:
-                  _startNewChat,
-              borderRadius:
-                  BorderRadius.circular(
+
+            // NEW CHAT
+            Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(
                 12,
               ),
-              child:
-                  const Padding(
-                padding:
-                    EdgeInsets.all(
-                  10,
+              child: InkWell(
+                onTap: _startNewChat,
+                borderRadius: BorderRadius.circular(
+                  12,
                 ),
-                child:
-                    Icon(
-                  Icons
-                      .add_comment_outlined,
-                  color:
-                      AppTheme
-                          .textPrimary,
-                  size:
-                      22,
+                child: const Padding(
+                  padding: EdgeInsets.all(
+                    10,
+                  ),
+                  child: Icon(
+                    Icons.add_comment_outlined,
+                    color: AppTheme.textPrimary,
+                    size: 22,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
     });
   }
 
@@ -985,67 +924,47 @@ class _ChatScreenState extends State<ChatScreen> {
     String error,
   ) {
     return Container(
-      margin:
-          const EdgeInsets.fromLTRB(
+      margin: const EdgeInsets.fromLTRB(
         16,
         4,
         16,
         8,
       ),
-      padding:
-          const EdgeInsets.all(
+      padding: const EdgeInsets.all(
         11,
       ),
-      decoration:
-          BoxDecoration(
-        color:
-            AppTheme.error.withValues(
+      decoration: BoxDecoration(
+        color: AppTheme.error.withValues(
           alpha: 0.10,
         ),
-        borderRadius:
-            BorderRadius.circular(
+        borderRadius: BorderRadius.circular(
           12,
         ),
-        border:
-            Border.all(
-          color:
-              AppTheme.error
-                  .withValues(
+        border: Border.all(
+          color: AppTheme.error.withValues(
             alpha: 0.25,
           ),
         ),
       ),
-      child:
-          Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(
-            Icons
-                .error_outline_rounded,
-            color:
-                AppTheme.error,
-            size:
-                18,
+            Icons.error_outline_rounded,
+            color: AppTheme.error,
+            size: 18,
           ),
           const SizedBox(
             width: 8,
           ),
           Expanded(
-            child:
-                Text(
+            child: Text(
               error,
-              maxLines:
-                  4,
-              overflow:
-                  TextOverflow
-                      .ellipsis,
-              style:
-                  const TextStyle(
-                color:
-                    AppTheme.error,
-                fontSize:
-                    12,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppTheme.error,
+                fontSize: 12,
               ),
             ),
           ),
@@ -1063,8 +982,7 @@ class _ChatScreenState extends State<ChatScreen> {
 // EMPTY CHAT
 // ============================================================
 
-class _EmptyChat
-    extends StatelessWidget {
+class _EmptyChat extends StatelessWidget {
   const _EmptyChat();
 
   @override
@@ -1072,113 +990,69 @@ class _EmptyChat
     BuildContext context,
   ) {
     return Center(
-      child:
-          SingleChildScrollView(
-        padding:
-            const EdgeInsets
-                .symmetric(
-          horizontal:
-              28,
-          vertical:
-              24,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 28,
+          vertical: 24,
         ),
-        child:
-            Column(
-          mainAxisSize:
-              MainAxisSize.min,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width:
-                  78,
-              height:
-                  78,
-              decoration:
-                  BoxDecoration(
-                color:
-                    AppTheme
-                        .primary
-                        .withValues(
-                  alpha:
-                      0.10,
+              width: 78,
+              height: 78,
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(
+                  alpha: 0.10,
                 ),
-                shape:
-                    BoxShape.circle,
+                shape: BoxShape.circle,
               ),
-              child:
-                  const Icon(
-                Icons
-                    .auto_awesome_rounded,
-                color:
-                    AppTheme.primary,
-                size:
-                    36,
+              child: const Icon(
+                Icons.auto_awesome_rounded,
+                color: AppTheme.primary,
+                size: 36,
               ),
             ),
-
             const SizedBox(
               height: 20,
             ),
-
             const Text(
               'Tanya apa saja',
-              textAlign:
-                  TextAlign.center,
-              style:
-                  TextStyle(
-                color:
-                    AppTheme
-                        .textPrimary,
-                fontSize:
-                    21,
-                fontWeight:
-                    FontWeight.w700,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 21,
+                fontWeight: FontWeight.w700,
               ),
             ),
-
             const SizedBox(
               height: 8,
             ),
-
             const Text(
               'Gunakan PintarAja untuk membantu tugas, riset, ide, dan berbagai kebutuhan akademikmu.',
-              textAlign:
-                  TextAlign.center,
-              style:
-                  TextStyle(
-                color:
-                    AppTheme
-                        .textSecondary,
-                fontSize:
-                    13,
-                height:
-                    1.5,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 13,
+                height: 1.5,
               ),
             ),
-
             const SizedBox(
               height: 20,
             ),
-
             const Wrap(
-              alignment:
-                  WrapAlignment
-                      .center,
-              spacing:
-                  8,
-              runSpacing:
-                  8,
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 _SuggestionButton(
-                  text:
-                      'Bantu tugas kuliah',
+                  text: 'Bantu tugas kuliah',
                 ),
                 _SuggestionButton(
-                  text:
-                      'Buat ide skripsi',
+                  text: 'Buat ide skripsi',
                 ),
                 _SuggestionButton(
-                  text:
-                      'Ringkas teks',
+                  text: 'Ringkas teks',
                 ),
               ],
             ),
@@ -1193,8 +1067,7 @@ class _EmptyChat
 // SUGGESTION BUTTON
 // ============================================================
 
-class _SuggestionButton
-    extends StatelessWidget {
+class _SuggestionButton extends StatelessWidget {
   final String text;
 
   const _SuggestionButton({
@@ -1206,77 +1079,48 @@ class _SuggestionButton
     BuildContext context,
   ) {
     return GestureDetector(
-      onTap:
-          () {
-        final state =
-            context
-                .findAncestorStateOfType<
-                    _ChatScreenState>();
+      onTap: () {
+        final state = context.findAncestorStateOfType<_ChatScreenState>();
 
         if (state == null) {
           return;
         }
 
-        state
-            ._messageController
-            .text = text;
+        state._messageController.text = text;
 
         state._sendMessage();
       },
-      child:
-          Container(
-        constraints:
-            const BoxConstraints(
-          maxWidth:
-              170,
+      child: Container(
+        constraints: const BoxConstraints(
+          maxWidth: 170,
         ),
-        padding:
-            const EdgeInsets
-                .symmetric(
-          horizontal:
-              13,
-          vertical:
-              9,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 13,
+          vertical: 9,
         ),
-        decoration:
-            BoxDecoration(
-          color:
-              AppTheme
-                  .surfaceLight,
-          borderRadius:
-              BorderRadius.circular(
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceLight,
+          borderRadius: BorderRadius.circular(
             20,
           ),
-          border:
-              Border.all(
-            color:
-                AppTheme
-                    .borderLight,
+          border: Border.all(
+            color: AppTheme.borderLight,
           ),
         ),
-        child:
-            Text(
+        child: Text(
           text,
-          maxLines:
-              1,
-          overflow:
-              TextOverflow.ellipsis,
-          style:
-              const TextStyle(
-            color:
-                AppTheme
-                    .textSecondary,
-            fontSize:
-                11.5,
-            fontWeight:
-                FontWeight.w500,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppTheme.textSecondary,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
     );
   }
 }
-
 
 // ============================================================
 // MESSAGE BUBBLE
@@ -1298,7 +1142,8 @@ class _MessageBubble extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 18),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           if (!isUser)
             Container(
@@ -1328,11 +1173,13 @@ class _MessageBubble extends StatelessWidget {
                     bottomLeft: Radius.circular(isUser ? 18 : 5),
                     bottomRight: Radius.circular(isUser ? 5 : 18),
                   ),
-                  border: isUser ? null : Border.all(color: AppTheme.borderLight),
+                  border:
+                      isUser ? null : Border.all(color: AppTheme.borderLight),
                 ),
                 child: Builder(builder: (context) {
                   // Check if content is a JSON array
-                  if (message.content.trim().startsWith('[') && message.content.trim().endsWith(']')) {
+                  if (message.content.trim().startsWith('[') &&
+                      message.content.trim().endsWith(']')) {
                     try {
                       final parsed = jsonDecode(message.content);
                       if (parsed is List) {
@@ -1343,17 +1190,26 @@ class _MessageBubble extends StatelessWidget {
                               if (part['type'] == 'text') {
                                 return Text(
                                   part['text'] ?? '',
-                                  style: TextStyle(color: isUser ? Colors.white : AppTheme.textPrimary, fontSize: 14, height: 1.5),
+                                  style: TextStyle(
+                                      color: isUser
+                                          ? Colors.white
+                                          : AppTheme.textPrimary,
+                                      fontSize: 14,
+                                      height: 1.5),
                                 );
                               } else if (part['type'] == 'image_url') {
                                 final url = part['image_url']['url'];
-                                if (url != null && url.toString().startsWith('data:image')) {
-                                  final base64Str = url.toString().split(',').last;
+                                if (url != null &&
+                                    url.toString().startsWith('data:image')) {
+                                  final base64Str =
+                                      url.toString().split(',').last;
                                   return Padding(
                                     padding: const EdgeInsets.only(top: 8.0),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
-                                      child: Image.memory(base64Decode(base64Str), fit: BoxFit.cover),
+                                      child: Image.memory(
+                                          base64Decode(base64Str),
+                                          fit: BoxFit.cover),
                                     ),
                                   );
                                 }
@@ -1361,13 +1217,19 @@ class _MessageBubble extends StatelessWidget {
                                 return Container(
                                   margin: const EdgeInsets.only(top: 8),
                                   padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)),
+                                  decoration: BoxDecoration(
+                                      color: Colors.white24,
+                                      borderRadius: BorderRadius.circular(8)),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.insert_drive_file, color: Colors.white, size: 16),
+                                      const Icon(Icons.insert_drive_file,
+                                          color: Colors.white, size: 16),
                                       const SizedBox(width: 4),
-                                      Text(part['name'] ?? 'File', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                                      Text(part['name'] ?? 'File',
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12)),
                                     ],
                                   ),
                                 );
@@ -1381,7 +1243,7 @@ class _MessageBubble extends StatelessWidget {
                       // fallback
                     }
                   }
-                  
+
                   if (isUser) {
                     return Text(
                       message.content,
@@ -1519,12 +1381,14 @@ class _ChatInputState extends State<_ChatInput> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_library_rounded, color: AppTheme.primary),
+                leading: const Icon(Icons.photo_library_rounded,
+                    color: AppTheme.primary),
                 title: const Text('Pilih Foto / Gambar'),
                 onTap: () async {
                   Navigator.pop(ctx);
                   final picker = ImagePicker();
-                  final picked = await picker.pickImage(source: ImageSource.gallery);
+                  final picked =
+                      await picker.pickImage(source: ImageSource.gallery);
                   if (picked != null) {
                     widget.onFileChanged(File(picked.path));
                     widget.onFileNameChanged(picked.name);
@@ -1532,12 +1396,14 @@ class _ChatInputState extends State<_ChatInput> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt_rounded, color: AppTheme.primary),
+                leading: const Icon(Icons.camera_alt_rounded,
+                    color: AppTheme.primary),
                 title: const Text('Ambil Foto Kamera'),
                 onTap: () async {
                   Navigator.pop(ctx);
                   final picker = ImagePicker();
-                  final picked = await picker.pickImage(source: ImageSource.camera);
+                  final picked =
+                      await picker.pickImage(source: ImageSource.camera);
                   if (picked != null) {
                     widget.onFileChanged(File(picked.path));
                     widget.onFileNameChanged(picked.name);
@@ -1545,7 +1411,8 @@ class _ChatInputState extends State<_ChatInput> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.insert_drive_file_rounded, color: AppTheme.primary),
+                leading: const Icon(Icons.insert_drive_file_rounded,
+                    color: AppTheme.primary),
                 title: const Text('Pilih Dokumen File'),
                 onTap: () async {
                   Navigator.pop(ctx);
@@ -1593,20 +1460,35 @@ class _ChatInputState extends State<_ChatInput> {
                     decoration: BoxDecoration(
                       color: AppTheme.surfaceLight,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                      border: Border.all(
+                          color: AppTheme.primary.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
-                        if (widget.attachedFileName != null && (widget.attachedFileName!.toLowerCase().endsWith('.jpg') || widget.attachedFileName!.toLowerCase().endsWith('.jpeg') || widget.attachedFileName!.toLowerCase().endsWith('.png')))
+                        if (widget.attachedFileName != null &&
+                            (widget.attachedFileName!
+                                    .toLowerCase()
+                                    .endsWith('.jpg') ||
+                                widget.attachedFileName!
+                                    .toLowerCase()
+                                    .endsWith('.jpeg') ||
+                                widget.attachedFileName!
+                                    .toLowerCase()
+                                    .endsWith('.png')))
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.file(widget.attachedFile!, width: 40, height: 40, fit: BoxFit.cover),
+                            child: Image.file(widget.attachedFile!,
+                                width: 40, height: 40, fit: BoxFit.cover),
                           )
                         else
                           Container(
-                            width: 40, height: 40,
-                            decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                            child: const Icon(Icons.insert_drive_file_rounded, color: AppTheme.primary, size: 24),
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                                color: AppTheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8)),
+                            child: const Icon(Icons.insert_drive_file_rounded,
+                                color: AppTheme.primary, size: 24),
                           ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -1614,11 +1496,15 @@ class _ChatInputState extends State<_ChatInput> {
                             widget.attachedFileName ?? 'Lampiran terpilih',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 20, color: AppTheme.textMuted),
+                          icon: const Icon(Icons.close_rounded,
+                              size: 20, color: AppTheme.textMuted),
                           onPressed: () {
                             widget.onFileChanged(null);
                             widget.onFileNameChanged(null);
@@ -1672,12 +1558,14 @@ class _ChatInputState extends State<_ChatInput> {
                       // MODEL SELECTOR BUTTON
                       GestureDetector(
                         onTap: () {
-                          final chatScreenState = context.findAncestorStateOfType<_ChatScreenState>();
+                          final chatScreenState = context
+                              .findAncestorStateOfType<_ChatScreenState>();
                           chatScreenState?._showModelSelector();
                         },
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 4, right: 4),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 8),
                           decoration: BoxDecoration(
                             color: AppTheme.surfaceMuted,
                             borderRadius: BorderRadius.circular(16),
@@ -1687,7 +1575,8 @@ class _ChatInputState extends State<_ChatInput> {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              const Icon(Icons.auto_awesome_rounded, color: AppTheme.primary, size: 13),
+                              const Icon(Icons.auto_awesome_rounded,
+                                  color: AppTheme.primary, size: 13),
                               const SizedBox(width: 3),
                               ConstrainedBox(
                                 constraints: const BoxConstraints(maxWidth: 70),
@@ -1703,7 +1592,8 @@ class _ChatInputState extends State<_ChatInput> {
                                 ),
                               ),
                               const SizedBox(width: 1),
-                              const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textSecondary, size: 13),
+                              const Icon(Icons.keyboard_arrow_down_rounded,
+                                  color: AppTheme.textSecondary, size: 13),
                             ],
                           ),
                         ),
@@ -1716,7 +1606,9 @@ class _ChatInputState extends State<_ChatInput> {
                           height: 40,
                           margin: const EdgeInsets.only(bottom: 4),
                           decoration: BoxDecoration(
-                            color: chat.isStreaming ? AppTheme.surfaceMuted : AppTheme.primary,
+                            color: chat.isStreaming
+                                ? AppTheme.surfaceMuted
+                                : AppTheme.primary,
                             shape: BoxShape.circle,
                           ),
                           child: chat.isStreaming
@@ -1763,14 +1655,14 @@ class _ProviderOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleColor = selected
-        ? AppTheme.primary
-        : AppTheme.textPrimary;
+    final titleColor = selected ? AppTheme.primary : AppTheme.textPrimary;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Material(
-        color: selected ? AppTheme.primary.withValues(alpha: 0.06) : Colors.transparent,
+        color: selected
+            ? AppTheme.primary.withValues(alpha: 0.06)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
@@ -1796,14 +1688,29 @@ class _ProviderOption extends StatelessWidget {
                         style: TextStyle(
                           color: titleColor,
                           fontSize: 13.5,
-                          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight:
+                              selected ? FontWeight.w700 : FontWeight.w500,
                         ),
                       ),
+                      if (provider.quota.limit > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            'Sisa ${provider.quota.remaining} dari ${provider.quota.limit} limit harian',
+                            style: TextStyle(
+                              color: provider.quota.remaining <= 0
+                                  ? AppTheme.error
+                                  : AppTheme.textSecondary,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
                 if (selected)
-                  const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 20),
+                  const Icon(Icons.check_circle_rounded,
+                      color: AppTheme.primary, size: 20),
               ],
             ),
           ),
@@ -1812,4 +1719,3 @@ class _ProviderOption extends StatelessWidget {
     );
   }
 }
-

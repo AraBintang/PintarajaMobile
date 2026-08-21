@@ -20,20 +20,15 @@ class NewPasswordScreen extends StatefulWidget {
   });
 
   @override
-  State<NewPasswordScreen> createState() =>
-      _NewPasswordScreenState();
+  State<NewPasswordScreen> createState() => _NewPasswordScreenState();
 }
 
-class _NewPasswordScreenState
-    extends State<NewPasswordScreen> {
-  final _formKey =
-      GlobalKey<FormState>();
+class _NewPasswordScreenState extends State<NewPasswordScreen> {
+  final _formKey = GlobalKey<FormState>();
 
-  final _passwordController =
-      TextEditingController();
+  final _passwordController = TextEditingController();
 
-  final _confirmPasswordController =
-      TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
@@ -68,8 +63,7 @@ class _NewPasswordScreenState
         {
           'email': widget.email,
           'token': widget.token,
-          'password':
-              _passwordController.text,
+          'password': _passwordController.text,
         },
         useAuth: false,
       );
@@ -84,8 +78,7 @@ class _NewPasswordScreenState
         builder: (_) {
           return AlertDialog(
             shape: RoundedRectangleBorder(
-              borderRadius:
-                  BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(18),
             ),
             title: const Text(
               'Password berhasil diubah',
@@ -117,14 +110,11 @@ class _NewPasswordScreenState
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),
-          backgroundColor:
-              AppTheme.error,
-          behavior:
-              SnackBarBehavior.floating,
+          backgroundColor: AppTheme.error,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     } catch (_) {
@@ -132,16 +122,13 @@ class _NewPasswordScreenState
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Terjadi kesalahan saat mengubah password.',
           ),
-          backgroundColor:
-              AppTheme.error,
-          behavior:
-              SnackBarBehavior.floating,
+          backgroundColor: AppTheme.error,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     } finally {
@@ -162,230 +149,164 @@ class _NewPasswordScreenState
     BuildContext context,
   ) {
     return Scaffold(
-      backgroundColor:
-          AppTheme.backgroundLight,
+      backgroundColor: AppTheme.backgroundLight,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding:
-                const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Container(
               width: double.infinity,
-              padding:
-                  const EdgeInsets.all(24),
-              decoration:
-                  BoxDecoration(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius:
-                    BorderRadius.circular(
+                borderRadius: BorderRadius.circular(
                   24,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black
-                        .withValues(
+                    color: Colors.black.withValues(
                       alpha: 0.05,
                     ),
                     blurRadius: 30,
-                    offset:
-                        const Offset(0, 12),
+                    offset: const Offset(0, 12),
                   ),
                 ],
               ),
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Create new password',
                       style: TextStyle(
-                        color: AppTheme
-                            .textPrimary,
+                        color: AppTheme.textPrimary,
                         fontSize: 25,
-                        fontWeight:
-                            FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-
                     const SizedBox(
                       height: 8,
                     ),
-
                     Text(
                       'Buat password baru untuk ${widget.email}.',
-                      style:
-                          const TextStyle(
-                        color: AppTheme
-                            .textSecondary,
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
                         fontSize: 13,
                         height: 1.5,
                       ),
                     ),
-
                     const SizedBox(
                       height: 28,
                     ),
-
                     const Text(
                       'New password',
-                      style:
-                          TextStyle(
-                        color: AppTheme
-                            .textSecondary,
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
                         fontSize: 12.5,
-                        fontWeight:
-                            FontWeight.w500,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-
                     const SizedBox(
                       height: 8,
                     ),
-
                     TextFormField(
-                      controller:
-                          _passwordController,
-                      obscureText:
-                          _obscurePassword,
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
                       validator: (value) {
-                        final password =
-                            value ?? '';
+                        final password = value ?? '';
 
-                        if (password
-                            .isEmpty) {
+                        if (password.isEmpty) {
                           return 'Password wajib diisi';
                         }
 
-                        if (password.length <
-                            8) {
+                        if (password.length < 8) {
                           return 'Password minimal 8 karakter';
                         }
 
                         return null;
                       },
-                      decoration:
-                          InputDecoration(
-                        hintText:
-                            'Minimal 8 karakter',
-                        prefixIcon:
-                            const Icon(
-                          Icons
-                              .lock_outline_rounded,
+                      decoration: InputDecoration(
+                        hintText: 'Minimal 8 karakter',
+                        prefixIcon: const Icon(
+                          Icons.lock_outline_rounded,
                         ),
-                        suffixIcon:
-                            IconButton(
+                        suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
-                              _obscurePassword =
-                                  !_obscurePassword;
+                              _obscurePassword = !_obscurePassword;
                             });
                           },
                           icon: Icon(
                             _obscurePassword
-                                ? Icons
-                                    .visibility_outlined
-                                : Icons
-                                    .visibility_off_outlined,
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
                           ),
                         ),
                       ),
                     ),
-
                     const SizedBox(
                       height: 18,
                     ),
-
                     const Text(
                       'Confirm password',
-                      style:
-                          TextStyle(
-                        color: AppTheme
-                            .textSecondary,
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
                         fontSize: 12.5,
-                        fontWeight:
-                            FontWeight.w500,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-
                     const SizedBox(
                       height: 8,
                     ),
-
                     TextFormField(
-                      controller:
-                          _confirmPasswordController,
-                      obscureText:
-                          _obscureConfirm,
+                      controller: _confirmPasswordController,
+                      obscureText: _obscureConfirm,
                       validator: (value) {
-                        if (value == null ||
-                            value.isEmpty) {
+                        if (value == null || value.isEmpty) {
                           return 'Konfirmasi password wajib diisi';
                         }
 
-                        if (value !=
-                            _passwordController
-                                .text) {
+                        if (value != _passwordController.text) {
                           return 'Password tidak sama';
                         }
 
                         return null;
                       },
-                      decoration:
-                          InputDecoration(
-                        hintText:
-                            'Ulangi password',
-                        prefixIcon:
-                            const Icon(
-                          Icons
-                              .lock_outline_rounded,
+                      decoration: InputDecoration(
+                        hintText: 'Ulangi password',
+                        prefixIcon: const Icon(
+                          Icons.lock_outline_rounded,
                         ),
-                        suffixIcon:
-                            IconButton(
+                        suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
-                              _obscureConfirm =
-                                  !_obscureConfirm;
+                              _obscureConfirm = !_obscureConfirm;
                             });
                           },
                           icon: Icon(
                             _obscureConfirm
-                                ? Icons
-                                    .visibility_outlined
-                                : Icons
-                                    .visibility_off_outlined,
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
                           ),
                         ),
                       ),
                     ),
-
                     const SizedBox(
                       height: 24,
                     ),
-
                     SizedBox(
-                      width:
-                          double.infinity,
+                      width: double.infinity,
                       height: 50,
-                      child:
-                          ElevatedButton(
-                        onPressed:
-                            _loading
-                                ? null
-                                : _resetPassword,
+                      child: ElevatedButton(
+                        onPressed: _loading ? null : _resetPassword,
                         child: _loading
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child:
-                                    CircularProgressIndicator(
-                                  strokeWidth:
-                                      2.2,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<
-                                          Color>(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
                                     Colors.white,
                                   ),
                                 ),
@@ -395,21 +316,17 @@ class _NewPasswordScreenState
                               ),
                       ),
                     ),
-
                     const SizedBox(
                       height: 18,
                     ),
-
                     Center(
-                      child:
-                          TextButton(
+                      child: TextButton(
                         onPressed: () {
                           context.go(
                             '/auth/login',
                           );
                         },
-                        child:
-                            const Text(
+                        child: const Text(
                           'Back to login',
                         ),
                       ),

@@ -10,19 +10,19 @@ class ApiConstants {
   // BASE
   // ==========================================================
 
-  static const String baseUrl =
-      'https://pintaraja.com/api';
+  static const String baseUrl = 'https://pintaraja.com/api';
 
   // ==========================================================
   // TRIPAY
   // ==========================================================
-  
+
   static const String tripayApiKey = '6GaMeHd4kMtp9T3MV3bbVg2RpcDhabzKvcey1KiK';
   static const String tripayPrivateKey = '0NCKW-6RXt6-znZRJ-A9rzm-T59DV';
   static const String tripayMerchantCode = 'T38245';
-  
+
   // URL untuk mendapatkan daftar channel pembayaran
-  static const String tripayChannelsUrl = 'https://tripay.co.id/api/merchant/payment-channel';
+  static const String tripayChannelsUrl =
+      'https://tripay.co.id/api/merchant/payment-channel';
 
   // ==========================================================
   // AUTH
@@ -35,65 +35,49 @@ class ApiConstants {
 // POST /new-password
   // ==========================================================
 
-  static const String login =
-      '$baseUrl/login';
+  static const String login = '$baseUrl/login';
 
-  static const String loginGoogle =
-      '$baseUrl/auth/google';
+  static const String loginGoogle = '$baseUrl/auth/google';
 
-  static const String register =
-      '$baseUrl/register';
+  static const String register = '$baseUrl/register';
 
-  static const String verifyOtp =
-      '$baseUrl/verify-otp';
+  static const String verifyOtp = '$baseUrl/verify-otp';
 
-  static const String resendOtp =
-      '$baseUrl/resend-otp';
+  static const String resendOtp = '$baseUrl/resend-otp';
 
-  static const String forgotPassword =
-      '$baseUrl/forgot-password';
+  static const String forgotPassword = '$baseUrl/forgot-password';
 
-  static const String newPassword =
-      '$baseUrl/new-password';
+  static const String newPassword = '$baseUrl/new-password';
 
-  static const String logout =
-      '$baseUrl/logout';
+  static const String logout = '$baseUrl/logout';
 
   // ==========================================================
   // PROFILE
   // ==========================================================
 
-  static const String profile =
-      '$baseUrl/profiles';
+  static const String profile = '$baseUrl/profiles';
 
-  static const String user =
-      '$baseUrl/profiles';
+  static const String user = '$baseUrl/profiles';
 
-  static const String updateProfile =
-      '$baseUrl/profiles';
+  static const String updateProfile = '$baseUrl/profiles';
 
-  static const String changePassword =
-      '$baseUrl/profiles/password';
+  static const String changePassword = '$baseUrl/profiles/password';
 
-  static const String redeemCoupon =
-      '$baseUrl/profiles/redeem';
+  static const String redeemCoupon = '$baseUrl/profiles/redeem';
 
   // ==========================================================
   // CONVERSATIONS
   // ==========================================================
 
-  static const String conversations =
-      '$baseUrl/convers';
+  static const String conversations = '$baseUrl/convers';
 
   // ==========================================================
   // CHAT / AI
   // ==========================================================
 
-  static const String chats =
-      '$baseUrl/chats';
+  static const String chats = '$baseUrl/chats';
 
-  static const String chat =
-      '$baseUrl/chats';
+  static const String chat = '$baseUrl/chats';
 
   static String conversationChats(
     int conversationId,
@@ -101,88 +85,71 @@ class ApiConstants {
     return '$chats/$conversationId';
   }
 
-  static const String chatUpload =
-      '$chats/upload';
+  static const String chatUpload = '$chats/upload';
 
-  static const String chatDeleteFile =
-      '$chats/delete';
+  static const String chatDeleteFile = '$chats/delete';
 
-  static const String chatGenerateFromFile =
-      '$chats/gff';
+  static const String chatGenerateFromFile = '$chats/gff';
 
   // ==========================================================
   // IMAGE / VIDEO
   // ==========================================================
 
-  static const String imageGenerator =
-      '$baseUrl/generate-image';
+  static const String imageGenerator = '$baseUrl/generate-image';
 
-  static const String videoGenerator =
-      '$baseUrl/generate-video';
+  static const String videoGenerator = '$baseUrl/generate-video';
 
   // ==========================================================
   // WRITER
   // ==========================================================
 
-  static const String writer =
-      '$baseUrl/writers';
+  static const String writer = '$baseUrl/writers';
 
-  static const String writerFiles =
-      '$baseUrl/writers/files';
+  static const String writerFiles = '$baseUrl/writers/files';
 
-  static const String writerUploadFile =
-      '$baseUrl/writers/upload-file';
+  static const String writerUploadFile = '$baseUrl/writers/upload-file';
 
-  static const String writerDeleteFile =
-      '$baseUrl/writers/delete-file';
+  static const String writerDeleteFile = '$baseUrl/writers/delete-file';
 
   // ==========================================================
   // PROMPTS
   // ==========================================================
 
-  static const String prompts =
-      '$baseUrl/prompts';
+  static const String prompts = '$baseUrl/prompts';
 
   // ==========================================================
   // WORKBOOKS
   // ==========================================================
 
-  static const String workbooks =
-      '$baseUrl/workbooks';
+  static const String workbooks = '$baseUrl/workbooks';
 
   // ==========================================================
   // DOCUMENTS
   // ==========================================================
 
-  static const String documents =
-      '$baseUrl/documents';
+  static const String documents = '$baseUrl/documents';
 
-  static const String documentsDownload =
-      '$baseUrl/documents/download';
+  static const String documentsDownload = '$baseUrl/documents/download';
 
   // ==========================================================
   // PARAPHRASE
   // ==========================================================
 
-  static const String paraphrase =
-      '$baseUrl/paraps';
+  static const String paraphrase = '$baseUrl/paraps';
 
   // ==========================================================
   // HUMANIZER
   // ==========================================================
 
-  static const String humanizer =
-      '$baseUrl/humans';
+  static const String humanizer = '$baseUrl/humans';
 
   // ==========================================================
   // TRANSCRIBE
   // ==========================================================
 
-  static const String transcribes =
-      '$baseUrl/transcribes';
+  static const String transcribes = '$baseUrl/transcribes';
 
-  static const String transcribeActive =
-      '$baseUrl/transcribes/active';
+  static const String transcribeActive = '$baseUrl/transcribes/active';
 
   static String transcribeStatus(
     int id,
@@ -194,8 +161,7 @@ class ApiConstants {
   // PLAGIARISM
   // ==========================================================
 
-  static const String plagiarism =
-      '$baseUrl/plagiarism';
+  static const String plagiarism = '$baseUrl/plagiarism';
 
   static const String plagiarismPendingPayment =
       '$baseUrl/plagiarism/pending-payment';
@@ -213,20 +179,15 @@ class ApiConstants {
   // PAYMENTS
   // ==========================================================
 
-  static const String payments =
-      '$baseUrl/payments';
+  static const String payments = '$baseUrl/payments';
 
-  static const String payment =
-      '$baseUrl/payments';
+  static const String payment = '$baseUrl/payments';
 
-  static const String topUp =
-      '$baseUrl/payments/topup';
+  static const String topUp = '$baseUrl/payments/topup';
 
-  static const String referralDiscount =
-      '$baseUrl/payments/referral-discount';
+  static const String referralDiscount = '$baseUrl/payments/referral-discount';
 
-  static const String checkDiscount =
-      '$baseUrl/payments/check-discount';
+  static const String checkDiscount = '$baseUrl/payments/check-discount';
 
   static String paymentByReference(
     String referenceId,
@@ -238,70 +199,59 @@ class ApiConstants {
   // PLANS
   // ==========================================================
 
-  static const String plans =
-      '$baseUrl/plans';
+  static const String plans = '$baseUrl/plans';
 
   // ==========================================================
   // COUPONS
   // ==========================================================
 
-  static const String coupon =
-      '$baseUrl/coupons';
+  static const String coupon = '$baseUrl/coupons';
 
   // ==========================================================
   // DISCOUNT COUPONS
   // ==========================================================
 
-  static const String discountCoupons =
-      '$baseUrl/discount-coupons';
+  static const String discountCoupons = '$baseUrl/discount-coupons';
 
   // ==========================================================
   // REFERRALS
   // ==========================================================
 
-  static const String referrals =
-      '$baseUrl/referrals';
+  static const String referrals = '$baseUrl/referrals';
 
-  static const String activateReferral =
-      '$baseUrl/referrals/activate';
+  static const String activateReferral = '$baseUrl/referrals/activate';
 
-  static const String claimFreeMonth =
-      '$baseUrl/referrals/claim-free-month';
+  static const String claimFreeMonth = '$baseUrl/referrals/claim-free-month';
 
   // ==========================================================
   // AUTOCOMPLETE
   // ==========================================================
 
-  static const String autocomplete =
-      '$baseUrl/autocomplete';
+  static const String autocomplete = '$baseUrl/autocomplete';
 
   // ==========================================================
   // PUBLIC SETTINGS
   // ==========================================================
 
-  static const String publicSettings =
-      '$baseUrl/settings/public';
+  static const String publicSettings = '$baseUrl/settings/public';
 
   // ==========================================================
   // BLOG
   // ==========================================================
 
-  static const String blog =
-      '$baseUrl/blog';
+  static const String blog = '$baseUrl/blog';
 
   // ==========================================================
   // PAPERS
   // ==========================================================
 
-  static const String papers =
-      '$baseUrl/papers';
+  static const String papers = '$baseUrl/papers';
 
   // ==========================================================
   // GOOGLE AUTH
   // ==========================================================
 
-  static const String googleCallback =
-      '$baseUrl/auth/google/callback';
+  static const String googleCallback = '$baseUrl/auth/google/callback';
 }
 
 // ============================================================
@@ -311,15 +261,11 @@ class ApiConstants {
 class AppConstants {
   AppConstants._();
 
-  static const String appName =
-      'PintarAja';
+  static const String appName = 'PintarAja';
 
-  static const String appTagline =
-      'Solusi Mahasiswa, di Pintar Aja';
+  static const String appTagline = 'Solusi Mahasiswa, di Pintar Aja';
 
-  static const String tokenKey =
-      'auth_token';
+  static const String tokenKey = 'auth_token';
 
-  static const String userKey =
-      'user_data';
+  static const String userKey = 'user_data';
 }

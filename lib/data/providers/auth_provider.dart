@@ -37,11 +37,9 @@ class AuthProvider extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  bool get isLoggedIn =>
-      _status == AuthStatus.authenticated;
+  bool get isLoggedIn => _status == AuthStatus.authenticated;
 
-  int get tokenBalance =>
-      _user?.quota ?? 0;
+  int get tokenBalance => _user?.quota ?? 0;
 
   // ==========================================================
   // CONSTRUCTOR
@@ -57,19 +55,16 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> _checkAuth() async {
     try {
-      final token =
-          StorageService.getToken();
+      final token = StorageService.getToken();
 
       // ------------------------------------------------------
       // TIDAK ADA TOKEN
       // ------------------------------------------------------
 
-      if (token == null ||
-          token.isEmpty) {
+      if (token == null || token.isEmpty) {
         _user = null;
 
-        _status =
-            AuthStatus.unauthenticated;
+        _status = AuthStatus.unauthenticated;
 
         notifyListeners();
 
@@ -80,8 +75,7 @@ class AuthProvider extends ChangeNotifier {
       // COBA AMBIL USER DARI STORAGE
       // ------------------------------------------------------
 
-      final userData =
-          StorageService.getUser();
+      final userData = StorageService.getUser();
 
       if (userData != null) {
         try {
@@ -91,8 +85,7 @@ class AuthProvider extends ChangeNotifier {
             ),
           );
 
-          _status =
-              AuthStatus.authenticated;
+          _status = AuthStatus.authenticated;
 
           notifyListeners();
 
@@ -115,8 +108,7 @@ class AuthProvider extends ChangeNotifier {
 
       await _fetchUser();
 
-      _status =
-          AuthStatus.authenticated;
+      _status = AuthStatus.authenticated;
 
       notifyListeners();
     } on ApiException catch (e) {
@@ -125,8 +117,7 @@ class AuthProvider extends ChangeNotifier {
       } else {
         _user = null;
 
-        _status =
-            AuthStatus.unauthenticated;
+        _status = AuthStatus.unauthenticated;
 
         await StorageService.clearAuth();
 
@@ -135,8 +126,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (_) {
       _user = null;
 
-      _status =
-          AuthStatus.unauthenticated;
+      _status = AuthStatus.unauthenticated;
 
       await StorageService.clearAuth();
 
@@ -149,8 +139,7 @@ class AuthProvider extends ChangeNotifier {
   // ==========================================================
 
   Future<void> _fetchUser() async {
-    final data =
-        await ApiService.instance.get(
+    final data = await ApiService.instance.get(
       ApiConstants.user,
     );
 
@@ -164,10 +153,7 @@ class AuthProvider extends ChangeNotifier {
     //
     // {...}
 
-    final rawUser =
-        data is Map
-            ? (data['data'] ?? data)
-            : null;
+    final rawUser = data is Map ? (data['data'] ?? data) : null;
 
     if (rawUser is! Map) {
       throw const ApiException(
@@ -185,16 +171,14 @@ class AuthProvider extends ChangeNotifier {
     // SIMPAN USER SESUAI REMEMBER ME
     // --------------------------------------------------------
 
-    final shouldPersist =
-        StorageService.rememberMe;
+    final shouldPersist = StorageService.rememberMe;
 
     await StorageService.saveUser(
       _user!.toJson(),
       persistent: shouldPersist,
     );
 
-    _status =
-        AuthStatus.authenticated;
+    _status = AuthStatus.authenticated;
   }
 
   // ==========================================================
@@ -211,8 +195,7 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      final data =
-          await ApiService.instance.post(
+      final data = await ApiService.instance.post(
         ApiConstants.login,
         {
           'email': email.trim(),
@@ -236,12 +219,9 @@ class AuthProvider extends ChangeNotifier {
       // TOKEN
       // ------------------------------------------------------
 
-      final token =
-          data['token'] ??
-          data['access_token'];
+      final token = data['token'] ?? data['access_token'];
 
-      if (token == null ||
-          token.toString().isEmpty) {
+      if (token == null || token.toString().isEmpty) {
         throw const ApiException(
           'Token tidak ditemukan.',
         );
@@ -266,8 +246,7 @@ class AuthProvider extends ChangeNotifier {
       // USER
       // ------------------------------------------------------
 
-      final rawUser =
-          data['user'];
+      final rawUser = data['user'];
 
       if (rawUser is Map) {
         _user = UserModel.fromJson(
@@ -286,8 +265,7 @@ class AuthProvider extends ChangeNotifier {
       // AUTHENTICATED
       // ------------------------------------------------------
 
-      _status =
-          AuthStatus.authenticated;
+      _status = AuthStatus.authenticated;
 
       _setLoading(false);
 
@@ -305,8 +283,7 @@ class AuthProvider extends ChangeNotifier {
 
       return false;
     } catch (_) {
-      _error =
-          'Terjadi kesalahan saat login.';
+      _error = 'Terjadi kesalahan saat login.';
 
       _setLoading(false);
 
@@ -318,7 +295,8 @@ class AuthProvider extends ChangeNotifier {
   // GOOGLE LOGIN
   // ==========================================================
 
-  Future<bool> loginWithGoogle({String? googleToken, String? accessToken}) async {
+  Future<bool> loginWithGoogle(
+      {String? googleToken, String? accessToken}) async {
     _setLoading(true);
     _error = null;
 
@@ -341,7 +319,8 @@ class AuthProvider extends ChangeNotifier {
         throw const ApiException('Response login Google tidak valid.');
       }
 
-      final token = data['token'] ?? data['access_token'] ?? data['data']?['token'];
+      final token =
+          data['token'] ?? data['access_token'] ?? data['data']?['token'];
       if (token == null || token.toString().isEmpty) {
         throw const ApiException('Token otentikasi Google tidak ditemukan.');
       }
@@ -375,8 +354,7 @@ class AuthProvider extends ChangeNotifier {
   // BACKGROUND USER REFRESH
   // ==========================================================
 
-  Future<void>
-      _refreshUserInBackground() async {
+  Future<void> _refreshUserInBackground() async {
     try {
       await _fetchUser();
 
@@ -407,25 +385,19 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      final body =
-          <String, dynamic>{
+      final body = <String, dynamic>{
         'name': name.trim(),
         'email': email.trim(),
         'password': password,
-        'password_confirmation':
-            password,
-        'cf-turnstile-response':
-            turnstileToken,
+        'password_confirmation': password,
+        'cf-turnstile-response': turnstileToken,
       };
 
-      if (referralCode != null &&
-          referralCode.trim().isNotEmpty) {
-        body['referral_code'] =
-            referralCode.trim();
+      if (referralCode != null && referralCode.trim().isNotEmpty) {
+        body['referral_code'] = referralCode.trim();
       }
 
-      final data =
-          await ApiService.instance.post(
+      final data = await ApiService.instance.post(
         ApiConstants.register,
         body,
         useAuth: false,
@@ -436,12 +408,9 @@ class AuthProvider extends ChangeNotifier {
       // ------------------------------------------------------
 
       if (data is Map) {
-        final token =
-            data['token'] ??
-            data['access_token'];
+        final token = data['token'] ?? data['access_token'];
 
-        if (token != null &&
-            token.toString().isNotEmpty) {
+        if (token != null && token.toString().isNotEmpty) {
           await StorageService.saveToken(
             token.toString(),
             remember: false,
@@ -461,8 +430,7 @@ class AuthProvider extends ChangeNotifier {
 
       return false;
     } catch (_) {
-      _error =
-          'Terjadi kesalahan saat registrasi.';
+      _error = 'Terjadi kesalahan saat registrasi.';
 
       _setLoading(false);
 
@@ -483,8 +451,7 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      final data =
-          await ApiService.instance.post(
+      final data = await ApiService.instance.post(
         ApiConstants.verifyOtp,
         {
           'email': email.trim(),
@@ -499,12 +466,9 @@ class AuthProvider extends ChangeNotifier {
         );
       }
 
-      final token =
-          data['token'] ??
-          data['access_token'];
+      final token = data['token'] ?? data['access_token'];
 
-      if (token == null ||
-          token.toString().isEmpty) {
+      if (token == null || token.toString().isEmpty) {
         throw const ApiException(
           'Token tidak ditemukan setelah verifikasi.',
         );
@@ -519,8 +483,7 @@ class AuthProvider extends ChangeNotifier {
 
       await _fetchUser();
 
-      _status =
-          AuthStatus.authenticated;
+      _status = AuthStatus.authenticated;
 
       _setLoading(false);
 
@@ -534,8 +497,7 @@ class AuthProvider extends ChangeNotifier {
 
       return false;
     } catch (_) {
-      _error =
-          'Terjadi kesalahan saat verifikasi OTP.';
+      _error = 'Terjadi kesalahan saat verifikasi OTP.';
 
       _setLoading(false);
 
@@ -573,8 +535,7 @@ class AuthProvider extends ChangeNotifier {
 
       return false;
     } catch (_) {
-      _error =
-          'Gagal mengirim ulang OTP.';
+      _error = 'Gagal mengirim ulang OTP.';
 
       _setLoading(false);
 
@@ -588,11 +549,9 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> logout() async {
     try {
-      final token =
-          StorageService.getToken();
+      final token = StorageService.getToken();
 
-      if (token != null &&
-          token.isNotEmpty) {
+      if (token != null && token.isNotEmpty) {
         await ApiService.instance.post(
           ApiConstants.logout,
           {},
@@ -615,8 +574,7 @@ class AuthProvider extends ChangeNotifier {
 
     _user = null;
 
-    _status =
-        AuthStatus.unauthenticated;
+    _status = AuthStatus.unauthenticated;
 
     _error = null;
 
@@ -659,9 +617,7 @@ class AuthProvider extends ChangeNotifier {
         ApiConstants.updateProfile,
         {
           'name': name.trim(),
-          if (phone != null &&
-              phone.trim().isNotEmpty)
-            'phone': phone.trim(),
+          if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
         },
       );
 
@@ -677,8 +633,7 @@ class AuthProvider extends ChangeNotifier {
 
       return false;
     } catch (_) {
-      _error =
-          'Gagal memperbarui profil.';
+      _error = 'Gagal memperbarui profil.';
 
       _setLoading(false);
 
@@ -699,15 +654,12 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      final body =
-          <String, dynamic>{
+      final body = <String, dynamic>{
         'password': newPassword,
       };
 
-      if (oldPassword != null &&
-          oldPassword.trim().isNotEmpty) {
-        body['password_old'] =
-            oldPassword;
+      if (oldPassword != null && oldPassword.trim().isNotEmpty) {
+        body['password_old'] = oldPassword;
       }
 
       await ApiService.instance.put(
@@ -727,8 +679,7 @@ class AuthProvider extends ChangeNotifier {
 
       return false;
     } catch (_) {
-      _error =
-          'Gagal mengubah password.';
+      _error = 'Gagal mengubah password.';
 
       _setLoading(false);
 
@@ -767,8 +718,7 @@ class AuthProvider extends ChangeNotifier {
 
       return false;
     } catch (_) {
-      _error =
-          'Gagal menukarkan kupon.';
+      _error = 'Gagal menukarkan kupon.';
 
       _setLoading(false);
 

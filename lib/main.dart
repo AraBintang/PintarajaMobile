@@ -40,7 +40,6 @@ Future<void> main() async {
   runApp(const PintaRajaApp());
 }
 
-
 // ============================================================
 // APP
 // ============================================================
@@ -49,12 +48,10 @@ class PintaRajaApp extends StatefulWidget {
   const PintaRajaApp({super.key});
 
   @override
-  State<PintaRajaApp> createState() =>
-      _PintaRajaAppState();
+  State<PintaRajaApp> createState() => _PintaRajaAppState();
 }
 
-class _PintaRajaAppState
-    extends State<PintaRajaApp> {
+class _PintaRajaAppState extends State<PintaRajaApp> {
   late final AuthProvider _authProvider;
   late final GoRouter _router;
 
@@ -84,28 +81,22 @@ class _PintaRajaAppState
         ChangeNotifierProvider<AuthProvider>.value(
           value: _authProvider,
         ),
-
         ChangeNotifierProvider<ThemeProvider>(
           create: (_) => ThemeProvider(),
         ),
-
         ChangeNotifierProvider<LanguageProvider>(
           create: (_) => LanguageProvider(),
         ),
-
         ChangeNotifierProvider<ChatProvider>(
           create: (_) => ChatProvider(),
         ),
-
         ChangeNotifierProvider<PlanProvider>(
           create: (_) => PlanProvider(),
         ),
-
         ChangeNotifierProvider<NotificationProvider>(
           create: (_) => NotificationProvider(),
         ),
       ],
-
       child: Consumer<ThemeProvider>(
         builder: (context, theme, _) {
           return MaterialApp.router(

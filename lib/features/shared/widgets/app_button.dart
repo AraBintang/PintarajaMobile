@@ -30,7 +30,8 @@ class AppButton extends StatelessWidget {
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(double.infinity, 56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           side: const BorderSide(color: AppTheme.primary, width: 1.5),
           foregroundColor: AppTheme.primary,
         ),
@@ -63,7 +64,8 @@ class AppButton extends StatelessWidget {
             ? null
             : [
                 BoxShadow(
-                  color: (gradient?.colors.first ?? AppTheme.primary).withValues(alpha: 0.25),
+                  color: (gradient?.colors.first ?? AppTheme.primary)
+                      .withValues(alpha: 0.25),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -74,7 +76,8 @@ class AppButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         child: isLoading
             ? const SizedBox(

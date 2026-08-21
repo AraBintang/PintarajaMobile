@@ -53,11 +53,14 @@ class AppTextField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: AppTheme.textMuted),
-            prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: AppTheme.primary) : null,
+            prefixIcon: prefixIcon != null
+                ? Icon(prefixIcon, color: AppTheme.primary)
+                : null,
             suffixIcon: suffixIcon,
             fillColor: AppTheme.bgInput,
             filled: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: AppTheme.divider),
