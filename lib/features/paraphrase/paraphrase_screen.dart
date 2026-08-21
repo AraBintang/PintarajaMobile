@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
+import '../../data/providers/chat_provider.dart';
 import '../../data/services/storage_service.dart';
 import '../shared/widgets/app_sidebar_drawer.dart';
 
@@ -29,6 +30,7 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
   String _result = '';
   String? _error;
   bool _isLoading = false;
+  int? _selectedProviderId;
 
   static const List<Map<String, String>> _modes = [
     {'id': 'standard', 'label': 'Standard'},
@@ -94,6 +96,28 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
   // PARAPHRASE
   // ==========================================================
 
+  // Helper: perform one paraphrase HTTP call and return the response.
+  Future<http.Response> _doParaphraseRequest(
+      String text, int? providerId) async {
+    final token = StorageService.getToken();
+    final body = <String, dynamic>{
+      'text': text,
+      'mode': _selectedMode,
+      'language': _languageCode,
+    };
+    if (providerId != null) body['providerId'] = providerId;
+
+    return http.post(
+      Uri.parse(ApiConstants.paraphrase),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+  }
+
   Future<void> _paraphrase() async {
     final text = _textController.text.trim();
 
@@ -115,21 +139,36 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
     });
 
     try {
-      final token = StorageService.getToken();
-      final response = await http.post(
-        Uri.parse(ApiConstants.paraphrase),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          if (token != null && token.isNotEmpty)
-            'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'text': text,
-          'mode': _selectedMode,
-          'language': _languageCode,
-        }),
-      );
+      // --- First attempt with current provider ---
+      int? providerId = _selectedProviderId;
+      http.Response response = await _doParaphraseRequest(text, providerId);
+
+      if (!mounted) return;
+
+      // --- Fallback on 402 / 429 ---
+      if (response.statusCode == 402 || response.statusCode == 429) {
+        final providers =
+            context.read<ChatProvider>().aiProviders.toList();
+
+        // Build ordered list of fallback candidates (exclude failed provider).
+        final candidates = providers
+            .where((p) => p.id != providerId && !p.isLimited)
+            .toList();
+
+        for (final candidate in candidates) {
+          response =
+              await _doParaphraseRequest(text, candidate.id);
+
+          if (!mounted) return;
+
+          // If this candidate succeeded, use it as the effective provider.
+          if (response.statusCode != 402 &&
+              response.statusCode != 429 &&
+              response.statusCode != 500) {
+            break;
+          }
+        }
+      }
 
       if (!mounted) return;
 
@@ -166,6 +205,7 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
         });
       }
 
+      if (!mounted) return;
       await context.read<AuthProvider>().refreshUser();
     } on SocketException {
       if (!mounted) return;
@@ -686,7 +726,163 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
       },
     );
   }
+
+  // ==========================================================
+  // MODEL SELECTOR
+  // ==========================================================
+
+  void _showModelSelector() {
+    final providers = context.read<ChatProvider>().aiProviders;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          decoration: BoxDecoration(
+            color: AppTheme.getSurface(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.getBorder(context),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Pilih Model AI',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _buildProviderTile(
+                ctx: ctx,
+                id: null,
+                label: 'Auto',
+                subtitle: 'Pilih model secara otomatis',
+                isSelected: _selectedProviderId == null,
+                isLimited: false,
+              ),
+              if (providers.isNotEmpty) ...[
+                const Divider(height: 12),
+                ...providers.map(
+                  (p) => _buildProviderTile(
+                    ctx: ctx,
+                    id: p.id,
+                    label: p.displayName,
+                    subtitle: p.code,
+                    isSelected: _selectedProviderId == p.id,
+                    isLimited: p.isLimited,
+                  ),
+                ),
+              ] else
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'Tidak ada model tersedia.',
+                    style: TextStyle(
+                      color: AppTheme.getTextSecondary(context),
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProviderTile({
+    required BuildContext ctx,
+    required int? id,
+    required String label,
+    required String subtitle,
+    required bool isSelected,
+    required bool isLimited,
+  }) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      leading: CircleAvatar(
+        radius: 18,
+        backgroundColor: isSelected
+            ? AppTheme.primary.withValues(alpha: 0.12)
+            : AppTheme.surfaceMuted,
+        child: Icon(
+          isSelected ? Icons.check_rounded : Icons.smart_toy_outlined,
+          size: 18,
+          color:
+              isSelected ? AppTheme.primary : AppTheme.getTextSecondary(ctx),
+        ),
+      ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? AppTheme.primary : AppTheme.getTextColor(ctx),
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          if (isLimited)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppTheme.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'Limit',
+                style: TextStyle(
+                  color: AppTheme.error,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(color: AppTheme.getTextSecondary(ctx), fontSize: 12),
+      ),
+      onTap: isLimited
+          ? null
+          : () {
+              setState(() => _selectedProviderId = id);
+              Navigator.pop(ctx);
+            },
+    );
+  }
 }
+
 
 // ============================================================
 // TOKEN CHIP
@@ -733,6 +929,56 @@ class _TokenChip extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// MODEL SELECTOR BUTTON
+// ============================================================
+
+class _ModelSelectorButton extends StatelessWidget {
+  final int? selectedProviderId;
+  final VoidCallback onTap;
+
+  const _ModelSelectorButton({
+    required this.selectedProviderId,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Resolve display label from ChatProvider.
+    final providers = context.watch<ChatProvider>().aiProviders;
+    final selected = selectedProviderId == null
+        ? null
+        : providers.where((p) => p.id == selectedProviderId).firstOrNull;
+    final label = selected?.displayName ?? 'Auto';
+
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: Icon(
+        Icons.smart_toy_outlined,
+        size: 16,
+        color: AppTheme.getTextSecondary(context),
+      ),
+      label: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AppTheme.getTextSecondary(context),
+        ),
+      ),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: AppTheme.getBorder(context)),
         ),
       ),
     );

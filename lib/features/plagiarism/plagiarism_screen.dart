@@ -15,6 +15,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/services/api_service.dart';
 import '../shared/widgets/payment_sheet.dart';
+import '../shared/widgets/qris_payment_sheet.dart';
 import '../shared/widgets/app_sidebar_drawer.dart';
 
 class PlagiarismScreen extends StatefulWidget {
@@ -41,6 +42,7 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
 
   static const int _maxFileSizeMB = 50;
   static const int _minFiles = 1;
+  static const int _maxFiles = 3;
   static const int _pricePerFile = 22000;
 
   @override
@@ -164,9 +166,9 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
           'author_first_name': _firstNameController.text.trim(),
           'author_last_name': _lastNameController.text.trim(),
           'whatsapp_phone': _whatsappController.text.trim(),
-          'exclude_biography': _excludeBiography.toString(),
-          'exclude_quoted_text': _excludeQuotedText.toString(),
-          'exclude_small_matches': _excludeSmallMatches.toString(),
+          'exclude_biography': _excludeBiography ? '1' : '0',
+          'exclude_quoted_text': _excludeQuotedText ? '1' : '0',
+          'exclude_small_matches': _excludeSmallMatches ? '1' : '0',
           'channel': 'topup',
           'method': 'topup',
         },

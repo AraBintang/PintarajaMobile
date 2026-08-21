@@ -1233,76 +1233,58 @@ class ChatProvider
       // REQUEST BODY
       // ======================================================
 
-      final body = {
-        'providerId':
-            provider.id,
-        'conversationId':
-            conversationId,
-        'message':
-            finalContent,
-        'messageToAi':
-            messageToAi,
-      };
+      String responseString = '';
+      int statusCode = 200;
+      
+      if (attachedFile != null) {
+        final request = http.MultipartRequest('POST', Uri.parse(ApiConstants.chatGenerateFromFile));
+        request.headers['Authorization'] = 'Bearer ';
+        request.fields['providerId'] = provider.id.toString();
+        request.fields['conversationId'] = conversationId.toString();
+        if (cleanMessage.isNotEmpty) {
+          request.fields['message'] = cleanMessage;
+        }
+        request.files.add(await http.MultipartFile.fromPath('files[]', attachedFile.path));
+        
+        final streamedResponse = await request.send();
+        statusCode = streamedResponse.statusCode;
+        responseString = await streamedResponse.stream.bytesToString();
+      } else {
+        final body = {
+          'providerId': provider.id,
+          'conversationId': conversationId,
+          'message': finalContent,
+          'messageToAi': messageToAi,
+        };
 
-      // ======================================================
-      // POST
-      // ======================================================
+        final response = await http.post(
+          Uri.parse(ApiConstants.chats),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/event-stream',
+            'Authorization': 'Bearer ',
+          },
+          body: jsonEncode(body),
+        ).timeout(const Duration(seconds: 120));
+        
+        statusCode = response.statusCode;
+        responseString = utf8.decode(response.bodyBytes);
+      }
 
-      final response =
-          await http
-              .post(
-        Uri.parse(
-          ApiConstants.chats,
-        ),
-        headers: {
-          'Content-Type':
-              'application/json',
-          'Accept':
-              'application/json, text/event-stream',
-          'Authorization':
-              'Bearer $token',
-        },
-        body:
-            jsonEncode(body),
-      ).timeout(
-        const Duration(
-          seconds: 120,
-        ),
-      );
-
-      // ======================================================
-      // ERROR
-      // ======================================================
-
-      if (response.statusCode <
-              200 ||
-          response.statusCode >=
-              300) {
-        _removeAssistantPlaceholder(
-          placeholderIndex,
-        );
-
-        _error =
-            _extractResponseError(
-          response,
-        );
-
+      if (statusCode < 200 || statusCode >= 300) {
+        _removeAssistantPlaceholder(placeholderIndex);
+        try {
+          final json = jsonDecode(responseString);
+          _error = json['message'] ?? 'Gagal memproses pesan.';
+        } catch (_) {
+          _error = 'Error ';
+        }
         notifyListeners();
-
         return;
       }
 
-      // ======================================================
-      // RESPONSE
-      // ======================================================
-
-      final content =
-          _parseAiResponse(
-        utf8.decode(
-          response.bodyBytes,
-        ),
-      );
-
+      final content = _parseAiResponse(responseString);
+      
       final aiResponse =
           content.trim().isEmpty
               ? 'AI tidak memberikan respons.'

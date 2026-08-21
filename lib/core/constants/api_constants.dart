@@ -14,6 +14,17 @@ class ApiConstants {
       'https://pintaraja.com/api';
 
   // ==========================================================
+  // TRIPAY
+  // ==========================================================
+  
+  static const String tripayApiKey = '6GaMeHd4kMtp9T3MV3bbVg2RpcDhabzKvcey1KiK';
+  static const String tripayPrivateKey = '0NCKW-6RXt6-znZRJ-A9rzm-T59DV';
+  static const String tripayMerchantCode = 'T38245';
+  
+  // URL untuk mendapatkan daftar channel pembayaran
+  static const String tripayChannelsUrl = 'https://tripay.co.id/api/merchant/payment-channel';
+
+  // ==========================================================
   // AUTH
   // Backend:
 // POST /login

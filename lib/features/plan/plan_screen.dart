@@ -251,7 +251,10 @@ class _PlanCard extends StatelessWidget {
         return PaymentSelectionSheet(
           itemName: 'Langganan ${plan.name}',
           price: plan.price,
-          onPaymentSuccess: () async {
+                      phone: '',
+            type: 'subscription',
+            planId: plan.id,
+            onPaymentSuccess: () async {
             Navigator.pop(bottomSheetCtx);
             await context.read<AuthProvider>().refreshUser();
             if (context.mounted) {

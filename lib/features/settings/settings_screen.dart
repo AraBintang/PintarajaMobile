@@ -14,8 +14,10 @@ import 'package:provider/provider.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
+import '../../data/services/api_service.dart';
 import '../../data/services/storage_service.dart';
 import '../shared/widgets/payment_sheet.dart';
+import '../shared/widgets/qris_payment_sheet.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -479,17 +481,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _triggerPayment(BuildContext ctx, String planName, int amount) {
-    Navigator.pop(ctx);
-    PaymentSelectionSheet.show(
-      context,
-      itemTitle: 'Upgrade $planName',
-      amount: amount,
-      onPaymentSuccess: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Pembayaran $planName berhasil!')),
-        );
-      },
-    );
+      Navigator.pop(ctx);
+      _createPlanPayment(context, planName, amount);
+  }
+  
+  Future<void> _createPlanPayment(BuildContext currentContext, String planName, int amount) async {
+      showDialog(
+        context: currentContext,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+      
+      try {
+        final response = await ApiService.instance.post(ApiConstants.topUp, {
+          'coins': (amount / 1000).ceil(),
+          'channel': 'QRIS2',
+          'method': 'QRIS',
+          'phone': '081234567890',
+        });
+        
+        if (!mounted) return;
+        Navigator.pop(currentContext);
+        
+        if (response['status'] == 'success' || response['paymentCode'] != null || response['checkoutUrl'] != null) {
+          QrisPaymentSheet.show(
+            currentContext,
+            qrUrl: response['paymentCode'] ?? response['payUrl'] ?? '',
+            referenceId: response['referenceId'] ?? '',
+            checkoutUrl: response['checkoutUrl'] ?? '',
+          );
+        } else {
+          ScaffoldMessenger.of(currentContext).showSnackBar(
+            SnackBar(content: Text(response['message'] ?? 'Gagal membuat pembayaran QRIS.')),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.pop(currentContext);
+        ScaffoldMessenger.of(currentContext).showSnackBar(SnackBar(content: Text('Terjadi kesalahan: $e')));
+      }
   }
 
   // ==========================================================

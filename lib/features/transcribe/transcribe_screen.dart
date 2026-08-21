@@ -243,6 +243,8 @@ class _TranscribeScreenState extends State<TranscribeScreen>
         case 'youtube':
           request.fields['source'] = 'youtube';
           request.fields['video_url'] = _youtubeController.text.trim();
+          request.fields['youtube_url'] = _youtubeController.text.trim();
+          request.fields['url'] = _youtubeController.text.trim();
           break;
 
         case 'record':
@@ -929,6 +931,19 @@ class _TranscribeScreenState extends State<TranscribeScreen>
     );
   }
 
+  Widget _buildBulletPoint(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('• ', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+          Expanded(child: Text(text, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11))),
+        ],
+      ),
+    );
+  }
+
   Widget _buildYouTubeSection(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -972,6 +987,27 @@ class _TranscribeScreenState extends State<TranscribeScreen>
               setState(() => _youtubeError = null);
             }
           },
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(12),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceMuted,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.borderLight),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('YouTube Video Requirements', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 12)),
+              const SizedBox(height: 6),
+              _buildBulletPoint('Maximum duration 2 hours'),
+              _buildBulletPoint('Videos must be public or unlisted'),
+              _buildBulletPoint('Videos must have clear audio'),
+              _buildBulletPoint('Content with strict copyright may not be processed.'),
+            ],
+          ),
         ),
       ],
     );

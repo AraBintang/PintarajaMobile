@@ -549,6 +549,13 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.history_rounded, color: AppTheme.textSecondary),
+            tooltip: 'History Prompt',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('History prompt segera hadir.')));
+            },
+          ),
+          IconButton(
             tooltip: 'Prompt Library',
             onPressed: _showPromptLibrary,
             icon: const Icon(Icons.library_books_rounded, color: AppTheme.primary, size: 22),
@@ -756,130 +763,180 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
   // ==========================================================
 
   Widget _buildInputArea() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceLight,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Attached file chip
-          if (_attachedFileName != null) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Topik Box
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceLight,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppTheme.borderLight),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Attached file chip
+              if (_attachedFileName != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.description_rounded, size: 16, color: AppTheme.primary),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          _attachedFileName!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      GestureDetector(
+                        onTap: _removeAttachedFile,
+                        child: const Icon(Icons.close_rounded, size: 16, color: AppTheme.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+
+              // Text input
+              TextField(
+                controller: _topicController,
+                maxLength: _maxCharacters,
+                maxLines: 6,
+                minLines: 4,
+                textInputAction: TextInputAction.newline,
+                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, height: 1.5),
+                decoration: const InputDecoration(
+                  hintText: 'Tuliskan topik atau judul tulisan...',
+                  hintStyle: TextStyle(color: AppTheme.textMuted),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  contentPadding: EdgeInsets.zero,
+                  counterText: '',
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+
+              // Character counter
+              Row(
                 children: [
-                  const Icon(Icons.description_rounded, size: 16, color: AppTheme.primary),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      _attachedFileName!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary, fontWeight: FontWeight.w600),
+                  // Attachment button
+                  GestureDetector(
+                    onTap: _isLoading ? null : _pickFile,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceMuted,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.attach_file_rounded,
+                        size: 18,
+                        color: _isLoading ? AppTheme.textMuted : AppTheme.textSecondary,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  GestureDetector(
-                    onTap: _removeAttachedFile,
-                    child: const Icon(Icons.close_rounded, size: 16, color: AppTheme.textMuted),
+                  const Spacer(),
+                  Text(
+                    '/',
+                    style: TextStyle(
+                      color: _charCount >= _maxCharacters ? AppTheme.warning : AppTheme.textMuted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 10),
-          ],
-
-          // Text input
-          TextField(
-            controller: _topicController,
-            maxLength: _maxCharacters,
-            maxLines: 6,
-            minLines: 4,
-            textInputAction: TextInputAction.newline,
-            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, height: 1.5),
-            decoration: const InputDecoration(
-              hintText: 'Tuliskan topik atau judul tulisan...',
-              hintStyle: TextStyle(color: AppTheme.textMuted),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              filled: false,
-              contentPadding: EdgeInsets.zero,
-              counterText: '',
-            ),
+            ],
           ),
-
-          // Character counter
-          Row(
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Instruksi Tambahan Box
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceLight,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppTheme.borderLight),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Attachment button
-              GestureDetector(
-                onTap: _isLoading ? null : _pickFile,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceMuted,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.attach_file_rounded,
-                    size: 18,
-                    color: _isLoading ? AppTheme.textMuted : AppTheme.textSecondary,
-                  ),
+              Padding(
+                padding: const EdgeInsets.only(left: 14, right: 14, top: 14, bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Instruksi Tambahan',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _showPromptLibrary,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.library_books_rounded, color: AppTheme.primary, size: 16),
+                            const SizedBox(width: 6),
+                            const Text(
+                              'Prompt Library',
+                              style: TextStyle(
+                                color: AppTheme.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const Spacer(),
-              Text(
-                '$_charCount/$_maxCharacters',
-                style: TextStyle(
-                  color: _charCount >= _maxCharacters ? AppTheme.warning : AppTheme.textMuted,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+              TextField(
+                controller: _instructionsController,
+                maxLines: 4,
+                minLines: 2,
+                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                decoration: const InputDecoration(
+                  hintText: 'Contoh: Gunakan bahasa yang santai dan mudah dipahami...',
+                  hintStyle: TextStyle(color: AppTheme.textMuted, fontSize: 12.5),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 8),
-
-          // Optional instructions
-          TextField(
-            controller: _instructionsController,
-            maxLines: 2,
-            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
-            decoration: InputDecoration(
-              hintText: 'Instruksi tambahan (opsional)...',
-              hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 12.5),
-              fillColor: AppTheme.surfaceMuted,
-              filled: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppTheme.primary, width: 1),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
