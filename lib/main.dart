@@ -17,6 +17,7 @@ import 'data/providers/theme_provider.dart';
 import 'data/providers/language_provider.dart';
 import 'data/providers/notification_provider.dart';
 
+import 'data/services/api_service.dart';
 import 'data/services/storage_service.dart';
 
 Future<void> main() async {
@@ -60,6 +61,11 @@ class _PintaRajaAppState extends State<PintaRajaApp> {
     super.initState();
 
     _authProvider = AuthProvider();
+
+    // HTTP 401 di manapun → bersihkan sesi & redirect ke login.
+    ApiService.onUnauthorized = () {
+      _authProvider.handleUnauthorized();
+    };
 
     _router = AppRouter.router(
       _authProvider,

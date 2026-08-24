@@ -36,7 +36,6 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
   bool _excludeBiography = true;
   bool _excludeQuotedText = false;
   bool _excludeSmallMatches = false;
-  bool _isUploading = false;
   String? _error;
   bool _orderSuccess = false;
 
@@ -81,7 +80,7 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
     if (result == null || result.files.isEmpty) return;
 
     for (final file in result.files) {
-      if (_uploadedFiles.length >= 3) {
+      if (_uploadedFiles.length >= _maxFiles) {
         if (!mounted) return;
         setState(() {
           _error = 'Maksimal 3 file yang dapat diupload.';
@@ -127,96 +126,41 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
 
   int get _totalPrice => _uploadedFiles.length * _pricePerFile;
 
-  Future<void> _submitOrder() async {
-    if (_uploadedFiles.length < _minFiles) {
-      setState(() {
-        _error = 'Minimal upload $_minFiles file untuk pengecekan.';
-      });
-      return;
+  /// Membuat order plagiasi + transaksi Tripay dalam SATU panggilan
+  /// POST /plagiarism (multipart). Dipanggil oleh PaymentSelectionSheet
+  /// setelah user memilih metode pembayaran.
+  Future<Map<String, dynamic>> _createOrder(String method, String phone) async {
+    final filesMap = <String, File>{};
+    for (int i = 0; i < _uploadedFiles.length; i++) {
+      filesMap['documents[$i]'] = _uploadedFiles[i];
     }
-
-    if (_firstNameController.text.trim().isEmpty ||
-        _lastNameController.text.trim().isEmpty) {
-      setState(() {
-        _error = 'Nama penulis harus diisi.';
-      });
-      return;
-    }
-
-    if (_whatsappController.text.trim().isEmpty) {
-      setState(() {
-        _error = 'Nomor WhatsApp harus diisi.';
-      });
-      return;
-    }
-
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _isUploading = true;
-      _error = null;
-    });
 
     try {
-      final filesMap = <String, File>{};
-      for (int i = 0; i < _uploadedFiles.length; i++) {
-        filesMap['documents[$i]'] = _uploadedFiles[i];
-      }
-
-      await ApiService.instance.postMultipart(
+      final data = await ApiService.instance.postMultipart(
         ApiConstants.plagiarism,
         fields: {
           'service_type': _selectedService,
           'author_first_name': _firstNameController.text.trim(),
           'author_last_name': _lastNameController.text.trim(),
           'whatsapp_phone': _whatsappController.text.trim(),
-          'exclude_biography': _excludeBiography ? '1' : '0',
+          'exclude_bibliography': _excludeBiography ? '1' : '0',
           'exclude_quoted_text': _excludeQuotedText ? '1' : '0',
           'exclude_small_matches': _excludeSmallMatches ? '1' : '0',
-          'channel': 'topup',
-          'method': 'topup',
-          'phone': _whatsappController.text.trim(),
+          'channel': method,
+          'method': method,
+          'phone': phone,
         },
         files: filesMap,
         timeout: const Duration(seconds: 180),
       );
 
-      if (!mounted) return;
-
-      await context.read<AuthProvider>().refreshUser();
-
-      setState(() {
-        _orderSuccess = true;
-        _isUploading = false;
-      });
+      if (data is Map) {
+        return Map<String, dynamic>.from(data);
+      }
+      return <String, dynamic>{};
     } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.message;
-        _isUploading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _error = 'Gagal mengirim order. Pastikan koneksi internet stabil.';
-        _isUploading = false;
-      });
+      throw PaymentProcessException(e.message);
     }
-  }
-
-  void _proceedToPayment() {
-    Navigator.pop(context);
-    PaymentSelectionSheet.show(
-      context,
-      itemTitle:
-          'Pengecekan Plagiarisme (${_selectedService.toUpperCase()}) - ${_uploadedFiles.length} file',
-      amount: _totalPrice,
-      onPaymentSuccess: () async {
-        await context.read<AuthProvider>().refreshUser();
-        if (mounted) {
-          setState(() => _orderSuccess = true);
-        }
-      },
-    );
   }
 
   @override
@@ -505,7 +449,7 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: _isUploading ? null : _pickFiles,
+            onPressed: _pickFiles,
             icon: const Icon(Icons.cloud_upload_rounded,
                 size: 18, color: AppTheme.primary),
             label: Text(
@@ -697,7 +641,7 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
   }
 
   Widget _buildSubmitButton() {
-    final canSubmit = _uploadedFiles.length >= _minFiles && !_isUploading;
+    final canSubmit = _uploadedFiles.length >= _minFiles;
 
     return SizedBox(
       width: double.infinity,
@@ -713,18 +657,10 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
           elevation: canSubmit ? 2 : 0,
         ),
         onPressed: canSubmit ? _showPaymentConfirmation : null,
-        child: _isUploading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2.5, color: Colors.white),
-              )
-            : Text(
-                'Lanjut ke Pembayaran - Rp ${_totalPrice.toStringAsFixed(0)}',
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              ),
+        child: Text(
+          'Lanjut ke Pembayaran - Rp ${_totalPrice.toStringAsFixed(0)}',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
       ),
     );
   }
@@ -817,8 +753,8 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.qr_code_2_rounded, size: 20),
-                  label: const Text('Bayar via QRIS',
+                  icon: const Icon(Icons.payment_rounded, size: 20),
+                  label: const Text('Lanjut ke Metode Pembayaran',
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                   style: ElevatedButton.styleFrom(
@@ -831,11 +767,20 @@ class _PlagiarismScreenState extends State<PlagiarismScreen> {
                   ),
                   onPressed: () {
                     Navigator.pop(ctx);
-                    _submitOrder().then((_) {
-                      if (_orderSuccess && mounted) {
-                        _proceedToPayment();
-                      }
-                    });
+                    PaymentSelectionSheet.show(
+                      context,
+                      itemTitle:
+                          'Pengecekan Plagiarisme (${_selectedService.toUpperCase()}) - ${_uploadedFiles.length} file',
+                      amount: _totalPrice,
+                      phone: _whatsappController.text.trim(),
+                      customProcess: _createOrder,
+                      onPaymentSuccess: () async {
+                        await context.read<AuthProvider>().refreshUser();
+                        if (mounted) {
+                          setState(() => _orderSuccess = true);
+                        }
+                      },
+                    );
                   },
                 ),
               ),

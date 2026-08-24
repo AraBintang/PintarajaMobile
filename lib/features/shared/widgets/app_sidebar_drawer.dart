@@ -28,7 +28,12 @@ class AppSidebarDrawer extends StatelessWidget {
         borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
       ),
       child: SafeArea(
-        child: Column(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
           children: [
             // ── Header ──────────────────────────────────────────────
             Padding(
@@ -292,9 +297,13 @@ class AppSidebarDrawer extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
+            ), // Column
+          ), // IntrinsicHeight
+        ), // ConstrainedBox
+      ), // SingleChildScrollView
+        ), // LayoutBuilder
+      ), // SafeArea
+    ); // Drawer
   }
 
   Widget _buildWorkspaceItem(

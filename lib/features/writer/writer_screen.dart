@@ -47,6 +47,7 @@ class _WriterScreenState extends State<WriterScreen> {
   void initState() {
     super.initState();
     _topicController.addListener(_handleTopicChanged);
+    _loadHistory();
   }
 
   @override
@@ -63,6 +64,90 @@ class _WriterScreenState extends State<WriterScreen> {
     setState(() {
       _charCount = _topicController.text.length;
     });
+  }
+
+  // ==========================================================
+  // HISTORY (SERVER)
+  // ==========================================================
+
+  Future<void> _loadHistory() async {
+    try {
+      final token = StorageService.getToken();
+      if (token == null || token.isEmpty) return;
+
+      final response = await http
+          .get(
+            Uri.parse(ApiConstants.writer),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 20));
+
+      if (response.statusCode < 200 || response.statusCode >= 300) return;
+      if (!mounted) return;
+
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      final docs = decoded is Map ? decoded['documents'] : null;
+      if (docs is! List) return;
+
+      final items = <Map<String, String>>[];
+      for (final doc in docs) {
+        if (doc is! Map) continue;
+
+        String topic = doc['title']?.toString() ?? '';
+        final input = doc['input']?.toString() ?? '';
+
+        if (topic.isEmpty || topic == 'Untitled') {
+          final match = RegExp(r'Topik:\s*(.+)').firstMatch(input);
+          if (match != null) topic = match.group(1)?.trim() ?? '';
+        }
+
+        items.add({
+          'topic': topic,
+          'result': doc['result']?.toString() ?? '',
+          'time': doc['lastEdited']?.toString() ?? '',
+        });
+      }
+
+      setState(() {
+        _history
+          ..clear()
+          ..addAll(items);
+      });
+    } catch (_) {
+      // History tetap kosong bila gagal dimuat.
+    }
+  }
+
+  Future<void> _saveToServerHistory(String topic, String result) async {
+    try {
+      final userId = context.read<AuthProvider>().user?.id ?? 0;
+      final token = StorageService.getToken();
+
+      if (userId <= 0 || token == null || token.isEmpty) return;
+
+      await http
+          .post(
+            Uri.parse(ApiConstants.documents),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({
+              'userId': userId,
+              'workbookId': 0,
+              'name': topic,
+              'fullPrompt': 'Topik: $topic',
+              'result': result,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
+    } catch (_) {
+      // Penyimpanan history bersifat best-effort.
+    }
   }
 
   int _resolveWriterProviderId(ChatProvider chatProvider) {
@@ -299,6 +384,8 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
         });
       });
 
+      await _saveToServerHistory(topic, result);
+
       await context.read<AuthProvider>().refreshUser();
 
       if (!mounted) return;
@@ -431,9 +518,8 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
       context: context,
       builder: (_) => _PromptLibraryDialog(
         onInsert: (content) {
-          final current = _instructionsController.text;
-          final separator = current.isEmpty ? '' : '\n\n';
-          _instructionsController.text = current + separator + content;
+          // Prompt library mengisi text box INSTRUKSI TAMBAHAN.
+          _instructionsController.text = content;
           _instructionsController.selection = TextSelection.fromPosition(
             TextPosition(offset: _instructionsController.text.length),
           );
@@ -497,10 +583,15 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
   void _showTokenDialog() {
     final authProvider = context.read<AuthProvider>();
     final tokenBalance = authProvider.tokenBalance;
+    final minCoins = authProvider.topupMinCoins;
+    final pricePerCoin = authProvider.topupPricePerCoin;
+    final priceLabel = pricePerCoin % 1 == 0
+        ? pricePerCoin.toInt().toString()
+        : pricePerCoin.toStringAsFixed(2);
 
-    int selectedCoins = 50;
+    int selectedCoins = minCoins > 50 ? minCoins : 50;
     final TextEditingController coinsController =
-        TextEditingController(text: '50');
+        TextEditingController(text: '$selectedCoins');
 
     showModalBottomSheet<void>(
       context: context,
@@ -510,7 +601,6 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
             final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
-            final pricePerCoin = 1000;
             final totalPrice = selectedCoins * pricePerCoin;
 
             return Padding(
@@ -613,7 +703,7 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                               fontSize: 15,
                               color: AppTheme.getTextColor(context))),
                       const SizedBox(height: 4),
-                      Text('Harga: Rp $pricePerCoin / token',
+                      Text('Harga: Rp $priceLabel / token',
                           style: const TextStyle(
                               color: AppTheme.textSecondary, fontSize: 12)),
                       const SizedBox(height: 10),
@@ -622,7 +712,10 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: [10, 50, 100, 500, 1000].map((amount) {
+                        children: [
+                          ...[10, 50, 100, 500, 1000]
+                              .where((amount) => amount >= minCoins)
+                              .map((amount) {
                           final isSelected = selectedCoins == amount;
                           return GestureDetector(
                             onTap: () {
@@ -653,7 +746,8 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                                       fontSize: 13)),
                             ),
                           );
-                        }).toList(),
+                          }),
+                        ],
                       ),
                       const SizedBox(height: 10),
 
@@ -662,7 +756,7 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                         controller: coinsController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          labelText: 'Jumlah Token (Min. 10)',
+                          labelText: 'Jumlah Token (Min. $minCoins)',
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12)),
                           prefixIcon: const Icon(Icons.diamond_rounded),
@@ -717,7 +811,7 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                                 borderRadius: BorderRadius.circular(12)),
                             elevation: 2,
                           ),
-                          onPressed: selectedCoins < 10
+                          onPressed: selectedCoins < minCoins
                               ? null
                               : () async {
                                   Navigator.pop(ctx);
@@ -729,7 +823,7 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
 
                                   await PaymentSelectionSheet.processDirectQris(
                                     this.context,
-                                    amount: totalPrice,
+                                    amount: totalPrice.round(),
                                     coins: selectedCoins,
                                     phone: phone,
                                   );

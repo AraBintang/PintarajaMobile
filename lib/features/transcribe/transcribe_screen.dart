@@ -67,10 +67,18 @@ class _TranscribeScreenState extends State<TranscribeScreen>
     super.initState();
     _loadHistory();
     _checkActiveTranscription();
+    // Pastikan tombol "Mulai Transkripsi" selalu update saat link YouTube
+    // berubah (termasuk paste/autofill yang bisa melewati onChanged).
+    _youtubeController.addListener(_onYoutubeChanged);
+  }
+
+  void _onYoutubeChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _youtubeController.removeListener(_onYoutubeChanged);
     _youtubeController.dispose();
     _pollTimer?.cancel();
     _stopRecording();

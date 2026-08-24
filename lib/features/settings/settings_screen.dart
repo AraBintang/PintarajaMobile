@@ -15,7 +15,7 @@ import '../../core/constants/api_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/services/storage_service.dart';
-import '../shared/widgets/payment_sheet.dart';
+import '../shared/widgets/payment_method_page.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -402,28 +402,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10))),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final success = await auth.changePassword(
-                oldPassword: oldPw.text,
-                newPassword: newPw.text,
-              );
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text(success
-                          ? 'Password berhasil diubah!'
-                          : 'Gagal mengubah password.')),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 12)),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final success = await auth.changePassword(
+                  oldPassword: oldPw.text,
+                  newPassword: newPw.text,
                 );
-              }
-            },
-            child: const Text('Ubah'),
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(success
+                            ? 'Password berhasil diubah!'
+                            : 'Gagal mengubah password.')),
+                  );
+                }
+              },
+              child: const Text('Ubah'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal'),
+            ),
           ),
         ],
       ),
@@ -440,21 +450,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _UpgradePlanModal(
-        onPlanSelected: (planId, planName, amount) {
+        onPlanSelected: (planId, planName, amount, period) {
           final auth = context.read<AuthProvider>();
           final phone = auth.user?.phone?.isNotEmpty == true
               ? auth.user!.phone!
-              : '08123456789';
-          PaymentSelectionSheet.show(
-            context,
-            itemTitle: planName,
-            amount: amount,
-            type: 'subscription',
-            planId: planId,
-            phone: phone,
-            onPaymentSuccess: () async {
-              await auth.refreshUser();
-            },
+              : '';
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => PaymentMethodPage(
+                planId: planId,
+                planName: planName,
+                amount: amount,
+                phone: phone,
+                period: period,
+                onPaymentSuccess: () async {
+                  await auth.refreshUser();
+                },
+              ),
+            ),
           );
         },
       ),
@@ -498,26 +511,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10))),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final success =
-                  await auth.redeemCoupon(codeController.text.trim());
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text(success
-                          ? 'Kupon berhasil ditukarkan!'
-                          : 'Kode kupon tidak valid.')),
-                );
-              }
-            },
-            child: const Text('Redeem'),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 12)),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final success =
+                    await auth.redeemCoupon(codeController.text.trim());
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(success
+                            ? 'Kupon berhasil ditukarkan!'
+                            : 'Kode kupon tidak valid.')),
+                  );
+                }
+              },
+              child: const Text('Redeem'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal'),
+            ),
           ),
         ],
       ),
@@ -1333,7 +1356,8 @@ class _DangerTile extends StatelessWidget {
 }
 
 class _UpgradePlanModal extends StatefulWidget {
-  final void Function(int planId, String planName, int amount)? onPlanSelected;
+  final void Function(int planId, String planName, int amount, String period)?
+      onPlanSelected;
 
   const _UpgradePlanModal({this.onPlanSelected});
 
@@ -1426,9 +1450,9 @@ class _UpgradePlanModalState extends State<_UpgradePlanModal> {
             ..._plans.map((plan) {
               final planId = plan['id'] as int? ?? 0;
               final name = plan['name'] ?? '';
-              final description = plan['description'] ?? '';
+              final description = plan['description'] ?? plan['tagLine'] ?? '';
               final badge = plan['badge'] as String?;
-              
+
               int amount = 0;
               final priceData = plan['price'];
               if (priceData is Map) {
@@ -1441,10 +1465,14 @@ class _UpgradePlanModalState extends State<_UpgradePlanModal> {
                 amount = int.tryParse(priceData.toString()) ?? 0;
               }
 
-              final formattedPrice = amount > 0
-                  ? 'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}'
-                  : 'Gratis';
-              
+              // Plan gratis / tanpa harga tidak bisa dibeli via Tripay.
+              if (amount <= 0 || planId <= 1) {
+                return const SizedBox.shrink();
+              }
+
+              final formattedPrice =
+                  'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: _PlanOptionTile(
@@ -1454,7 +1482,8 @@ class _UpgradePlanModalState extends State<_UpgradePlanModal> {
                   badge: badge,
                   onTap: () {
                     Navigator.pop(context);
-                    widget.onPlanSelected?.call(planId, name, amount);
+                    widget.onPlanSelected?.call(planId, name, amount,
+                        _period[0].toUpperCase() + _period.substring(1));
                   },
                 ),
               );

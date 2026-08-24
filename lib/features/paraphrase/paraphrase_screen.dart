@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -53,9 +54,6 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
     super.dispose();
   }
 
-  String get _languageCode =>
-      _languages.firstWhere((l) => l['label'] == _selectedLanguage)['id']!;
-
   // ==========================================================
   // FILE UPLOAD
   // ==========================================================
@@ -69,17 +67,49 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
     if (result == null || result.files.isEmpty) return;
 
     final file = result.files.first;
-    String text = '';
+    final extension = (file.extension ?? '').toLowerCase();
 
+    Uint8List? bytes;
     if (file.path != null) {
       final f = File(file.path!);
       if (await f.exists()) {
-        text = await f.readAsString();
+        bytes = await f.readAsBytes();
       }
-    } else if (file.bytes != null) {
-      text = utf8.decode(file.bytes!);
+    } else {
+      bytes = file.bytes;
     }
 
+    if (!mounted) return;
+
+    String text = '';
+    try {
+      if (bytes == null || bytes.isEmpty) {
+        setState(() => _error = 'Gagal membaca isi dokumen.');
+        return;
+      }
+
+      switch (extension) {
+        case 'txt':
+        case 'md':
+          text = utf8.decode(bytes, allowMalformed: true);
+          break;
+        case 'docx':
+          text = _extractDocxText(bytes);
+          break;
+        default:
+          setState(() {
+            _error =
+                'Format .doc lama tidak didukung. Simpan ulang dokumen sebagai .docx atau .txt.';
+          });
+          return;
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = 'Gagal membaca isi dokumen.');
+      return;
+    }
+
+    text = text.trim();
     if (!mounted) return;
 
     if (text.isNotEmpty) {
@@ -88,9 +118,38 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
       });
     } else {
       setState(() {
-        _error = 'Gagal membaca isi dokumen.';
+        _error = 'Isi dokumen kosong atau tidak terbaca.';
       });
     }
+  }
+
+  // ==========================================================
+  // DOCX TEXT EXTRACTION
+  // ==========================================================
+
+  String _extractDocxText(Uint8List bytes) {
+    final archive = ZipDecoder().decodeBytes(bytes);
+
+    final docFile = archive.findFile('word/document.xml');
+    if (docFile == null) {
+      throw const FormatException('word/document.xml tidak ditemukan');
+    }
+
+    final xml =
+        utf8.decode(docFile.content as List<int>, allowMalformed: true);
+
+    return xml
+        .replaceAll(RegExp(r'</w:p>'), '\n')
+        .replaceAll(RegExp(r'<w:br[^>]*/>'), '\n')
+        .replaceAll(RegExp(r'<w:tab[^>]*/>'), '\t')
+        .replaceAll(RegExp(r'<[^>]+>'), '')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&apos;', "'")
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+        .trim();
   }
 
   // ==========================================================
@@ -104,7 +163,7 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
     final body = <String, dynamic>{
       'text': text,
       'mode': _selectedMode,
-      'language': _languageCode,
+      'language': _selectedLanguage,
     };
     if (providerId != null) body['providerId'] = providerId;
 

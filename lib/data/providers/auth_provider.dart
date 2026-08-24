@@ -3,6 +3,8 @@
 // Login, Register, OTP, Session, Logout
 // ============================================================
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/constants/api_constants.dart';
@@ -40,6 +42,49 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoggedIn => _status == AuthStatus.authenticated;
 
   int get tokenBalance => _user?.quota ?? 0;
+
+  Map<String, int> _tokenCosts = {};
+
+  bool _tokenCostsLoaded = false;
+
+  Map<String, int> get tokenCosts => _tokenCosts;
+
+  int get topupMinCoins {
+    final value = _tokenCosts['cost_topup_amount'] ?? 0;
+    return value > 0 ? value : 10;
+  }
+
+  double get topupPricePerCoin {
+    final amount = topupMinCoins;
+    if (amount <= 0) return 0;
+    final price = _tokenCosts['cost_topup_price'] ?? 0;
+    return price / amount;
+  }
+
+  Future<void> loadTokenCosts({bool force = false}) async {
+    if (_tokenCostsLoaded && !force) return;
+
+    try {
+      final data = await ApiService.instance.get(
+        ApiConstants.tokenCosts,
+      );
+
+      if (data is Map && data['data'] is Map) {
+        _tokenCosts = (data['data'] as Map).map(
+          (key, value) => MapEntry(
+            key.toString(),
+            int.tryParse(value.toString()) ?? 0,
+          ),
+        );
+
+        _tokenCostsLoaded = true;
+
+        notifyListeners();
+      }
+    } catch (_) {
+      // Biaya token tetap memakai nilai default.
+    }
+  }
 
   // ==========================================================
   // CONSTRUCTOR
@@ -582,11 +627,26 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ==========================================================
+  // HANDLE UNAUTHORIZED (GLOBAL 401 HOOK)
+  // ==========================================================
+
+  /// Dipanggil dari [ApiService.onUnauthorized] ketika request apapun
+  /// menerima HTTP 401. Membersihkan state dan memberitahu router agar
+  /// mengarahkan user kembali ke halaman login.
+  Future<void> handleUnauthorized() async {
+    if (_status != AuthStatus.authenticated) return;
+
+    await _clearAuthState();
+  }
+
+  // ==========================================================
   // REFRESH USER
   // ==========================================================
 
   Future<void> refreshUser() async {
     try {
+      unawaited(loadTokenCosts());
+
       await _fetchUser();
 
       notifyListeners();

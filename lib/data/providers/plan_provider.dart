@@ -23,16 +23,34 @@ class PlanModel {
     this.isPopular = false,
   });
 
-  factory PlanModel.fromJson(Map<String, dynamic> json) => PlanModel(
-        id: json['id'] ?? 0,
-        name: json['name'] ?? '',
-        price: double.tryParse(json['price']?.toString() ?? '0') ?? 0,
-        credits: json['credits'] ?? 0,
-        features:
-            (json['features'] as List?)?.map((e) => e.toString()).toList() ??
-                [],
-        isPopular: json['is_popular'] == true || json['is_popular'] == 1,
-      );
+  factory PlanModel.fromJson(Map<String, dynamic> json) {
+    // Backend mengirim price sebagai map per periode:
+    // {weekly, weekly_discount, weekly_final, monthly, ..., yearly_final}
+    double price = 0;
+    final rawPrice = json['price'];
+    if (rawPrice is Map) {
+      final monthly =
+          rawPrice['monthly_final'] ?? rawPrice['monthly'] ?? 0;
+      price = double.tryParse(monthly.toString()) ?? 0;
+    } else if (rawPrice != null) {
+      price = double.tryParse(rawPrice.toString()) ?? 0;
+    }
+
+    final popularRaw = json['isPopular'] ?? json['is_popular'];
+
+    return PlanModel(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      price: price,
+      credits: json['quota'] ?? json['credits'] ?? 0,
+      features:
+          (json['features'] as List?)?.map((e) => e.toString()).toList() ??
+              [],
+      isPopular: popularRaw == true ||
+          popularRaw == 1 ||
+          popularRaw.toString().toUpperCase() == 'Y',
+    );
+  }
 
   bool get isFree => price == 0;
 }

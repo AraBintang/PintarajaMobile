@@ -132,6 +132,12 @@ class ApiConstants {
   static const String documentsDownload = '$baseUrl/documents/download';
 
   // ==========================================================
+  // TOKEN COSTS
+  // ==========================================================
+
+  static const String tokenCosts = '$baseUrl/costs';
+
+  // ==========================================================
   // PARAPHRASE
   // ==========================================================
 

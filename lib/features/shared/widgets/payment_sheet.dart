@@ -10,6 +10,19 @@ import '../../../data/providers/auth_provider.dart';
 import '../../../data/services/storage_service.dart';
 import 'qris_payment_sheet.dart';
 
+/// Thrown by [PaymentSelectionSheet.customProcess] to surface an error
+/// message inside the checkout sheet.
+class PaymentProcessException implements Exception {
+  final String message;
+  const PaymentProcessException(this.message);
+}
+
+/// Creates the payment transaction externally (e.g. multipart order
+/// endpoints that create their own Tripay transaction). Returns the
+/// unified response payload; throws [PaymentProcessException] on failure.
+typedef CustomPaymentProcess = Future<Map<String, dynamic>> Function(
+    String method, String phone);
+
 class PaymentSelectionSheet extends StatefulWidget {
   final String itemName;
   final double price;
@@ -19,6 +32,14 @@ class PaymentSelectionSheet extends StatefulWidget {
   final int? planId;
   final String? discountCode;
   final int? coins;
+
+  /// Subscription period suffix used by the backend to determine plan
+  /// duration: 'Weekly' | 'Monthly' | 'Yearly'.
+  final String? period;
+
+  /// When provided, replaces the default HTTP call so the caller can
+  /// create the transaction itself (e.g. POST /plagiarism multipart).
+  final CustomPaymentProcess? customProcess;
 
   const PaymentSelectionSheet({
     super.key,
@@ -30,6 +51,8 @@ class PaymentSelectionSheet extends StatefulWidget {
     this.planId,
     this.discountCode,
     this.coins,
+    this.period,
+    this.customProcess,
   });
 
   static void show(
@@ -42,6 +65,8 @@ class PaymentSelectionSheet extends StatefulWidget {
     int? planId,
     String? discountCode,
     int? coins,
+    String? period,
+    CustomPaymentProcess? customProcess,
   }) {
     showModalBottomSheet<void>(
       context: context,
@@ -56,8 +81,53 @@ class PaymentSelectionSheet extends StatefulWidget {
         planId: planId,
         discountCode: discountCode,
         coins: coins,
+        period: period,
+        customProcess: customProcess,
       ),
     );
+  }
+
+  /// Parses the unified payment response returned by
+  /// /payments (store), /topup and /plagiarism endpoints.
+  static Map<String, String> parsePaymentResponse(dynamic data) {
+    String str(Object? v) => v?.toString() ?? '';
+    return {
+      'qrUrl': str(data['paymentCode']).isNotEmpty
+          ? str(data['paymentCode'])
+          : str(data['qr_url']),
+      'referenceId': str(data['referenceId']).isNotEmpty
+          ? str(data['referenceId'])
+          : str(data['reference']),
+      'checkoutUrl': str(data['checkoutUrl']).isNotEmpty
+          ? str(data['checkoutUrl'])
+          : str(data['checkout_url']),
+      'payUrl': str(data['payUrl']).isNotEmpty
+          ? str(data['payUrl'])
+          : str(data['pay_url']),
+    };
+  }
+
+  /// Extracts a human readable message from an error response body.
+  static String parseErrorResponse(String body, int statusCode) {
+    try {
+      final err = jsonDecode(body);
+      if (err is Map) {
+        if (err['error'] is String) return err['error'] as String;
+        if (err['message'] is String) return err['message'] as String;
+        if (err['errors'] is Map) {
+          final first = (err['errors'] as Map).values.first;
+          if (first is List && first.isNotEmpty) return first.first.toString();
+        }
+      }
+    } catch (_) {}
+    return 'Gagal memproses pembayaran. Code: $statusCode';
+  }
+
+  /// Opens a checkout URL in the external browser.
+  static Future<void> launchExternalUrl(Uri uri) async {
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   static Future<void> processDirectQris(
@@ -67,13 +137,29 @@ class PaymentSelectionSheet extends StatefulWidget {
     String type = 'topup',
     String phone = '08123456789',
   }) async {
-    showDialog(
+    // Pemanggil (tombol top up) biasanya baru saja memanggil Navigator.pop
+    // untuk menutup dialognya. Push/pop di event-loop yang sama membuat
+    // Navigator terkunci (_debugLocked) dan melempar assertion. Beri jeda
+    // satu frame agar transaksi navigasi pemanggil selesai lebih dulu.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!context.mounted) return;
+
+    final rootNav = Navigator.of(context, rootNavigator: true);
+
+    final loadingRoute = DialogRoute<void>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => const Center(child: CircularProgressIndicator()),
     );
+    rootNav.push(loadingRoute);
 
-    bool dialogPopped = false;
+    // Tutup HANYA route loading ini (bukan route lain yang kebuka duluan),
+    // sehingga tidak mungkin double-pop rute di bawahnya.
+    void dismissLoading() {
+      if (loadingRoute.isActive) {
+        rootNav.removeRoute(loadingRoute);
+      }
+    }
 
     try {
       final token = StorageService.getToken();
@@ -96,36 +182,44 @@ class PaymentSelectionSheet extends StatefulWidget {
         body: jsonEncode(body),
       );
 
-      Navigator.pop(context); // Close loading dialog
-      dialogPopped = true;
+      dismissLoading();
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final data = jsonDecode(response.body);
-        showModalBottomSheet(
+        final parsed = parsePaymentResponse(data);
+
+        if (!context.mounted) return;
+
+        await showModalBottomSheet(
           context: context,
           isScrollControlled: true,
+          useRootNavigator: true,
           backgroundColor: Colors.transparent,
           builder: (_) => QrisPaymentSheet(
-            qrUrl: data['qr_url'] ?? data['checkout_url'] ?? '',
-            referenceId: data['reference'] ?? data['reference_id'] ?? '',
-            checkoutUrl: data['checkout_url'] ?? data['pay_url'] ?? '',
+            qrUrl: parsed['qrUrl'] ?? '',
+            referenceId: parsed['referenceId'] ?? '',
+            checkoutUrl:
+                parsed['checkoutUrl']?.isNotEmpty == true
+                    ? parsed['checkoutUrl']!
+                    : (parsed['payUrl'] ?? ''),
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  'Gagal memproses pembayaran. Code: ${response.statusCode}')),
-        );
+        _showErrorSnackBar(context,
+            parseErrorResponse(response.body, response.statusCode));
       }
     } catch (e) {
-      if (!dialogPopped) {
-        Navigator.pop(context); // Close loading dialog
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan jaringan atau data tidak valid.')),
-      );
+      dismissLoading();
+      _showErrorSnackBar(
+          context, 'Terjadi kesalahan jaringan atau data tidak valid.');
     }
+  }
+
+  static void _showErrorSnackBar(BuildContext context, String message) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -144,21 +238,8 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
     'QRIS': [
       {'id': 'QRIS2', 'name': 'QRIS', 'icon': 'qris'},
     ],
-    'E-WALLET': [
-      {'id': 'DANA', 'name': 'DANA', 'icon': 'dana'},
-      {'id': 'OVO', 'name': 'OVO', 'icon': 'ovo'},
-      {'id': 'SHOPEEPAY', 'name': 'ShopeePay', 'icon': 'shopeepay'},
-    ],
-    'VIRTUAL ACCOUNT': [
-      {'id': 'BCAVA', 'name': 'BCA VA', 'icon': 'bca'},
-      {'id': 'BNIVA', 'name': 'BNI VA', 'icon': 'bni'},
-      {'id': 'BRIVA', 'name': 'BRI VA', 'icon': 'bri'},
-      {'id': 'BSIVA', 'name': 'BSI VA', 'icon': 'bsi'},
-      {'id': 'MANDIRIVA', 'name': 'Mandiri VA', 'icon': 'mandiri'},
-    ],
-    'MINI MARKET': [
-      {'id': 'ALFAMART', 'name': 'Alfamart', 'icon': 'alfamart'},
-      {'id': 'INDOMARET', 'name': 'Indomaret', 'icon': 'indomaret'},
+    'KARTU KREDIT': [
+      {'id': 'VISA', 'name': 'Visa / Mastercard', 'icon': 'visa'},
     ],
   };
 
@@ -189,93 +270,106 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
     });
 
     try {
-      final token = StorageService.getToken();
+      Map<String, dynamic> data;
 
-      final Map<String, dynamic> body = {
-        'method': _selectedMethod,
-        'channel': _selectedMethod,
-        'type': widget.type,
-        'phone': phone,
-      };
+      if (widget.customProcess != null) {
+        data = await widget.customProcess!(_selectedMethod, phone);
+      } else {
+        final token = StorageService.getToken();
 
-      if (widget.type == 'subscription' && widget.planId != null) {
-        body['planId'] = widget.planId;
-        body['amount'] = widget.price.toInt();
-      } else if (widget.type == 'topup' && widget.coins != null) {
-        body['coins'] = widget.coins;
+        final Map<String, dynamic> body = {
+          'method': _selectedMethod,
+          'channel': _selectedMethod,
+          'type': widget.type,
+          'phone': phone,
+        };
+
+        if (widget.type == 'subscription' && widget.planId != null) {
+          body['planId'] = widget.planId;
+          body['amount'] = widget.price.toInt();
+          // Backend requires `item`; its trailing suffix (-Weekly/-Monthly/
+          // -Yearly) determines the subscription duration on payment callback.
+          body['item'] = widget.period != null && widget.period!.isNotEmpty
+              ? '${widget.itemName} - ${widget.period}'
+              : widget.itemName;
+        } else if (widget.type == 'topup' && widget.coins != null) {
+          body['coins'] = widget.coins;
+        }
+
+        final promo = _promoController.text.trim();
+        if (promo.isNotEmpty) {
+          body['discount_code'] = promo;
+        }
+
+        final endpoint = widget.type == 'subscription'
+            ? ApiConstants.payments
+            : ApiConstants.topUp;
+
+        final response = await http.post(
+          Uri.parse(endpoint),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(body),
+        );
+
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          throw PaymentProcessException(
+              PaymentSelectionSheet.parseErrorResponse(
+                  response.body, response.statusCode));
+        }
+        data = (jsonDecode(response.body) as Map).cast<String, dynamic>();
       }
-
-      final promo = _promoController.text.trim();
-      if (promo.isNotEmpty) {
-        body['discount_code'] = promo;
-      }
-
-      final endpoint = widget.type == 'subscription'
-          ? ApiConstants.payments
-          : ApiConstants.topUp;
-
-      final response = await http.post(
-        Uri.parse(endpoint),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(body),
-      );
 
       if (!mounted) return;
+      final parsed = PaymentSelectionSheet.parsePaymentResponse(data);
 
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final data = jsonDecode(response.body);
+      Navigator.pop(context); // Close checkout
 
-        Navigator.pop(context); // Close checkout
+      final qrUrl = parsed['qrUrl'] ?? '';
+      final referenceId = parsed['referenceId'] ?? '';
+      final checkoutUrl = (parsed['checkoutUrl']?.isNotEmpty == true
+              ? parsed['checkoutUrl']
+              : parsed['payUrl']) ??
+          '';
 
-        // data keys differ: topup returns qr_url, subscription returns paymentCode
-        final qrUrl = data['qr_url'] ??
-            data['paymentCode'] ??
-            data['checkout_url'] ??
-            '';
-        final referenceId = data['reference'] ??
-            data['reference_id'] ??
-            data['referenceId'] ??
-            '';
-        final checkoutUrl = data['checkout_url'] ??
-            data['checkoutUrl'] ??
-            data['pay_url'] ??
-            data['payUrl'] ??
-            '';
-
-        if (_selectedMethod.startsWith('QRIS')) {
-          if (!mounted) return;
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (_) => QrisPaymentSheet(
-              qrUrl: qrUrl,
-              referenceId: referenceId,
-              checkoutUrl: checkoutUrl,
-            ),
-          );
-          widget.onPaymentSuccess();
-        } else {
-          if (checkoutUrl.isNotEmpty) {
-            final uri = Uri.parse(checkoutUrl);
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            }
-          }
-          widget.onPaymentSuccess();
-        }
-      } else {
-        setState(() {
-          _error = 'Gagal memproses pembayaran. Code: ${response.statusCode}';
-        });
+      // Order fully covered by quota: no payment needed.
+      if (qrUrl.isEmpty && checkoutUrl.isEmpty) {
+        widget.onPaymentSuccess();
+        return;
       }
+
+      if (_selectedMethod.startsWith('QRIS')) {
+        // Tunggu frame berikutnya agar pop di atas selesai dulu
+        // (hindari !_debugLocked saat push QR sheet).
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted) return;
+        await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          useRootNavigator: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => QrisPaymentSheet(
+            qrUrl: qrUrl,
+            referenceId: referenceId,
+            checkoutUrl: checkoutUrl,
+          ),
+        );
+        widget.onPaymentSuccess();
+      } else {
+        if (checkoutUrl.isNotEmpty) {
+          final uri = Uri.parse(checkoutUrl);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        }
+        widget.onPaymentSuccess();
+      }
+    } on PaymentProcessException catch (e) {
+      if (mounted) setState(() => _error = e.message);
     } catch (e) {
-      setState(() {
-        _error = 'Terjadi kesalahan jaringan.';
-      });
+      if (mounted) setState(() => _error = 'Terjadi kesalahan jaringan.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

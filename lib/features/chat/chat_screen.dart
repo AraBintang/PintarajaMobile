@@ -86,11 +86,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
     final chat = context.read<ChatProvider>();
 
-    await chat.startNewChat();
+    try {
+      await chat.startNewChat();
+    } catch (_) {
+      // Gagal membuat conversation di server tidak boleh
+      // membuat layar mati — user tetap bisa chat lokal.
+    }
 
     if (!mounted) {
       return;
     }
+
+    setState(() {});
 
     _scrollToBottom();
   }
@@ -294,6 +301,8 @@ class _ChatScreenState extends State<ChatScreen> {
   // ==========================================================
 
   void _showModelSelector() {
+    context.read<ChatProvider>().loadAiProviders();
+
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppTheme.surfaceLight,
@@ -393,10 +402,15 @@ class _ChatScreenState extends State<ChatScreen> {
   void _showTokenDialog() {
     final authProvider = context.read<AuthProvider>();
     final tokenBalance = authProvider.tokenBalance;
+    final minCoins = authProvider.topupMinCoins;
+    final pricePerCoin = authProvider.topupPricePerCoin;
+    final priceLabel = pricePerCoin % 1 == 0
+        ? pricePerCoin.toInt().toString()
+        : pricePerCoin.toStringAsFixed(2);
 
-    int selectedCoins = 50;
+    int selectedCoins = minCoins > 50 ? minCoins : 50;
     final TextEditingController coinsController =
-        TextEditingController(text: '50');
+        TextEditingController(text: '$selectedCoins');
 
     showModalBottomSheet<void>(
       context: context,
@@ -406,7 +420,6 @@ class _ChatScreenState extends State<ChatScreen> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
             final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
-            final pricePerCoin = 1000;
             final totalPrice = selectedCoins * pricePerCoin;
 
             return Padding(
@@ -509,7 +522,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               fontSize: 15,
                               color: AppTheme.getTextColor(context))),
                       const SizedBox(height: 4),
-                      Text('Harga: Rp $pricePerCoin / token',
+                      Text('Harga: Rp $priceLabel / token',
                           style: const TextStyle(
                               color: AppTheme.textSecondary, fontSize: 12)),
                       const SizedBox(height: 10),
@@ -518,7 +531,10 @@ class _ChatScreenState extends State<ChatScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: [10, 50, 100, 500, 1000].map((amount) {
+                        children: [
+                          ...[10, 50, 100, 500, 1000]
+                              .where((amount) => amount >= minCoins)
+                              .map((amount) {
                           final isSelected = selectedCoins == amount;
                           return GestureDetector(
                             onTap: () {
@@ -549,7 +565,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                       fontSize: 13)),
                             ),
                           );
-                        }).toList(),
+                          }),
+                        ],
                       ),
                       const SizedBox(height: 10),
 
@@ -558,7 +575,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         controller: coinsController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          labelText: 'Jumlah Token (Min. 10)',
+                          labelText: 'Jumlah Token (Min. $minCoins)',
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12)),
                           prefixIcon: const Icon(Icons.diamond_rounded),
@@ -613,7 +630,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 borderRadius: BorderRadius.circular(12)),
                             elevation: 2,
                           ),
-                          onPressed: selectedCoins < 10
+                          onPressed: selectedCoins < minCoins
                               ? null
                               : () async {
                                   Navigator.pop(ctx);
@@ -625,7 +642,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
                                   await PaymentSelectionSheet.processDirectQris(
                                     this.context,
-                                    amount: totalPrice,
+                                    amount: totalPrice.round(),
                                     coins: selectedCoins,
                                     phone: phone,
                                   );
@@ -815,6 +832,11 @@ class _ChatScreenState extends State<ChatScreen> {
               width: 30,
               height: 30,
               fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.auto_awesome_rounded,
+                color: AppTheme.primary,
+                size: 22,
+              ),
             ),
 
             const SizedBox(
@@ -1207,9 +1229,15 @@ class _MessageBubble extends StatelessWidget {
                                     padding: const EdgeInsets.only(top: 8.0),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
-                                      child: Image.memory(
-                                          base64Decode(base64Str),
-                                          fit: BoxFit.cover),
+                                      child: ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 240,
+                                          maxHeight: 320,
+                                        ),
+                                        child: Image.memory(
+                                            base64Decode(base64Str),
+                                            fit: BoxFit.contain),
+                                      ),
                                     ),
                                   );
                                 }
@@ -1226,10 +1254,14 @@ class _MessageBubble extends StatelessWidget {
                                       const Icon(Icons.insert_drive_file,
                                           color: Colors.white, size: 16),
                                       const SizedBox(width: 4),
-                                      Text(part['name'] ?? 'File',
-                                          style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12)),
+                                      Flexible(
+                                        child: Text(part['name'] ?? 'File',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12)),
+                                      ),
                                     ],
                                   ),
                                 );

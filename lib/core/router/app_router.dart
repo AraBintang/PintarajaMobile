@@ -26,6 +26,15 @@ import '../../features/plagiarism/plagiarism_screen.dart';
 import '../../features/transcribe/transcribe_screen.dart';
 
 class AppRouter {
+  /// Ekstraksi aman conversationId dari route extra.
+  /// Cast langsung `as int?` akan melempar TypeError bila pemanggil
+  /// mengirim tipe lain (String, Map, dll) dan membuat layar hitam.
+  static int? _extractConversationId(Object? extra) {
+    if (extra is int) return extra;
+    if (extra is String) return int.tryParse(extra);
+    return null;
+  }
+
   static GoRouter router(AuthProvider auth) {
     return GoRouter(
       initialLocation: '/splash',
@@ -214,7 +223,7 @@ class AppRouter {
             GoRoute(
               path: '/chat',
               builder: (_, state) {
-                final conversationId = state.extra as int?;
+                final conversationId = _extractConversationId(state.extra);
 
                 return ChatScreen(
                   conversationId: conversationId,
@@ -229,8 +238,8 @@ class AppRouter {
             GoRoute(
               path: '/home',
               builder: (_, state) {
-                final conversationId = state.extra as int?;
-                return ChatScreen(conversationId: conversationId);
+                return ChatScreen(
+                    conversationId: _extractConversationId(state.extra));
               },
             ),
 

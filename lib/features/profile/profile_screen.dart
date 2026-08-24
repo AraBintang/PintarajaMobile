@@ -311,34 +311,44 @@ class ProfileScreen extends StatelessWidget {
             ],
           ),
           actions: [
-            TextButton(
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        setState(() => isLoading = true);
+                        final ok = await auth.updateProfile(
+                            name: nameCtrl.text.trim(),
+                            phone: phoneCtrl.text.trim());
+                        setState(() => isLoading = false);
+                        if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(ok
+                                  ? 'Profil berhasil diperbarui!'
+                                  : (auth.error ??
+                                      'Gagal memperbarui profil.'))));
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12)),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Text('Simpan'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
                 onPressed: () => Navigator.pop(dialogCtx),
-                child: const Text('Batal')),
-            ElevatedButton(
-              onPressed: isLoading
-                  ? null
-                  : () async {
-                      setState(() => isLoading = true);
-                      final ok = await auth.updateProfile(
-                          name: nameCtrl.text.trim(),
-                          phone: phoneCtrl.text.trim());
-                      setState(() => isLoading = false);
-                      if (dialogCtx.mounted) Navigator.pop(dialogCtx);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(ok
-                                ? 'Profil berhasil diperbarui!'
-                                : (auth.error ??
-                                    'Gagal memperbarui profil.'))));
-                      }
-                    },
-              child: isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : const Text('Simpan'),
+                child: const Text('Batal'),
+              ),
             ),
           ],
         ),
@@ -546,52 +556,62 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ]),
           actions: [
-            TextButton(
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        if (tab == 0) {
+                          if (newPassCtrl.text != confirmPassCtrl.text) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                content: Text(
+                                    'Password baru dan konfirmasi tidak cocok.')));
+                            return;
+                          }
+                          setState(() => isLoading = true);
+                          final ok = await auth.changePassword(
+                              oldPassword: oldPassCtrl.text,
+                              newPassword: newPassCtrl.text);
+                          setState(() => isLoading = false);
+                          if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(ok
+                                    ? 'Password berhasil diubah!'
+                                    : (auth.error ??
+                                        'Gagal mengubah password.'))));
+                          }
+                        } else {
+                          setState(() => isLoading = true);
+                          await Future.delayed(const Duration(milliseconds: 800));
+                          setState(() => isLoading = false);
+                          if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(
+                                    'Link reset password dikirim ke ${auth.user?.email ?? 'email'}. Cek inbox kamu.')));
+                          }
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12)),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : Text(tab == 0 ? 'Simpan' : 'Kirim Link'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
                 onPressed: () => Navigator.pop(dialogCtx),
-                child: const Text('Batal')),
-            ElevatedButton(
-              onPressed: isLoading
-                  ? null
-                  : () async {
-                      if (tab == 0) {
-                        if (newPassCtrl.text != confirmPassCtrl.text) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                              content: Text(
-                                  'Password baru dan konfirmasi tidak cocok.')));
-                          return;
-                        }
-                        setState(() => isLoading = true);
-                        final ok = await auth.changePassword(
-                            oldPassword: oldPassCtrl.text,
-                            newPassword: newPassCtrl.text);
-                        setState(() => isLoading = false);
-                        if (dialogCtx.mounted) Navigator.pop(dialogCtx);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(ok
-                                  ? 'Password berhasil diubah!'
-                                  : (auth.error ??
-                                      'Gagal mengubah password.'))));
-                        }
-                      } else {
-                        setState(() => isLoading = true);
-                        await Future.delayed(const Duration(milliseconds: 800));
-                        setState(() => isLoading = false);
-                        if (dialogCtx.mounted) Navigator.pop(dialogCtx);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(
-                                  'Link reset password dikirim ke ${auth.user?.email ?? 'email'}. Cek inbox kamu.')));
-                        }
-                      }
-                    },
-              child: isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : Text(tab == 0 ? 'Simpan' : 'Kirim Link'),
+                child: const Text('Batal'),
+              ),
             ),
           ],
         ),

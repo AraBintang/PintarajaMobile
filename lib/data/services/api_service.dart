@@ -36,6 +36,13 @@ class ApiService {
 
   static final ApiService instance = ApiService._();
 
+  /// Called whenever an authenticated request receives HTTP 401.
+  ///
+  /// Wired in main.dart to [AuthProvider.handleUnauthorized] so the
+  /// router's refreshListenable fires and the user is redirected to
+  /// the login screen instead of staying stuck with a dead token.
+  static void Function()? onUnauthorized;
+
   // ==========================================================
   // HEADERS
   // ==========================================================
@@ -421,6 +428,8 @@ class ApiService {
       unawaited(
         StorageService.clearAuth(),
       );
+
+      onUnauthorized?.call();
 
       throw ApiException(
         message,
