@@ -1,5 +1,5 @@
-// ============================================================
-// PROFILE SCREEN — Full Functional: Edit Profil, Reset Password,
+﻿// ============================================================
+// PROFILE SCREEN â€” Full Functional: Edit Profil, Reset Password,
 //                  Redeem Kupon, Membership, Tema, Bahasa, Logout
 // ============================================================
 
@@ -51,7 +51,7 @@ class ProfileScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 10),
 
-            // ── Avatar + Info ───────────────────────────────
+            // â”€â”€ Avatar + Info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Center(
               child: Column(
                 children: [
@@ -120,7 +120,7 @@ class ProfileScreen extends StatelessWidget {
                             color: AppTheme.accent, size: 14),
                         const SizedBox(width: 6),
                         Text(
-                          user?.plan ?? 'Free Plan',
+                          user?.activePlanName ?? 'Free Plan',
                           style: const TextStyle(
                             color: AppTheme.accent,
                             fontSize: 11,
@@ -135,7 +135,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 28),
 
-            // ── Menu Akun ──────────────────────────────────
+            // â”€â”€ Menu Akun â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _buildSectionLabel('Akun'),
             _buildMenuItem(
               icon: Icons.person_outline_rounded,
@@ -158,28 +158,28 @@ class ProfileScreen extends StatelessWidget {
             _buildMenuItem(
               icon: Icons.workspace_premium_outlined,
               title: 'Paket & Langganan',
-              trailingText: user?.plan ?? 'Free',
+              trailingText: user?.activePlanName ?? 'Free',
               onTap: () => _showMembershipDialog(context, auth),
             ),
 
             const SizedBox(height: 8),
-            // ── Menu Preferensi ────────────────────────────
+            // â”€â”€ Menu Preferensi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _buildSectionLabel('Preferensi'),
             _buildMenuItem(
               icon: Icons.brightness_6_rounded,
               title: 'Mode Tampilan',
-              trailingText: theme.isDarkMode ? '🌙 Gelap' : '☀️ Terang',
+              trailingText: theme.isDarkMode ? 'ðŸŒ™ Gelap' : 'â˜€ï¸ Terang',
               onTap: () => _showThemeDialog(context, theme),
             ),
             _buildMenuItem(
               icon: Icons.language_rounded,
               title: 'Bahasa',
-              trailingText: '🇮🇩 Indonesia',
+              trailingText: 'ðŸ‡®ðŸ‡© Indonesia',
               onTap: () => _showLanguageDialog(context),
             ),
 
             const SizedBox(height: 8),
-            // ── Logout ─────────────────────────────────────
+            // â”€â”€ Logout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
@@ -217,7 +217,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Helpers ───────────────────────────────────────────────
+  // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   static Widget _buildSectionLabel(String label) {
     return Padding(
@@ -277,7 +277,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Edit Profil ───────────────────────────────────────────
+  // â”€â”€ Edit Profil â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _showEditProfileDialog(BuildContext context, AuthProvider auth) {
     final nameCtrl = TextEditingController(text: auth.user?.name ?? '');
@@ -356,7 +356,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Redeem Kupon ──────────────────────────────────────────
+  // â”€â”€ Redeem Kupon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _showRedeemCouponDialog(BuildContext context, AuthProvider auth) {
     final codeCtrl = TextEditingController();
@@ -426,7 +426,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Keamanan & Password ───────────────────────────────────
+  // â”€â”€ Keamanan & Password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _showSecurityDialog(BuildContext context, AuthProvider auth) {
     final oldPassCtrl = TextEditingController();
@@ -619,7 +619,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Membership ────────────────────────────────────────────
+  // â”€â”€ Membership â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _showMembershipDialog(BuildContext context, AuthProvider auth) {
     showDialog<void>(
@@ -649,7 +649,7 @@ class ProfileScreen extends StatelessWidget {
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(auth.user?.plan ?? 'Free Plan',
+                          Text(auth.user?.activePlanName ?? 'Free Plan',
                               style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -671,7 +671,7 @@ class ProfileScreen extends StatelessWidget {
                     fontSize: 12.5)),
             const SizedBox(height: 6),
             const Text(
-                '• AI Chat (GPT-4o, Gemini, Claude, DeepSeek, Qwen)\n• AI Writer + Storage 500MB\n• Paraphrase AI & Plagiarism Check\n• Prioritas akses model terbaru',
+                'â€¢ AI Chat (GPT-4o, Gemini, Claude, DeepSeek, Qwen)\nâ€¢ AI Writer + Storage 500MB\nâ€¢ Paraphrase AI & Plagiarism Check\nâ€¢ Prioritas akses model terbaru',
                 style: TextStyle(
                     color: AppTheme.textSecondary, fontSize: 12, height: 1.6)),
           ],
@@ -692,7 +692,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Tema ──────────────────────────────────────────────────
+  // â”€â”€ Tema â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _showThemeDialog(BuildContext context, ThemeProvider theme) {
     showDialog<void>(
@@ -708,10 +708,10 @@ class ProfileScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildThemeOption(context, dialogCtx, theme,
-                '☀️  Mode Terang (Light)', ThemeMode.light, !theme.isDarkMode),
+                'â˜€ï¸  Mode Terang (Light)', ThemeMode.light, !theme.isDarkMode),
             const SizedBox(height: 6),
             _buildThemeOption(context, dialogCtx, theme,
-                '🌙  Mode Gelap (Dark)', ThemeMode.dark, theme.isDarkMode),
+                'ðŸŒ™  Mode Gelap (Dark)', ThemeMode.dark, theme.isDarkMode),
           ],
         ),
       ),
@@ -754,7 +754,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Bahasa ────────────────────────────────────────────────
+  // â”€â”€ Bahasa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _showLanguageDialog(BuildContext context) {
     showDialog<void>(
@@ -770,7 +770,7 @@ class ProfileScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Text('🇮🇩', style: TextStyle(fontSize: 22)),
+              leading: const Text('ðŸ‡®ðŸ‡©', style: TextStyle(fontSize: 22)),
               title: const Text('Bahasa Indonesia',
                   style: TextStyle(color: AppTheme.textPrimary)),
               trailing: const Icon(Icons.check_circle_rounded,
@@ -778,7 +778,7 @@ class ProfileScreen extends StatelessWidget {
               onTap: () => Navigator.pop(dialogCtx),
             ),
             ListTile(
-              leading: const Text('🇺🇸', style: TextStyle(fontSize: 22)),
+              leading: const Text('ðŸ‡ºðŸ‡¸', style: TextStyle(fontSize: 22)),
               title: const Text('English (US)',
                   style: TextStyle(color: AppTheme.textPrimary)),
               onTap: () {
@@ -793,7 +793,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Logout ────────────────────────────────────────────────
+  // â”€â”€ Logout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _showLogoutConfirm(BuildContext context, AuthProvider auth) {
     showDialog<void>(
@@ -826,3 +826,5 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
+
+

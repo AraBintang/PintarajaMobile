@@ -238,6 +238,7 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
           'text',
           'output',
           'answer',
+          'data',
         ]);
 
         if (paraphrased.isEmpty) {
@@ -713,7 +714,7 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
     final authProvider = context.read<AuthProvider>();
     final tokenBalance = authProvider.tokenBalance;
     final minCoins = authProvider.topupMinCoins;
-    final pricePerCoin = 100.0;
+    final pricePerCoin = 1000.0;
     final priceLabel = pricePerCoin % 1 == 0
         ? pricePerCoin.toInt().toString()
         : pricePerCoin.toStringAsFixed(2);
@@ -1237,4 +1238,5 @@ class _ModelSelectorButton extends StatelessWidget {
     );
   }
 }
+
 

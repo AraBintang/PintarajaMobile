@@ -1,19 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <!-- Background splash -->
     <item>
-        <shape android:shape="rectangle">
-            <solid android:color="#F0F2F5" />
-        </shape>
+        <bitmap android:gravity="fill" android:src="@drawable/background"/>
     </item>
-
-    <!-- Logo PintarAja -->
     <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@drawable/pintaraja" />
+        <bitmap android:gravity="center" android:src="@drawable/splash"/>
     </item>
-
 </layer-list>

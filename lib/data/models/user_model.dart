@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // USER MODEL
 // ============================================================
 
@@ -16,6 +16,9 @@ class UserModel {
   final String? referralCode;
   final DateTime? subscriptionExpiredAt;
   final DateTime? createdAt;
+
+  bool get isPremium => subscriptionExpiredAt != null && subscriptionExpiredAt!.isAfter(DateTime.now());
+  String get activePlanName => isPremium ? (plan ?? 'Premium') : 'Free';
 
   const UserModel({
     required this.id,
@@ -154,3 +157,4 @@ class UserModel {
     return int.tryParse(value.toString());
   }
 }
+

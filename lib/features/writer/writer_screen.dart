@@ -584,7 +584,7 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
     final authProvider = context.read<AuthProvider>();
     final tokenBalance = authProvider.tokenBalance;
     final minCoins = authProvider.topupMinCoins;
-    final pricePerCoin = 100.0;
+    final pricePerCoin = 1000.0;
     final priceLabel = pricePerCoin % 1 == 0
         ? pricePerCoin.toInt().toString()
         : pricePerCoin.toStringAsFixed(2);
@@ -1115,7 +1115,7 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
                     ),
                     if (quota.hasLimit)
                       Text(
-                        '${quota.remaining}/${quota.limit}',
+                        'Limit: ${quota.remaining}/${quota.limit}',
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
@@ -1507,7 +1507,10 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppTheme.borderLight),
           ),
-          child: MarkdownBody(
+          child: SizedBox(
+            height: 350,
+            child: SingleChildScrollView(
+              child: MarkdownBody(
             data: _result,
             selectable: true,
             styleSheet: MarkdownStyleSheet(
@@ -1926,4 +1929,7 @@ class _SkeletonLineState extends State<_SkeletonLine>
     );
   }
 }
+
+
+
 

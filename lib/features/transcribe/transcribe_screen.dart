@@ -653,7 +653,7 @@ class _TranscribeScreenState extends State<TranscribeScreen>
     final authProvider = context.read<AuthProvider>();
     final tokenBalance = authProvider.tokenBalance;
     final minCoins = authProvider.topupMinCoins;
-    final pricePerCoin = 100.0;
+    final pricePerCoin = 1000.0;
     final priceLabel = pricePerCoin % 1 == 0
         ? pricePerCoin.toInt().toString()
         : pricePerCoin.toStringAsFixed(2);
@@ -808,7 +808,7 @@ class _TranscribeScreenState extends State<TranscribeScreen>
                                           ? AppTheme.primary
                                           : AppTheme.borderLight),
                                 ),
-                                child: Text('',
+                                child: Text('$amount',
                                     style: TextStyle(
                                         color: isSelected
                                             ? Colors.white
@@ -907,7 +907,7 @@ class _TranscribeScreenState extends State<TranscribeScreen>
                               const Icon(Icons.qr_code_2_rounded, size: 20),
                               const SizedBox(width: 8),
                               Text(
-                                  'Bayar via QRIS - Rp ',
+                                  'Bayar via QRIS - Rp ${totalPrice.toStringAsFixed(0)}',
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14)),
@@ -2042,6 +2042,9 @@ class _TokenChip extends StatelessWidget {
     );
   }
 }
+
+
+
 
 
 

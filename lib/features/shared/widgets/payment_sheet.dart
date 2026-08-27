@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -164,8 +164,8 @@ class PaymentSelectionSheet extends StatefulWidget {
     try {
       final token = StorageService.getToken();
       final body = <String, dynamic>{
-        'method': 'QRIS',
-        'channel': 'QRIS',
+        'method': 'QRIS2',
+        'channel': 'QRIS2',
         'type': type,
         'phone': phone,
       };
@@ -229,17 +229,14 @@ class PaymentSelectionSheet extends StatefulWidget {
 class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
   bool _isLoading = false;
   String? _error;
-  String _selectedMethod = 'QRIS';
+  String _selectedMethod = 'Xendit';
 
   late TextEditingController _phoneController;
   late TextEditingController _promoController;
 
   final Map<String, List<Map<String, String>>> _paymentGroups = {
-    'QRIS': [
-      {'id': 'QRIS', 'name': 'QRIS', 'icon': 'qris'},
-    ],
-    'KARTU KREDIT': [
-      {'id': 'VISA', 'name': 'Visa / Mastercard', 'icon': 'visa'},
+    'METODE PEMBAYARAN': [
+      {'id': 'Xendit', 'name': 'Lanjut ke Pembayaran (QRIS, VA, E-Wallet, dsb)', 'icon': 'qris'},
     ],
   };
 
@@ -668,7 +665,7 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
                               ElevatedButton(
                                 onPressed: () {},
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFD97706),
+                                  backgroundColor: AppTheme.primary,
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8)),
                                   padding: const EdgeInsets.symmetric(
@@ -701,7 +698,7 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _processPayment,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF10B981),
+                                backgroundColor: AppTheme.primary,
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
@@ -768,3 +765,4 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
     );
   }
 }
+

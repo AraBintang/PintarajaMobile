@@ -403,7 +403,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final authProvider = context.read<AuthProvider>();
     final tokenBalance = authProvider.tokenBalance;
     final minCoins = authProvider.topupMinCoins;
-    final pricePerCoin = 100.0;
+    final pricePerCoin = 1000.0;
     final priceLabel = pricePerCoin % 1 == 0
         ? pricePerCoin.toInt().toString()
         : pricePerCoin.toStringAsFixed(2);
@@ -1751,4 +1751,5 @@ class _ProviderOption extends StatelessWidget {
     );
   }
 }
+
 
