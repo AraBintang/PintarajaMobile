@@ -1214,68 +1214,6 @@ class ChatProvider extends ChangeNotifier {
   }
 
   // ==========================================================
-  // RESPONSE ERROR
-  // ==========================================================
-
-  String _extractResponseError(
-    http.Response response,
-  ) {
-    final text = utf8.decode(
-      response.bodyBytes,
-    );
-
-    try {
-      final decoded = jsonDecode(text);
-
-      if (decoded is Map) {
-        final message = decoded['message'] ?? decoded['error'];
-
-        if (message != null) {
-          return message.toString();
-        }
-
-        final quotaRemaining = decoded['quota_remaining'];
-
-        if (quotaRemaining != null) {
-          return 'Kuota harian tersisa: $quotaRemaining.';
-        }
-
-        final errors = decoded['errors'];
-
-        if (errors is Map && errors.isNotEmpty) {
-          final first = errors.values.first;
-
-          if (first is List && first.isNotEmpty) {
-            return first.first.toString();
-          }
-
-          return first.toString();
-        }
-      }
-    } catch (_) {
-      // Not JSON.
-    }
-
-    if (response.statusCode == 402) {
-      return 'Token kamu tidak cukup untuk menggunakan layanan ini.';
-    }
-
-    if (response.statusCode == 403) {
-      return 'AI provider ini tidak tersedia untuk paket akun kamu.';
-    }
-
-    if (response.statusCode == 429) {
-      return 'Batas penggunaan AI hari ini sudah tercapai.';
-    }
-
-    if (text.trim().isNotEmpty) {
-      return text.trim();
-    }
-
-    return 'Gagal mengirim pesan.';
-  }
-
-  // ==========================================================
   // PARSE AI RESPONSE
   // Support normal JSON + SSE
   // ==========================================================

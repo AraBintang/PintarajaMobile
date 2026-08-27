@@ -1,6 +1,6 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 // ============================================================
-// PINTARAJA — CHAT SCREEN
+// PINTARAJA â€” CHAT SCREEN
 // Floating Sidebar + Blur + Token + AI Provider + Conversations
 // Responsive untuk Android 720x1520
 // ============================================================
@@ -90,7 +90,7 @@ class _ChatScreenState extends State<ChatScreen> {
       await chat.startNewChat();
     } catch (_) {
       // Gagal membuat conversation di server tidak boleh
-      // membuat layar mati — user tetap bisa chat lokal.
+      // membuat layar mati â€” user tetap bisa chat lokal.
     }
 
     if (!mounted) {
@@ -403,7 +403,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final authProvider = context.read<AuthProvider>();
     final tokenBalance = authProvider.tokenBalance;
     final minCoins = authProvider.topupMinCoins;
-    final pricePerCoin = authProvider.topupPricePerCoin;
+    final pricePerCoin = 100.0;
     final priceLabel = pricePerCoin % 1 == 0
         ? pricePerCoin.toInt().toString()
         : pricePerCoin.toStringAsFixed(2);
@@ -785,8 +785,8 @@ class _ChatScreenState extends State<ChatScreen> {
       return Container(
         height: 62,
         padding: const EdgeInsets.only(
-          left: 8,
-          right: 0,
+          left: 10,
+          right: 10,
         ),
         decoration: const BoxDecoration(
           color: AppTheme.backgroundApp,
@@ -1751,3 +1751,4 @@ class _ProviderOption extends StatelessWidget {
     );
   }
 }
+

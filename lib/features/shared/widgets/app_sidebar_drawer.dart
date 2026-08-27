@@ -28,12 +28,7 @@ class AppSidebarDrawer extends StatelessWidget {
         borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
       ),
       child: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: IntrinsicHeight(
-                child: Column(
+        child: Column(
           children: [
             // ── Header ──────────────────────────────────────────────
             Padding(
@@ -100,178 +95,180 @@ class AppSidebarDrawer extends StatelessWidget {
             ),
             const Divider(height: 1),
 
-            // ── New Chat Button ─────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  chat.startNewChat();
-                  if (currentRoute != '/chat') {
-                    context.go('/chat');
-                  }
-                },
-                icon: const Icon(Icons.add_comment_rounded, size: 18),
-                label: Text(lang.translate('new_chat')),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 44),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-
-            // ── Workspace Navigation ────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  lang.translate('workspace').toUpperCase(),
-                  style: TextStyle(
-                    color: AppTheme.getTextSecondary(context),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ),
-
-            _buildWorkspaceItem(
-              context,
-              icon: Icons.chat_bubble_outline_rounded,
-              title: lang.translate('chat_ai'),
-              route: '/chat',
-              isActive: currentRoute == '/chat',
-            ),
-            _buildWorkspaceItem(
-              context,
-              icon: Icons.edit_outlined,
-              title: lang.translate('writer_ai'),
-              route: '/writer',
-              isActive: currentRoute == '/writer',
-            ),
-            _buildWorkspaceItem(
-              context,
-              icon: Icons.repeat_rounded,
-              title: 'Paraphrase',
-              route: '/paraphrase',
-              isActive: currentRoute == '/paraphrase',
-            ),
-            _buildWorkspaceItem(
-              context,
-              icon: Icons.person_outline_rounded,
-              title: 'Humanize',
-              route: '/tools',
-              isActive: currentRoute == '/tools',
-              comingSoon: true,
-            ),
-            _buildWorkspaceItem(
-              context,
-              icon: Icons.plagiarism_outlined,
-              title: 'Plagiatisme',
-              route: '/plagiarism',
-              isActive: currentRoute == '/plagiarism',
-            ),
-            _buildWorkspaceItem(
-              context,
-              icon: Icons.record_voice_over_rounded,
-              title: 'Transcribe AI',
-              route: '/transcribe',
-              isActive: currentRoute == '/transcribe',
-            ),
-
-            const SizedBox(height: 10),
-            const Divider(height: 1),
-
-            // ── Chat History ────────────────────────────────────────
+            // ── Konten scrollable (aman saat keyboard terbuka) ───────
             Expanded(
-              child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                children: [
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-                    child: Text(
-                      'Riwayat Percakapan',
-                      style: TextStyle(
-                        color: AppTheme.getTextSecondary(context),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── New Chat Button ────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          chat.startNewChat();
+                          if (currentRoute != '/chat') {
+                            context.go('/chat');
+                          }
+                        },
+                        icon: const Icon(Icons.add_comment_rounded, size: 18),
+                        label: Text(lang.translate('new_chat')),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 44),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  if (chat.conversations.isEmpty)
+
+                    // ── Workspace Navigation ──────────────────────────
                     Padding(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 4),
                       child: Text(
-                        'Belum ada obrolan.',
+                        lang.translate('workspace').toUpperCase(),
                         style: TextStyle(
                           color: AppTheme.getTextSecondary(context),
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                    )
-                  else
-                    ...chat.conversations.map((convo) {
-                      final isSelected =
-                          chat.currentConversationId == convo.id &&
-                              currentRoute == '/chat';
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: ListTile(
-                          onTap: () {
-                            Navigator.pop(context);
-                            chat.selectConversation(convo.id);
-                            if (currentRoute != '/chat') {
-                              context.go('/chat');
-                            }
-                          },
-                          dense: true,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                          selected: isSelected,
-                          selectedTileColor:
-                              AppTheme.primary.withValues(alpha: 0.08),
-                          leading: Icon(
-                            Icons.chat_bubble_outline_rounded,
-                            size: 16,
-                            color: isSelected
-                                ? AppTheme.primary
-                                : AppTheme.getTextSecondary(context),
+                    ),
+
+                    _buildWorkspaceItem(
+                      context,
+                      icon: Icons.chat_bubble_outline_rounded,
+                      title: lang.translate('chat_ai'),
+                      route: '/chat',
+                      isActive: currentRoute == '/chat',
+                    ),
+                    _buildWorkspaceItem(
+                      context,
+                      icon: Icons.edit_outlined,
+                      title: lang.translate('writer_ai'),
+                      route: '/writer',
+                      isActive: currentRoute == '/writer',
+                    ),
+                    _buildWorkspaceItem(
+                      context,
+                      icon: Icons.repeat_rounded,
+                      title: 'Paraphrase',
+                      route: '/paraphrase',
+                      isActive: currentRoute == '/paraphrase',
+                    ),
+                    _buildWorkspaceItem(
+                      context,
+                      icon: Icons.person_outline_rounded,
+                      title: 'Humanize',
+                      route: '/tools',
+                      isActive: currentRoute == '/tools',
+                      comingSoon: true,
+                    ),
+                    _buildWorkspaceItem(
+                      context,
+                      icon: Icons.plagiarism_outlined,
+                      title: 'Plagiatisme',
+                      route: '/plagiarism',
+                      isActive: currentRoute == '/plagiarism',
+                    ),
+                    _buildWorkspaceItem(
+                      context,
+                      icon: Icons.record_voice_over_rounded,
+                      title: 'Transcribe AI',
+                      route: '/transcribe',
+                      isActive: currentRoute == '/transcribe',
+                    ),
+
+                    const SizedBox(height: 10),
+                    const Divider(height: 1),
+
+                    // ── Chat History ──────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 6),
+                      child: Text(
+                        'Riwayat Percakapan',
+                        style: TextStyle(
+                          color: AppTheme.getTextSecondary(context),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    if (chat.conversations.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          'Belum ada obrolan.',
+                          style: TextStyle(
+                            color: AppTheme.getTextSecondary(context),
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
                           ),
-                          title: Text(
-                            convo.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
+                        ),
+                      )
+                    else
+                      ...chat.conversations.map((convo) {
+                        final isSelected =
+                            chat.currentConversationId == convo.id &&
+                                currentRoute == '/chat';
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: ListTile(
+                            onTap: () {
+                              Navigator.pop(context);
+                              chat.selectConversation(convo.id);
+                              if (currentRoute != '/chat') {
+                                context.go('/chat');
+                              }
+                            },
+                            dense: true,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            selected: isSelected,
+                            selectedTileColor:
+                                AppTheme.primary.withValues(alpha: 0.08),
+                            leading: Icon(
+                              Icons.chat_bubble_outline_rounded,
+                              size: 16,
                               color: isSelected
                                   ? AppTheme.primary
-                                  : AppTheme.getTextColor(context),
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
+                                  : AppTheme.getTextSecondary(context),
                             ),
+                            title: Text(
+                              convo.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? AppTheme.primary
+                                    : AppTheme.getTextColor(context),
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? IconButton(
+                                    icon: const Icon(
+                                        Icons.delete_outline_rounded,
+                                        size: 16,
+                                        color: AppTheme.error),
+                                    onPressed: () =>
+                                        _confirmDelete(context, chat, convo.id),
+                                  )
+                                : null,
                           ),
-                          trailing: isSelected
-                              ? IconButton(
-                                  icon: const Icon(Icons.delete_outline_rounded,
-                                      size: 16, color: AppTheme.error),
-                                  onPressed: () =>
-                                      _confirmDelete(context, chat, convo.id),
-                                )
-                              : null,
-                        ),
-                      );
-                    }),
-                ],
+                        );
+                      }),
+                  ],
+                ),
               ),
             ),
 
@@ -297,13 +294,9 @@ class AppSidebarDrawer extends StatelessWidget {
               ),
             ),
           ],
-            ), // Column
-          ), // IntrinsicHeight
-        ), // ConstrainedBox
-      ), // SingleChildScrollView
-        ), // LayoutBuilder
-      ), // SafeArea
-    ); // Drawer
+        ),
+      ),
+    );
   }
 
   Widget _buildWorkspaceItem(

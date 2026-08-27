@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
@@ -712,8 +712,13 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
   void _showTokenDialog() {
     final authProvider = context.read<AuthProvider>();
     final tokenBalance = authProvider.tokenBalance;
+    final minCoins = authProvider.topupMinCoins;
+    final pricePerCoin = 100.0;
+    final priceLabel = pricePerCoin % 1 == 0
+        ? pricePerCoin.toInt().toString()
+        : pricePerCoin.toStringAsFixed(2);
 
-    int selectedCoins = 50;
+    int selectedCoins = minCoins > 50 ? minCoins : 50;
     final TextEditingController coinsController =
         TextEditingController(text: '50');
 
@@ -725,7 +730,6 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
             final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
-            final pricePerCoin = 1000;
             final totalPrice = selectedCoins * pricePerCoin;
 
             return Padding(
@@ -837,7 +841,7 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: [10, 50, 100, 500, 1000].map((amount) {
+                        children: [10, 50, 100, 500, 1000].where((amount) => amount >= minCoins).map((amount) {
                           final isSelected = selectedCoins == amount;
                           return GestureDetector(
                             onTap: () {
@@ -877,7 +881,7 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
                         controller: coinsController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          labelText: 'Jumlah Token (Min. 10)',
+                          labelText: 'Jumlah Token (Min. )',
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12)),
                           prefixIcon: const Icon(Icons.diamond_rounded),
@@ -932,7 +936,7 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
                                 borderRadius: BorderRadius.circular(12)),
                             elevation: 2,
                           ),
-                          onPressed: selectedCoins < 10
+                          onPressed: selectedCoins < minCoins
                               ? null
                               : () async {
                                   Navigator.pop(ctx);
@@ -944,7 +948,7 @@ class _ParaphraseScreenState extends State<ParaphraseScreen> {
 
                                   await PaymentSelectionSheet.processDirectQris(
                                     this.context,
-                                    amount: totalPrice,
+                                    amount: totalPrice.round(),
                                     coins: selectedCoins,
                                     phone: phone,
                                   );
@@ -1233,3 +1237,4 @@ class _ModelSelectorButton extends StatelessWidget {
     );
   }
 }
+

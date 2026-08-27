@@ -164,8 +164,8 @@ class PaymentSelectionSheet extends StatefulWidget {
     try {
       final token = StorageService.getToken();
       final body = <String, dynamic>{
-        'method': 'QRIS2',
-        'channel': 'QRIS2',
+        'method': 'QRIS',
+        'channel': 'QRIS',
         'type': type,
         'phone': phone,
       };
@@ -229,14 +229,14 @@ class PaymentSelectionSheet extends StatefulWidget {
 class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
   bool _isLoading = false;
   String? _error;
-  String _selectedMethod = 'QRIS2';
+  String _selectedMethod = 'QRIS';
 
   late TextEditingController _phoneController;
   late TextEditingController _promoController;
 
   final Map<String, List<Map<String, String>>> _paymentGroups = {
     'QRIS': [
-      {'id': 'QRIS2', 'name': 'QRIS', 'icon': 'qris'},
+      {'id': 'QRIS', 'name': 'QRIS', 'icon': 'qris'},
     ],
     'KARTU KREDIT': [
       {'id': 'VISA', 'name': 'Visa / Mastercard', 'icon': 'visa'},

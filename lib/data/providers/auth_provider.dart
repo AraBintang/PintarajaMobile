@@ -51,13 +51,14 @@ class AuthProvider extends ChangeNotifier {
 
   int get topupMinCoins {
     final value = _tokenCosts['cost_topup_amount'] ?? 0;
-    return value > 0 ? value : 10;
+    return value > 0 ? value : 100;
   }
 
   double get topupPricePerCoin {
     final amount = topupMinCoins;
     if (amount <= 0) return 0;
-    final price = _tokenCosts['cost_topup_price'] ?? 0;
+    final price =
+        _tokenCosts['cost_topup_price'] ?? (amount == 100 ? 10000 : 0);
     return price / amount;
   }
 
@@ -389,7 +390,11 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
       return false;
     } catch (e) {
-      _error = 'Gagal melakukan login dengan Google.';
+      if (e is ApiException) {
+        _error = e.message;
+      } else {
+        _error = 'Gagal melakukan login dengan Google.';
+      }
       _setLoading(false);
       return false;
     }

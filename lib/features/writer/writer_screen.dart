@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -584,7 +584,7 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
     final authProvider = context.read<AuthProvider>();
     final tokenBalance = authProvider.tokenBalance;
     final minCoins = authProvider.topupMinCoins;
-    final pricePerCoin = authProvider.topupPricePerCoin;
+    final pricePerCoin = 100.0;
     final priceLabel = pricePerCoin % 1 == 0
         ? pricePerCoin.toInt().toString()
         : pricePerCoin.toStringAsFixed(2);
@@ -1926,3 +1926,4 @@ class _SkeletonLineState extends State<_SkeletonLine>
     );
   }
 }
+

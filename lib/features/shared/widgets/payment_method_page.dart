@@ -41,14 +41,14 @@ class PaymentMethodPage extends StatefulWidget {
 class _PaymentMethodPageState extends State<PaymentMethodPage> {
   bool _isLoading = false;
   String? _error;
-  String _selectedMethod = 'QRIS2';
+  String _selectedMethod = 'QRIS';
 
   late final TextEditingController _phoneController;
   late final TextEditingController _promoController;
 
   static const Map<String, List<Map<String, String>>> _paymentGroups = {
     'QRIS': [
-      {'id': 'QRIS2', 'name': 'QRIS'},
+      {'id': 'QRIS', 'name': 'QRIS'},
     ],
     'KARTU KREDIT': [
       {'id': 'VISA', 'name': 'Visa / Mastercard'},

@@ -4,7 +4,6 @@
 
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -499,11 +498,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               onPressed: () async {
                                 final auth = context.read<AuthProvider>();
                                 try {
-                                  final googleSignIn = GoogleSignIn(
-                                    scopes: ['email', 'profile'],
-                                  );
-                                  await googleSignIn
-                                      .signOut(); // ensure fresh sign-in
+                                  final googleSignIn = GoogleSignIn();
+                                  await googleSignIn.signOut();
                                   final googleUser =
                                       await googleSignIn.signIn();
                                   if (googleUser == null)
@@ -524,9 +520,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         'Login dengan Google tidak dapat diproses saat ini.');
                                   }
                                 } catch (e) {
-                                  _showError(kIsWeb
-                                      ? 'Login Google gagal dijalankan di browser. Pastikan google-signin-client_id sudah diisi di web/index.html dan domain ini terdaftar di Google Cloud Console (Authorized JavaScript origins).'
-                                      : 'Gagal memulai login Google. Periksa koneksi internet Anda.');
+                                  _showError(
+                                      'Gagal memulai login Google. Pastikan koneksi internet Anda aktif.');
                                 }
                               },
                               child: const Row(

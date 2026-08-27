@@ -55,7 +55,7 @@ class AppRouter {
         // ======================================================
 
         final isResetPassword =
-            location == '/reset-password' || location == '/auth/new-password';
+            location == '/reset-password' || location == '/new-password' || location == '/auth/new-password';
 
         if (isResetPassword) {
           return null;
@@ -146,13 +146,13 @@ class AppRouter {
         //
         // Contoh:
         //
-        // https://pintaraja.com/reset-password
+        // https://pintaraja.com/new-password
         //     ?email=test@example.com
         //     &token=TEST_TOKEN
         // ======================================================
 
         GoRoute(
-          path: '/reset-password',
+          path: '/new-password',
           builder: (_, state) {
             final email = state.uri.queryParameters['email'];
 

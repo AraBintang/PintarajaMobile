@@ -44,7 +44,7 @@
                 <data
                     android:scheme="https"
                     android:host="pintaraja.com"
-                    android:pathPrefix="/reset-password" />
+                    android:pathPrefix="/new-password" />
 
             </intent-filter>
 
