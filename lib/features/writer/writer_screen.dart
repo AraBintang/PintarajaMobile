@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -1511,41 +1511,43 @@ ${extraInst.isNotEmpty ? 'Instruksi Tambahan: $extraInst' : ''}
             height: 350,
             child: SingleChildScrollView(
               child: MarkdownBody(
-            data: _result,
-            selectable: true,
-            styleSheet: MarkdownStyleSheet(
-              p: const TextStyle(
-                  color: AppTheme.textPrimary, fontSize: 13.5, height: 1.65),
-              strong: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13.5),
-              em: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontStyle: FontStyle.italic,
-                  fontSize: 13.5),
-              h1: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700),
-              h2: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700),
-              h3: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700),
-              listBullet:
-                  const TextStyle(color: AppTheme.textPrimary, fontSize: 13.5),
-              blockquote: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 13.5,
-                  fontStyle: FontStyle.italic),
-              code: const TextStyle(
-                  color: AppTheme.primary,
-                  fontSize: 12.5,
-                  backgroundColor: Color(0xFFF1F5F9)),
+                data: _result,
+                selectable: true,
+                styleSheet: MarkdownStyleSheet(
+                  p: const TextStyle(
+                      color: AppTheme.textPrimary, fontSize: 13.5, height: 1.65),
+                  strong: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5),
+                  em: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontStyle: FontStyle.italic,
+                      fontSize: 13.5),
+                  h1: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700),
+                  h2: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700),
+                  h3: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700),
+                  listBullet: const TextStyle(
+                      color: AppTheme.textPrimary, fontSize: 13.5),
+                  blockquote: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 13.5,
+                      fontStyle: FontStyle.italic),
+                  code: const TextStyle(
+                      color: AppTheme.primary,
+                      fontSize: 12.5,
+                      backgroundColor: Color(0xFFF1F5F9)),
+                ),
+              ),
             ),
           ),
         ),

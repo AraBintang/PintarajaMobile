@@ -1095,19 +1095,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         'Gagal memulai login Google. Pastikan koneksi internet Anda aktif.');
                   }
                 },
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'G',
-                      style: TextStyle(
-                        color: Color(0xFF4285F4),
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Image.asset(
+                      'assets/images/pintaraja.png',
+                      height: 20,
+                      width: 20,
+                      fit: BoxFit.contain,
                     ),
-                    SizedBox(width: 10),
-                    Text('Sign up with Google'),
+                    const SizedBox(width: 10),
+                    const Text('Sign up with Google'),
                   ],
                 ),
               ),
