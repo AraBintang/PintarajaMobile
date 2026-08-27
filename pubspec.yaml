@@ -74,12 +74,13 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/pintaraja.png"
+  image_path: "assets/images/pintaraja_icon.png"
 
 flutter_native_splash:
   color: "#ffffff"
-  image: "assets/images/pintaraja.png"
+  image: "assets/images/pintaraja_splash.png"
   android: true
   ios: true
+
 
 

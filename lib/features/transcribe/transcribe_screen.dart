@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // PINTARAJA Ã¢â‚¬â€ TRANSCRIBE SCREEN
 // Konversi audio & video menjadi teks
 // Upload, YouTube link, atau rekam langsung
@@ -1515,7 +1515,7 @@ class _TranscribeScreenState extends State<TranscribeScreen>
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor:
-              _canSubmit ? AppTheme.accentPurple : AppTheme.surfaceMuted,
+              _canSubmit ? AppTheme.primary : AppTheme.surfaceMuted,
           foregroundColor: _canSubmit ? Colors.white : AppTheme.textMuted,
           disabledBackgroundColor: AppTheme.surfaceMuted,
           disabledForegroundColor: AppTheme.textMuted,

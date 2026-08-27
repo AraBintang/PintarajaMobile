@@ -1,5 +1,5 @@
-// ============================================================
-// PINTARAJA — LOGIN SCREEN
+﻿// ============================================================
+// PINTARAJA â€” LOGIN SCREEN
 // ============================================================
 
 import 'dart:async';
@@ -353,7 +353,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               _handleLogin();
                             },
                             decoration: InputDecoration(
-                              hintText: '••••••••',
+                              hintText: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
                               prefixIcon: const Icon(
                                 Icons.lock_outline_rounded,
                                 size: 20,
@@ -568,7 +568,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
 
                     const Text(
-                      'PintarAja — Platform AI untuk mahasiswa Indonesia',
+                      'PintarAja â€” Platform AI untuk mahasiswa Indonesia',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppTheme.textMuted,
@@ -758,3 +758,4 @@ class _GlowCircle extends StatelessWidget {
     );
   }
 }
+

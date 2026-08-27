@@ -1,5 +1,5 @@
-// ============================================================
-// PINTARAJA — REGISTER + OTP SCREEN
+﻿// ============================================================
+// PINTARAJA â€” REGISTER + OTP SCREEN
 // ============================================================
 
 import 'dart:async';
@@ -777,7 +777,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
 
                   const Text(
-                    'PintarAja — Platform AI untuk mahasiswa Indonesia',
+                    'PintarAja â€” Platform AI untuk mahasiswa Indonesia',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppTheme.textMuted,
@@ -904,7 +904,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               textInputAction: TextInputAction.next,
               validator: _validatePassword,
               decoration: InputDecoration(
-                hintText: '••••••••',
+                hintText: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
                 prefixIcon: const Icon(
                   Icons.lock_outline_rounded,
                   size: 20,
@@ -945,7 +945,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               textInputAction: TextInputAction.next,
               validator: _validateConfirmPassword,
               decoration: InputDecoration(
-                hintText: '••••••••',
+                hintText: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
                 prefixIcon: const Icon(
                   Icons.lock_outline_rounded,
                   size: 20,
@@ -1682,3 +1682,4 @@ class _GlowCircle extends StatelessWidget {
     );
   }
 }
+

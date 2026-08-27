@@ -38,11 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SliverToBoxAdapter(
             child: Container(
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.primary, AppTheme.accent],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: AppTheme.primary,
               ),
               child: SafeArea(
                 bottom: false,
@@ -1633,13 +1629,13 @@ class _FileManagerDialogState extends State<_FileManagerDialog> {
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        setState(() {
-          _files = data['files'] ?? [];
-          if (data['quota'] != null) {
-            _used = data['quota']['used'] ?? 0;
-            _limit = data['quota']['limit'] ?? 524288000;
-          }
-        });
+          setState(() {
+            _files = data['files'] ?? [];
+            if (data['quota'] != null) {
+              _used = (data['quota']['used'] as num?)?.toInt() ?? 0;
+              _limit = (data['quota']['limit'] as num?)?.toInt() ?? 524288000;
+            }
+          });
       } else {
         setState(() => _error = 'Gagal memuat file.');
       }
@@ -1757,7 +1753,7 @@ class _FileManagerDialogState extends State<_FileManagerDialog> {
                                     style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600)),
-                                subtitle: Text(_formatSize(f['size'] ?? 0),
+                                subtitle: Text(_formatSize((f['size'] as num?)?.toInt() ?? 0),
                                     style: const TextStyle(fontSize: 12)),
                                 trailing: IconButton(
                                   icon: const Icon(Icons.delete_outline_rounded,

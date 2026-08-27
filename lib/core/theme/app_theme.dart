@@ -84,7 +84,7 @@ class AppTheme {
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [
       primary,
-      accent,
+      primary,
     ],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
