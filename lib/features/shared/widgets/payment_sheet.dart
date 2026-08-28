@@ -125,8 +125,10 @@ class PaymentSelectionSheet extends StatefulWidget {
 
   /// Opens a checkout URL in the external browser.
   static Future<void> launchExternalUrl(Uri uri) async {
-    if (await canLaunchUrl(uri)) {
+    try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint("Gagal membuka URL: $e");
     }
   }
 
@@ -356,8 +358,10 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
       // Xendit returns invoice_url — open in browser directly
       if (checkoutUrl.isNotEmpty) {
         final uri = Uri.parse(checkoutUrl);
-        if (await canLaunchUrl(uri)) {
+        try {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } catch (e) {
+          debugPrint("Gagal membuka URL: $e");
         }
         widget.onPaymentSuccess();
       } else if (qrUrl.isNotEmpty) {
