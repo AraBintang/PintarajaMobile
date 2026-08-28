@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -168,6 +168,7 @@ class PaymentSelectionSheet extends StatefulWidget {
         'channel': 'QRIS2',
         'type': type,
         'phone': phone,
+        'amount': amount,
       };
       if (coins != null) {
         body['coins'] = coins;
@@ -190,20 +191,34 @@ class PaymentSelectionSheet extends StatefulWidget {
 
         if (!context.mounted) return;
 
-        await showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          useRootNavigator: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => QrisPaymentSheet(
-            qrUrl: parsed['qrUrl'] ?? '',
-            referenceId: parsed['referenceId'] ?? '',
-            checkoutUrl:
-                parsed['checkoutUrl']?.isNotEmpty == true
-                    ? parsed['checkoutUrl']!
-                    : (parsed['payUrl'] ?? ''),
-          ),
-        );
+        final checkoutUrl = (parsed['checkoutUrl']?.isNotEmpty == true
+                ? parsed['checkoutUrl']
+                : parsed['payUrl']) ??
+            '';
+
+        // Xendit returns invoice_url — open in browser directly
+        if (checkoutUrl.isNotEmpty) {
+          final uri = Uri.parse(checkoutUrl);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        } else {
+          // Fallback: show QR sheet if QR url exists
+          final qrUrl = parsed['qrUrl'] ?? '';
+          if (qrUrl.isNotEmpty && context.mounted) {
+            await showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              useRootNavigator: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => QrisPaymentSheet(
+                qrUrl: qrUrl,
+                referenceId: parsed['referenceId'] ?? '',
+                checkoutUrl: '',
+              ),
+            );
+          }
+        }
       } else {
         _showErrorSnackBar(context,
             parseErrorResponse(response.body, response.statusCode));
@@ -291,6 +306,7 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
               : widget.itemName;
         } else if (widget.type == 'topup' && widget.coins != null) {
           body['coins'] = widget.coins;
+          body['amount'] = widget.price.toInt();
         }
 
         final promo = _promoController.text.trim();

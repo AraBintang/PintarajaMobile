@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // PINTARAJA â€” LOGIN SCREEN
 // ============================================================
 
@@ -527,11 +527,18 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Image.asset(
-                                    'assets/images/pintaraja.png',
-                                    height: 20,
+                                  Container(
                                     width: 20,
-                                    fit: BoxFit.contain,
+                                    height: 20,
+                                    alignment: Alignment.center,
+                                    child: const Text(
+                                      'G',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF4285F4),
+                                      ),
+                                    ),
                                   ),
                                   const SizedBox(width: 10),
                                   const Text('Continue with Google'),

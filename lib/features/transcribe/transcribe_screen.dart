@@ -599,20 +599,20 @@ class _TranscribeScreenState extends State<TranscribeScreen>
       case 429:
         return 'Terlalu banyak permintaan. Coba lagi.';
       default:
-        return 'Terjadi kesalahan. Coba lagi.';
+        return '📄';
     }
   }
 
   String _sourceIcon(String source) {
     switch (source) {
       case 'upload':
-        return 'Ã°Å¸â€œÂ';
+        return '📁';
       case 'youtube':
-        return 'Ã°Å¸Å½Â¬';
+        return '🎬';
       case 'record':
-        return 'Ã°Å¸Å½â„¢Ã¯Â¸Â';
+        return '🎙️';
       default:
-        return 'Ã°Å¸â€œâ€ž';
+        return '📄';
     }
   }
 
@@ -1005,13 +1005,13 @@ class _TranscribeScreenState extends State<TranscribeScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.accentPurple.withValues(alpha: 0.08),
+            AppTheme.primary.withValues(alpha: 0.08),
             AppTheme.primary.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.accentPurple.withValues(alpha: 0.2),
+          color: AppTheme.primary.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -1019,12 +1019,12 @@ class _TranscribeScreenState extends State<TranscribeScreen>
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.accentPurple.withValues(alpha: 0.12),
+              color: AppTheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.record_voice_over_rounded,
-              color: AppTheme.accentPurple,
+              color: AppTheme.primary,
               size: 22,
             ),
           ),
@@ -1148,12 +1148,12 @@ class _TranscribeScreenState extends State<TranscribeScreen>
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppTheme.accentPurple.withValues(alpha: 0.1),
+                    color: AppTheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
                     Icons.audio_file_rounded,
-                    color: AppTheme.accentPurple,
+                    color: AppTheme.primary,
                     size: 18,
                   ),
                 ),
@@ -1205,17 +1205,17 @@ class _TranscribeScreenState extends State<TranscribeScreen>
             icon: const Icon(
               Icons.cloud_upload_rounded,
               size: 18,
-              color: AppTheme.accentPurple,
+              color: AppTheme.primary,
             ),
             label: Text(
               _selectedFile == null ? 'Pilih File' : 'Ganti File',
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
-                color: AppTheme.accentPurple,
+                color: AppTheme.primary,
               ),
             ),
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppTheme.accentPurple),
+              side: const BorderSide(color: AppTheme.primary),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -1233,8 +1233,7 @@ class _TranscribeScreenState extends State<TranscribeScreen>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Ã¢â‚¬Â¢ ',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+          const Text('• ', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
           Expanded(
               child: Text(text,
                   style: const TextStyle(
@@ -1796,7 +1795,7 @@ class _TranscribeScreenState extends State<TranscribeScreen>
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppTheme.accentPurple.withValues(alpha: 0.1),
+                    color: AppTheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -1961,11 +1960,11 @@ class _MethodCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.accentPurple.withValues(alpha: 0.06)
+              ? AppTheme.primary.withValues(alpha: 0.06)
               : AppTheme.getSurface(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? AppTheme.accentPurple : AppTheme.borderLight,
+            color: isSelected ? AppTheme.primary : AppTheme.borderLight,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -1974,7 +1973,7 @@ class _MethodCard extends StatelessWidget {
             Icon(
               icon,
               color: isSelected
-                  ? AppTheme.accentPurple
+                  ? AppTheme.primary
                   : AppTheme.getTextSecondary(context),
               size: 26,
             ),
@@ -1983,7 +1982,7 @@ class _MethodCard extends StatelessWidget {
               title,
               style: TextStyle(
                 color: isSelected
-                    ? AppTheme.accentPurple
+                    ? AppTheme.primary
                     : AppTheme.getTextColor(context),
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                 fontSize: 11,
