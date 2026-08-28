@@ -1,5 +1,5 @@
-﻿// ============================================================
-// PINTARAJA Ã¢â‚¬â€ PLAGIARISM SCREEN
+// ============================================================
+// PINTARAJA —  PLAGIARISM SCREEN
 // Full-featured Plagiarism Check: Turnitin & Drillbot
 // Upload files, author data, exclusions, payment
 // ============================================================

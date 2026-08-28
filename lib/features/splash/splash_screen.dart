@@ -96,10 +96,10 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Logo asli website
+                    // Icon PintarAja
                     Container(
-                      width: 108,
-                      height: 108,
+                      width: 130,
+                      height: 130,
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(
@@ -120,7 +120,9 @@ class _SplashScreenState extends State<SplashScreen>
                         ],
                       ),
                       child: Image.asset(
-                        'assets/images/pintaraja.webp',
+                        'assets/images/pintaraja_icon.png',
+                        width: 94,
+                        height: 94,
                         fit: BoxFit.contain,
                       ),
                     ),

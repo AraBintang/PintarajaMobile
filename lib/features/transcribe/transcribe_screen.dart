@@ -1,5 +1,5 @@
 // ============================================================
-// PINTARAJA Ã¢â‚¬â€ TRANSCRIBE SCREEN
+// PINTARAJA —  TRANSCRIBE SCREEN
 // Konversi audio & video menjadi teks
 // Upload, YouTube link, atau rekam langsung
 // ============================================================

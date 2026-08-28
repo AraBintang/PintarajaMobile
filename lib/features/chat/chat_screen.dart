@@ -1,6 +1,6 @@
 ﻿import 'dart:convert';
 // ============================================================
-// PINTARAJA â€” CHAT SCREEN
+// PINTARAJA — CHAT SCREEN
 // Floating Sidebar + Blur + Token + AI Provider + Conversations
 // Responsive untuk Android 720x1520
 // ============================================================
@@ -90,7 +90,7 @@ class _ChatScreenState extends State<ChatScreen> {
       await chat.startNewChat();
     } catch (_) {
       // Gagal membuat conversation di server tidak boleh
-      // membuat layar mati â€” user tetap bisa chat lokal.
+      // membuat layar mati — user tetap bisa chat lokal.
     }
 
     if (!mounted) {

@@ -353,9 +353,15 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
         return;
       }
 
-      if (_selectedMethod.startsWith('QRIS')) {
-        // Tunggu frame berikutnya agar pop di atas selesai dulu
-        // (hindari !_debugLocked saat push QR sheet).
+      // Xendit returns invoice_url — open in browser directly
+      if (checkoutUrl.isNotEmpty) {
+        final uri = Uri.parse(checkoutUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+        widget.onPaymentSuccess();
+      } else if (qrUrl.isNotEmpty) {
+        // Fallback for Tripay / raw QR string
         await WidgetsBinding.instance.endOfFrame;
         if (!mounted) return;
         await showModalBottomSheet(
@@ -366,17 +372,11 @@ class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
           builder: (_) => QrisPaymentSheet(
             qrUrl: qrUrl,
             referenceId: referenceId,
-            checkoutUrl: checkoutUrl,
+            checkoutUrl: '',
           ),
         );
         widget.onPaymentSuccess();
       } else {
-        if (checkoutUrl.isNotEmpty) {
-          final uri = Uri.parse(checkoutUrl);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          }
-        }
         widget.onPaymentSuccess();
       }
     } on PaymentProcessException catch (e) {
