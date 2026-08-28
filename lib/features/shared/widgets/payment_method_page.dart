@@ -41,17 +41,14 @@ class PaymentMethodPage extends StatefulWidget {
 class _PaymentMethodPageState extends State<PaymentMethodPage> {
   bool _isLoading = false;
   String? _error;
-  String _selectedMethod = 'QRIS';
+  String _selectedMethod = 'Xendit';
 
   late final TextEditingController _phoneController;
   late final TextEditingController _promoController;
 
   static const Map<String, List<Map<String, String>>> _paymentGroups = {
-    'QRIS': [
-      {'id': 'QRIS', 'name': 'QRIS'},
-    ],
-    'KARTU KREDIT': [
-      {'id': 'VISA', 'name': 'Visa / Mastercard'},
+    'METODE PEMBAYARAN': [
+      {'id': 'Xendit', 'name': 'Pembayaran Xendit (QRIS, VA, dsb)'},
     ],
   };
 
@@ -129,7 +126,10 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
 
       if (!mounted) return;
 
-      if (_selectedMethod.startsWith('QRIS') && qrUrl.isNotEmpty) {
+      if (checkoutUrl.isNotEmpty) {
+        final uri = Uri.parse(checkoutUrl);
+        await launchExternal(uri);
+      } else if (qrUrl.isNotEmpty) {
         await showModalBottomSheet<void>(
           context: context,
           isScrollControlled: true,
@@ -137,12 +137,9 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
           builder: (_) => QrisPaymentSheet(
             qrUrl: qrUrl,
             referenceId: referenceId,
-            checkoutUrl: checkoutUrl,
+            checkoutUrl: '',
           ),
         );
-      } else if (checkoutUrl.isNotEmpty) {
-        final uri = Uri.parse(checkoutUrl);
-        await launchExternal(uri);
       }
 
       widget.onPaymentSuccess();
