@@ -121,8 +121,8 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       child: Image.asset(
                         'assets/images/pintaraja_icon.png',
-                        width: 94,
-                        height: 94,
+                        width: 50,
+                        height: 50,
                         fit: BoxFit.contain,
                       ),
                     ),

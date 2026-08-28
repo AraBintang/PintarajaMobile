@@ -441,13 +441,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ==========================================================
 
   void _showPlanModal(BuildContext context) {
+    final auth = context.read<AuthProvider>();
+    final user = auth.user;
+    final planId = user?.planId ?? 1;
+    final planName = user?.activePlanName ?? 'Free';
+    final subsExp = user?.subscriptionExpiredAt;
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _UpgradePlanModal(
+        currentPlanId: planId,
+        currentPlanName: planName,
+        subsExp: subsExp,
         onPlanSelected: (planId, planName, amount, period) {
-          final auth = context.read<AuthProvider>();
           final phone = auth.user?.phone?.isNotEmpty == true
               ? auth.user!.phone!
               : '';
@@ -1354,8 +1362,16 @@ class _DangerTile extends StatelessWidget {
 class _UpgradePlanModal extends StatefulWidget {
   final void Function(int planId, String planName, int amount, String period)?
       onPlanSelected;
+  final int currentPlanId;
+  final String currentPlanName;
+  final DateTime? subsExp;
 
-  const _UpgradePlanModal({this.onPlanSelected});
+  const _UpgradePlanModal({
+    this.onPlanSelected,
+    this.currentPlanId = 1,
+    this.currentPlanName = 'Free',
+    this.subsExp,
+  });
 
   @override
   State<_UpgradePlanModal> createState() => _UpgradePlanModalState();
@@ -1421,7 +1437,15 @@ class _UpgradePlanModalState extends State<_UpgradePlanModal> {
               style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
           const SizedBox(height: 16),
 
-          // Period Selector
+          // ── Active Plan Card ──────────────────────────────────
+          _ActivePlanCard(
+            planId: widget.currentPlanId,
+            planName: widget.currentPlanName,
+            subsExp: widget.subsExp,
+          ),
+          const SizedBox(height: 16),
+
+
           Container(
             decoration: BoxDecoration(
               color: AppTheme.borderLight.withValues(alpha: 0.5),
@@ -1769,6 +1793,169 @@ class _FileManagerDialogState extends State<_FileManagerDialog> {
                               );
                             },
                           ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+// ACTIVE PLAN CARD
+// ============================================================
+
+class _ActivePlanCard extends StatelessWidget {
+  final int planId;
+  final String planName;
+  final DateTime? subsExp;
+
+  const _ActivePlanCard({
+    required this.planId,
+    required this.planName,
+    required this.subsExp,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isPremium = planId != 1;
+    final now = DateTime.now();
+
+    int remainingDays = 0;
+    String endDateStr = '-';
+
+    if (isPremium && subsExp != null && subsExp!.isAfter(now)) {
+      remainingDays = subsExp!.difference(now).inDays;
+      final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      endDateStr = '${subsExp!.day} ${months[subsExp!.month - 1]} ${subsExp!.year}';
+    }
+
+    final double progress = (isPremium && remainingDays > 0)
+        ? (remainingDays / 365.0).clamp(0.0, 1.0)
+        : 0.0;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isPremium
+            ? AppTheme.primary.withValues(alpha: 0.06)
+            : AppTheme.borderLight.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isPremium
+              ? AppTheme.primary.withValues(alpha: 0.25)
+              : AppTheme.borderLight,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isPremium
+                      ? AppTheme.primary.withValues(alpha: 0.12)
+                      : AppTheme.borderLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  isPremium ? Icons.workspace_premium_rounded : Icons.person_outline_rounded,
+                  color: isPremium ? AppTheme.primary : AppTheme.textMuted,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('ACTIVE PLAN',
+                        style: TextStyle(fontSize: 10, color: AppTheme.textMuted, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+                    Text(isPremium ? '$planName Account' : 'Free Account',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isPremium
+                      ? Colors.green.withValues(alpha: 0.12)
+                      : AppTheme.borderLight,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6, height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isPremium ? Colors.green : AppTheme.textMuted,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(isPremium ? 'Active' : 'Free',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isPremium ? Colors.green : AppTheme.textMuted,
+                        )),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
+
+          // Remaining days row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Remaining Active Period',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+              Text(
+                isPremium ? '$remainingDays Day${remainingDays != 1 ? 's' : ''}' : '0 Days',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: isPremium ? AppTheme.primary : AppTheme.textMuted,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 5,
+              backgroundColor: AppTheme.borderLight,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                isPremium ? AppTheme.primary : AppTheme.borderLight,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // End date row
+          Row(
+            children: [
+              Icon(Icons.calendar_today_outlined, size: 13, color: AppTheme.textMuted),
+              const SizedBox(width: 6),
+              Text(
+                isPremium ? 'Ends on $endDateStr' : 'No active subscription',
+                style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+              ),
+            ],
           ),
         ],
       ),
