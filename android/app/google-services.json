@@ -22,6 +22,43 @@
           }
         },
         {
+          "client_id": "537328365262-q7tagoumt8u7fl2sanbiif4s5ul7pe6u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.pintaraja_app",
+            "certificate_hash": "eced74984de7cba9d782cd65bfc0a7388315b02a"
+          }
+        },
+        {
+          "client_id": "537328365262-vq3vpoqddd8mq7hoi1gres5tukjbq7vf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD37PslZBMzZ_zHYfqagFyoKOwetWqGuNg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "537328365262-vq3vpoqddd8mq7hoi1gres5tukjbq7vf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:537328365262:android:12c2fb6f4ce1c54c64aa9f",
+        "android_client_info": {
+          "package_name": "com.pintaraja.app"
+        }
+      },
+      "oauth_client": [
+        {
           "client_id": "537328365262-vq3vpoqddd8mq7hoi1gres5tukjbq7vf.apps.googleusercontent.com",
           "client_type": 3
         }

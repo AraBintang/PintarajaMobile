@@ -41,14 +41,25 @@ class PaymentMethodPage extends StatefulWidget {
 class _PaymentMethodPageState extends State<PaymentMethodPage> {
   bool _isLoading = false;
   String? _error;
-  String _selectedMethod = 'Xendit';
+  String _selectedMethod = 'QRIS2';
 
   late final TextEditingController _phoneController;
   late final TextEditingController _promoController;
 
   static const Map<String, List<Map<String, String>>> _paymentGroups = {
-    'METODE PEMBAYARAN': [
-      {'id': 'Xendit', 'name': 'Pembayaran Xendit (QRIS, VA, dsb)'},
+    'QRIS': [
+      {'id': 'QRIS2', 'name': 'QRIS'},
+    ],
+    'VIRTUAL ACCOUNT': [
+      {'id': 'BRIVA', 'name': 'BRI VA'},
+      {'id': 'BNIVA', 'name': 'BNI VA'},
+      {'id': 'BCAVA', 'name': 'BCA VA'},
+      {'id': 'MANDIRIVA', 'name': 'Mandiri VA'},
+      {'id': 'PERMATAVA', 'name': 'Permata VA'},
+    ],
+    'GERAI': [
+      {'id': 'ALFAMART', 'name': 'Alfamart'},
+      {'id': 'INDOMARET', 'name': 'Indomaret'},
     ],
   };
 

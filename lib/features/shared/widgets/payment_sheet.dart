@@ -198,12 +198,10 @@ class PaymentSelectionSheet extends StatefulWidget {
                 : parsed['payUrl']) ??
             '';
 
-        // Xendit returns invoice_url — open in browser directly
+        // Tripay returns pay_url or checkout_url — open in browser directly
         if (checkoutUrl.isNotEmpty) {
           final uri = Uri.parse(checkoutUrl);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          }
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
         } else {
           // Fallback: show QR sheet if QR url exists
           final qrUrl = parsed['qrUrl'] ?? '';
@@ -246,14 +244,25 @@ class PaymentSelectionSheet extends StatefulWidget {
 class _PaymentSelectionSheetState extends State<PaymentSelectionSheet> {
   bool _isLoading = false;
   String? _error;
-  String _selectedMethod = 'Xendit';
+  String _selectedMethod = 'QRIS2';
 
   late TextEditingController _phoneController;
   late TextEditingController _promoController;
 
   final Map<String, List<Map<String, String>>> _paymentGroups = {
-    'METODE PEMBAYARAN': [
-      {'id': 'Xendit', 'name': 'Lanjut ke Pembayaran (QRIS, VA, E-Wallet, dsb)', 'icon': 'qris'},
+    'QRIS': [
+      {'id': 'QRIS2', 'name': 'QRIS'},
+    ],
+    'VIRTUAL ACCOUNT': [
+      {'id': 'BRIVA', 'name': 'BRI VA'},
+      {'id': 'BNIVA', 'name': 'BNI VA'},
+      {'id': 'BCAVA', 'name': 'BCA VA'},
+      {'id': 'MANDIRIVA', 'name': 'Mandiri VA'},
+      {'id': 'PERMATAVA', 'name': 'Permata VA'},
+    ],
+    'GERAI': [
+      {'id': 'ALFAMART', 'name': 'Alfamart'},
+      {'id': 'INDOMARET', 'name': 'Indomaret'},
     ],
   };
 
