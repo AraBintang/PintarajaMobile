@@ -575,7 +575,7 @@ class _VideoGeneratorScreenState extends State<VideoGeneratorScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.all(2),
                                     decoration: const BoxDecoration(
-                                      color: Colors.black70,
+                                      color: Colors.black54,
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(Icons.close_rounded,
