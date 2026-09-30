@@ -163,18 +163,17 @@ class _ImageGeneratorScreenState extends State<ImageGeneratorScreen> {
   }
 
   Future<void> _pollJobStatus(String jobId, String prompt) async {
-    const maxPolls = 60; // 10 menit
+    const maxPolls = 150;
     int pollCount = 0;
     final token = StorageService.getToken();
 
     while (pollCount < maxPolls && _isLoading) {
       pollCount++;
       setState(() {
-        _statusMessage =
-            'Sedang melukis gambar imajinasi Anda... ($pollCount/60)';
+        _statusMessage = 'Sedang melukis gambar imajinasi Anda... Mohon tunggu';
       });
 
-      await Future.delayed(const Duration(seconds: 10));
+      await Future.delayed(const Duration(seconds: 3));
       if (!mounted || !_isLoading) return;
 
       try {
