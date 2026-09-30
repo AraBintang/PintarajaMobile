@@ -167,7 +167,6 @@ class AppSidebarDrawer extends StatelessWidget {
                       title: 'Humanize',
                       route: '/tools',
                       isActive: currentRoute == '/tools',
-                      comingSoon: true,
                     ),
                     _buildWorkspaceItem(
                       context,

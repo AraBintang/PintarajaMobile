@@ -134,11 +134,16 @@ class _ToolsScreenState extends State<ToolsScreen> {
 
       switch (_activeTab) {
         case 'humanizer':
-          setState(() {
-            _isLoading = false;
-            _error = 'Fitur Humanizer AI akan segera rilis! (Coming Soon)';
-          });
-          return;
+          data = await ApiService.instance.post(
+            ApiConstants.humanizer,
+            body: {
+              'language': _selectedLanguage,
+              'mode': _selectedHumanMode,
+              'text': text,
+            },
+            timeout: const Duration(seconds: 90),
+          );
+          break;
 
         case 'plagiarism':
           final userNameParts =
