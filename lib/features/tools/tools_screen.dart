@@ -136,7 +136,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
         case 'humanizer':
           data = await ApiService.instance.post(
             ApiConstants.humanizer,
-            body: {
+            {
               'language': _selectedLanguage,
               'mode': _selectedHumanMode,
               'text': text,
