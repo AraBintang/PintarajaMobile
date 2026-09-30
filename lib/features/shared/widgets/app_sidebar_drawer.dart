@@ -178,6 +178,20 @@ class AppSidebarDrawer extends StatelessWidget {
                     ),
                     _buildWorkspaceItem(
                       context,
+                      icon: Icons.image_outlined,
+                      title: 'Gambar AI',
+                      route: '/image-generator',
+                      isActive: currentRoute == '/image-generator',
+                    ),
+                    _buildWorkspaceItem(
+                      context,
+                      icon: Icons.videocam_outlined,
+                      title: 'Video AI',
+                      route: '/video-generator',
+                      isActive: currentRoute == '/video-generator',
+                    ),
+                    _buildWorkspaceItem(
+                      context,
                       icon: Icons.record_voice_over_rounded,
                       title: 'Transcribe AI',
                       route: '/transcribe',

@@ -97,7 +97,11 @@ class ApiConstants {
 
   static const String imageGenerator = '$baseUrl/generate-image';
 
+  static const String checkImageStatus = '$baseUrl/check-image-status';
+
   static const String videoGenerator = '$baseUrl/generate-video';
+
+  static const String checkVideoStatus = '$baseUrl/check-video-status';
 
   // ==========================================================
   // WRITER

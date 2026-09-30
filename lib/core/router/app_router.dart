@@ -24,6 +24,8 @@ import '../../features/shared/widgets/app_sidebar_drawer.dart';
 import '../../features/plan/plan_screen.dart';
 import '../../features/plagiarism/plagiarism_screen.dart';
 import '../../features/transcribe/transcribe_screen.dart';
+import '../../features/image_generator/image_generator_screen.dart';
+import '../../features/video_generator/video_generator_screen.dart';
 
 class AppRouter {
   /// Ekstraksi aman conversationId dari route extra.
@@ -295,6 +297,24 @@ class AppRouter {
             GoRoute(
               path: '/transcribe',
               builder: (_, __) => const TranscribeScreen(),
+            ),
+
+            // --------------------------------------------------
+            // IMAGE GENERATOR
+            // --------------------------------------------------
+
+            GoRoute(
+              path: '/image-generator',
+              builder: (_, __) => const ImageGeneratorScreen(),
+            ),
+
+            // --------------------------------------------------
+            // VIDEO GENERATOR
+            // --------------------------------------------------
+
+            GoRoute(
+              path: '/video-generator',
+              builder: (_, __) => const VideoGeneratorScreen(),
             ),
           ],
         ),
